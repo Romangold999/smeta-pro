@@ -30,6 +30,28 @@ class GeometryEngineTest {
   assertEquals(1.89,m.openingArea,1e-8)
   assertEquals(0.765,m.revealArea,1e-8)
  }
+ @Test fun partitionChordSplitsRectangleAndPreservesArea() {
+  val room=listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0))
+  val split=GeometryEngine.splitByBoundaryChord(room,Vec2(2.0,0.0),Vec2(2.0,3.0))
+  assertNotNull(split)
+  assertEquals(6.0,GeometryEngine.area(split!!.first),1e-8)
+  assertEquals(6.0,GeometryEngine.area(split.second),1e-8)
+  assertEquals(12.0,split.combinedArea,1e-8)
+ }
+ @Test fun partitionChordCanStartInsideBoundaryEdges() {
+  val room=listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0))
+  val split=GeometryEngine.splitByBoundaryChord(room,Vec2(1.0,0.0),Vec2(3.0,3.0))
+  assertNotNull(split)
+  assertEquals(12.0,split!!.combinedArea,1e-8)
+ }
+ @Test fun rejectsPartitionChordWithEndpointOutsideRoom() {
+  val room=listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0))
+  assertNull(GeometryEngine.splitByBoundaryChord(room,Vec2(2.0,0.0),Vec2(5.0,3.0)))
+ }
+ @Test fun rejectsPartitionChordWhoseMidpointIsOutsideConcaveRoom() {
+  val room=listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,1.0),Vec2(1.0,1.0),Vec2(1.0,4.0),Vec2(0.0,4.0))
+  assertNull(GeometryEngine.splitByBoundaryChord(room,Vec2(4.0,0.5),Vec2(0.0,3.5)))
+ }
  @Test fun materialPackagesRoundUp() {
   val r=MaterialCalculator.calculate(20.0,1.2,25.0,10.0,10.0,true)
   assertEquals(264.0,r.required,1e-8)
