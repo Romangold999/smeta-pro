@@ -45,9 +45,9 @@ CatalogWork("Установка зеркала",1300.0,"шт","Монтаж"),Ca
 CatalogWork("Распайка ПП трубы (1 точка)",2000.0,"точка","Сантехника"),CatalogWork("Канализация",2000.0,"точка","Сантехника"),CatalogWork("Установка водомера",800.0,"шт","Сантехника"),CatalogWork("Штроба в бетоне 20 мм",1000.0,"м.п.","Электрика"),CatalogWork("Штроба в бетоне 50 мм",1500.0,"м.п.","Электрика"),CatalogWork("Штроба в газоблоке 20 мм",700.0,"м.п.","Электрика"),CatalogWork("Заделка штробы",200.0,"м.п.","Подготовка"),CatalogWork("Отверстие в бетоне для подрозетника",400.0,"шт","Электрика"),CatalogWork("Монтаж подрозетника",100.0,"шт","Электрика"),CatalogWork("Установка розетки",250.0,"шт","Электрика"),CatalogWork("Демонтаж старой штукатурки",450.0,"м²","Демонтаж"),CatalogWork("Демонтаж плитки",1000.0,"м²","Демонтаж"),CatalogWork("Изготовление раковины из керамогранита (до 80 см)",25000.0,"шт","Сантехника"),CatalogWork("Монтаж раковины",7000.0,"шт","Сантехника",true)
 )
 
-data class Room(val id:Long,val name:String,val width:Double,val length:Double,val height:Double,val wall1:Double,val wall2:Double,val wall3:Double,val wall4:Double) {
-    val floor get() = width*length
-    val perimeter get() = wall1+wall2+wall3+wall4
+data class Room(val id:Long,val name:String,val width:Double,val length:Double,val height:Double,val wall1:Double,val wall2:Double,val wall3:Double,val wall4:Double,val vertices:List<Vec2> = listOf(Vec2(0.0,0.0),Vec2(width,0.0),Vec2(width,length),Vec2(0.0,length))) {
+    val floor get() = GeometryEngine.area(vertices)
+    val perimeter get() = GeometryEngine.perimeter(vertices)
     val walls get() = perimeter*height
 }
 data class EstimateLine(val name:String,val unit:String,val price:Double,val qty:Double,val category:String,val material:Boolean=false) {
@@ -75,7 +75,7 @@ class MainActivity:ComponentActivity(){
   val w=if(p.size>=2) p[0].distanceTo(p[1]) else 4.0
   val l=if(p.size>=3) p[1].distanceTo(p[2]) else 5.0
   val h=g.wallHeights.firstOrNull()?:2.7
-  Room(i+1L,g.name,w,l,h,w,l,w,l)
+  Room(i+1L,g.name,w,l,h,w,l,w,l,p)
  }?.takeIf { it.isNotEmpty() } ?: listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0))
  var rooms by remember { mutableStateOf(toRoomModels(initialSaved)) }
  var selected by remember { mutableIntStateOf(0) }
@@ -142,7 +142,7 @@ class MainActivity:ComponentActivity(){
  val totalPerimeter=rooms.sumOf{it.perimeter}
  fun save(){
   val geometry=rooms.map { r ->
-   RoomGeometry(r.name,listOf(Vec2(0.0,0.0),Vec2(r.width,0.0),Vec2(r.width,r.length),Vec2(0.0,r.length)),List(4){r.height},List(4){0.0})
+   RoomGeometry(r.name,r.vertices,List(r.vertices.size){r.height},List(r.vertices.size){0.0})
   }
   projectStore.saveProject(SavedProject(activeProjectId,project,geometry,lines,construction=constructionRecords))
   prefs.edit().putString("project",project).putString("active_project_id",activeProjectId).apply()
@@ -176,7 +176,7 @@ class MainActivity:ComponentActivity(){
     "Обмеры" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock { Text("Геометрия помещения",fontSize=19.sp,fontWeight=FontWeight.Bold); Text("Базовый режим прямоугольного помещения. Длины каждой стены редактируются отдельно; исходные размеры не подгоняются автоматически.") ; Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){ rooms.forEachIndexed{i,r->FilterChip(selected=selected==i,onClick={selected=i},label={Text(r.name)})} } } }
       item { CardBlock { Text(current.name,fontWeight=FontWeight.Bold); NumberField("Ширина комнаты, м",roomW){roomW=it}; NumberField("Длина комнаты, м",roomL){roomL=it}; NumberField("Высота стен, м",roomH){roomH=it}; Button(onClick={ rooms=rooms.toMutableList().also{it[selected]=current.copy(width=roomW.toDoubleOrNull()?:current.width,length=roomL.toDoubleOrNull()?:current.length,height=roomH.toDoubleOrNull()?:current.height,wall1=roomW.toDoubleOrNull()?:current.wall1,wall3=roomW.toDoubleOrNull()?:current.wall3,wall2=roomL.toDoubleOrNull()?:current.wall2,wall4=roomL.toDoubleOrNull()?:current.wall4)} },modifier=Modifier.fillMaxWidth()){Text("Применить размеры")} } }
-      item { CardBlock { Text("Схема 2D",fontWeight=FontWeight.Bold); RoomPlan(current,Modifier.fillMaxWidth().height(220.dp)); Text("Схема масштабируется по габаритам. Для косых и ломаных контуров будет отдельный редактор геометрии.") } }
+      item { CardBlock { Text("Схема 2D",fontWeight=FontWeight.Bold); RoomPlan(current,Modifier.fillMaxWidth().height(220.dp)); Text("Контур помещения отображается по фактическим вершинам.") } }
       item { CardBlock { Text("Автоматические расчёты",fontWeight=FontWeight.Bold); Text("Пол: ${df.format(current.floor)} м²"); Text("Стены: ${df.format(current.walls)} м²"); Text("Периметр: ${df.format(current.perimeter)} м"); Text("Потолок: ${df.format(current.floor)} м²") } }
     }
     "Смета" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp),contentPadding=PaddingValues(vertical=12.dp)){
@@ -256,6 +256,11 @@ class MainActivity:ComponentActivity(){
           Text(if(partitionStart==null) "Точка начала не выбрана" else if(partitionEnd==null) "Выбери точку окончания" else "Длина по плану: $partitionLength м",color=accent,modifier=Modifier.weight(1f))
           TextButton(onClick={partitionStart=null;partitionEnd=null}){Text("Сбросить")}
         }
+        val splitPreview=if(partitionStart!=null && partitionEnd!=null) GeometryEngine.splitByBoundaryChord(current.vertices,partitionStart!!,partitionEnd!!) else null
+        if(partitionStart!=null && partitionEnd!=null) {
+          if(splitPreview!=null) Text("Контур делится на ${df.format(GeometryEngine.area(splitPreview.first))} м² и ${df.format(GeometryEngine.area(splitPreview.second))} м²",color=accent)
+          else Text("Невозможно разделить: обе точки должны лежать на границе, а линия проходить внутри помещения.",color=Color(0xFFFFB86B))
+        }
         NumberField("Длина перегородки, м",partitionLength){partitionLength=it}
         NumberField("Высота перегородки, м",partitionHeight){partitionHeight=it}
         NumberField("Площадь дверных/прочих проёмов, м²",partitionOpenings){partitionOpenings=it}
@@ -315,7 +320,18 @@ class MainActivity:ComponentActivity(){
             val rate=partitionRate.toDoubleOrNull()?:0.0
             val p1=partitionStart
             val p2=partitionEnd
-            if(p1!=null && p2!=null){
+            val split=if(p1!=null && p2!=null) GeometryEngine.splitByBoundaryChord(current.vertices,p1,p2) else null
+            if(p1!=null && p2!=null && split!=null){
+              fun roomFromPolygon(id:Long,name:String,points:List<Vec2>):Room {
+                val w=(points.maxOf{it.x}-points.minOf{it.x}).coerceAtLeast(0.01)
+                val h=(points.maxOf{it.y}-points.minOf{it.y}).coerceAtLeast(0.01)
+                return Room(id,name,w,h,current.height,w,h,w,h,points)
+              }
+              rooms=rooms.toMutableList().also { list ->
+                list[selected]=roomFromPolygon(current.id,current.name,split.first)
+                list.add(selected+1,roomFromPolygon(System.currentTimeMillis(),"\${current.name} — 2",split.second))
+              }
+              selected=selected+1
               constructionRecords=constructionRecords+ConstructionRecord(
                 id=java.util.UUID.randomUUID().toString(),kind="PARTITION",roomIndex=selected,
                 material=partitionKind,wallIndex=-1,startX=p1.x,startY=p1.y,endX=p2.x,endY=p2.y,
@@ -325,7 +341,10 @@ class MainActivity:ComponentActivity(){
                 studSpacingMm=studSpacing.toIntOrNull()?:600,insulation=insulation,
                 densityKgM3=blockDensity.toDoubleOrNull()?:0.0,quantity=result.netAreaM2
               )
-              saveMessage="Перегородка сохранена как элемент проекта. Нажми «Сохранить» для записи."
+              saveMessage="Помещение разделено на две области. Нажми «Сохранить» для записи."
+            } else {
+              saveMessage="Разделение не выполнено: выбери две точки на границе помещения."
+              return@Button
             }
             val rows=mutableListOf<EstimateLine>()
             rows.add(EstimateLine(if(partitionKind=="ГКЛ") "Монтаж каркасной перегородки ГКЛ $partitionThickness мм" else "Монтаж перегородки: $partitionKind $partitionThickness мм","м²",rate,result.netAreaM2,"Перегородки"))
