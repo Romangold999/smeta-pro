@@ -1,0 +1,139 @@
+package ru.planmaster3d.app
+
+import kotlin.math.*
+
+/** Точная двумерная геометрия. Единицы координат — метры. */
+data class Vec2(val x: Double, val y: Double) {
+    operator fun plus(o: Vec2)=Vec2(x+o.x,y+o.y)
+    operator fun minus(o: Vec2)=Vec2(x-o.x,y-o.y)
+    operator fun times(k: Double)=Vec2(x*k,y*k)
+    fun length()=hypot(x,y)
+    fun distanceTo(o:Vec2)=(this-o).length()
+}
+data class Opening(
+    val id:String,
+    val name:String,
+    val width:Double,
+    val height:Double,
+    val sillHeight:Double=0.0,
+    val depth:Double=0.0,
+    val hasSill:Boolean=false
+) {
+    init { require(width>=0 && height>=0 && sillHeight>=0 && depth>=0) }
+    val faceArea get()=width*height
+    /** Два боковых откоса + верхний; подоконник учитывается отдельно по флагу. */
+    fun revealArea():Double = depth*(2*height+width+(if(hasSill) width else 0.0))
+}
+data class WallMeasure(
+    val start:Vec2,
+    val end:Vec2,
+    val heightStart:Double,
+    val heightEnd:Double=heightStart,
+    val thickness:Double=0.0,
+    val openings:List<Opening> = emptyList(),
+    val label:String=""
+) {
+    val length get()=start.distanceTo(end)
+    val grossArea get()=length*(heightStart+heightEnd)/2.0
+    val openingArea get()=openings.sumOf{it.faceArea}
+    val netArea get()=(grossArea-openingArea).coerceAtLeast(0.0)
+    val revealArea get()=openings.sumOf{it.revealArea()}
+}
+data class RoomGeometry(
+    val name:String,
+    val vertices:List<Vec2>,
+    val wallHeights:List<Double> = emptyList(),
+    val wallThicknesses:List<Double> = emptyList(),
+    val openingsByWall:Map<Int,List<Opening>> = emptyMap()
+)
+data class ClosureResult(val dx:Double,val dy:Double,val residual:Double,val closed:Boolean)
+data class RoomMetrics(
+    val floorArea:Double,
+    val perimeter:Double,
+    val grossWallArea:Double,
+    val netWallArea:Double,
+    val ceilingArea:Double,
+    val openingArea:Double,
+    val revealArea:Double,
+    val walls:List<WallMeasure>,
+    val selfIntersects:Boolean
+)
+object GeometryEngine {
+    private const val EPS=1e-8
+    fun signedArea(points:List<Vec2>):Double {
+        if(points.size<3) return 0.0
+        var sum=0.0
+        for(i in points.indices){val a=points[i];val b=points[(i+1)%points.size];sum+=a.x*b.y-b.x*a.y}
+        return sum/2.0
+    }
+    fun area(points:List<Vec2>)=abs(signedArea(points))
+    fun perimeter(points:List<Vec2>):Double {
+        if(points.size<2) return 0.0
+        return points.indices.sumOf{points[it].distanceTo(points[(it+1)%points.size])}
+    }
+    fun selfIntersects(p:List<Vec2>):Boolean {
+        if(p.size<4)return false
+        for(i in p.indices) for(j in i+1 until p.size) {
+            val i2=(i+1)%p.size; val j2=(j+1)%p.size
+            if(i==j || i2==j || j2==i) continue
+            if(intersects(p[i],p[i2],p[j],p[j2])) return true
+        }
+        return false
+    }
+    private fun orient(a:Vec2,b:Vec2,c:Vec2)=(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)
+    private fun onSegment(a:Vec2,b:Vec2,p:Vec2)=p.x>=min(a.x,b.x)-EPS&&p.x<=max(a.x,b.x)+EPS&&p.y>=min(a.y,b.y)-EPS&&p.y<=max(a.y,b.y)+EPS
+    private fun intersects(a:Vec2,b:Vec2,c:Vec2,d:Vec2):Boolean {
+        val o1=orient(a,b,c);val o2=orient(a,b,d);val o3=orient(c,d,a);val o4=orient(c,d,b)
+        if(o1*o2 < -EPS && o3*o4 < -EPS)return true
+        return (abs(o1)<=EPS&&onSegment(a,b,c))||(abs(o2)<=EPS&&onSegment(a,b,d))||(abs(o3)<=EPS&&onSegment(c,d,a))||(abs(o4)<=EPS&&onSegment(c,d,b))
+    }
+    fun metrics(room:RoomGeometry,defaultHeight:Double=2.7):RoomMetrics {
+        require(room.vertices.size>=3){"Для помещения нужны минимум три вершины"}
+        require(room.wallHeights.isEmpty()||room.wallHeights.size==room.vertices.size)
+        require(room.wallThicknesses.isEmpty()||room.wallThicknesses.size==room.vertices.size)
+        val walls=room.vertices.indices.map{i->
+            val j=(i+1)%room.vertices.size
+            WallMeasure(room.vertices[i],room.vertices[j],
+                room.wallHeights.getOrElse(i){defaultHeight},
+                room.wallHeights.getOrElse(j){defaultHeight},
+                room.wallThicknesses.getOrElse(i){0.0},
+                room.openingsByWall[i].orEmpty(), "Стена ${i+1}")
+        }
+        val gross=walls.sumOf{it.grossArea}
+        val openings=walls.sumOf{it.openingArea}
+        return RoomMetrics(area(room.vertices),perimeter(room.vertices),gross,
+            walls.sumOf{it.netArea},area(room.vertices),openings,walls.sumOf{it.revealArea},
+            walls,selfIntersects(room.vertices))
+    }
+    /** Невязка исходных измеренных векторов до принудительного замыкания контура. */
+    fun closure(vectors:List<Vec2>,tolerance:Double=0.01):ClosureResult {
+        val dx=vectors.sumOf{it.x};val dy=vectors.sumOf{it.y}
+        val residual=hypot(dx,dy)
+        return ClosureResult(dx,dy,residual,residual<=tolerance)
+    }
+    fun diagonal(a:Vec2,b:Vec2)=a.distanceTo(b)
+    fun wallLengths(points:List<Vec2>)=points.indices.map{points[it].distanceTo(points[(it+1)%points.size])}
+}
+data class MaterialResult(val required:Double,val packages:Int,val packageSize:Double)
+object MaterialCalculator {
+    /** ratePerM2 — расход на м²; layerMm применяется отдельно для материалов с расходом на мм. */
+    fun calculate(area:Double,ratePerM2:Double,packageSize:Double,wastePercent:Double=0.0,layerMm:Double=1.0,perMillimetre:Boolean=false):MaterialResult {
+        require(area>=0&&ratePerM2>=0&&packageSize>0&&wastePercent>=0&&layerMm>=0)
+        val amount=area*ratePerM2*(if(perMillimetre)layerMm else 1.0)*(1+wastePercent/100.0)
+        return MaterialResult(amount,ceil(amount/packageSize).toInt(),packageSize)
+    }
+}
+data class LayoutResult(val rows:Int,val columns:Int,val pieces:Int,val piecesWithReserve:Int,val areaM2:Double,val wasteAreaM2:Double)
+object LayoutCalculator {
+    /** Раскладка по прямой сетке. Для сложных рисунков и повторного использования обрезков нужен отдельный nesting-алгоритм. */
+    fun grid(roomWidthMm:Double,roomLengthMm:Double,itemWidthMm:Double,itemLengthMm:Double,reservePercent:Double=10.0):LayoutResult {
+        require(roomWidthMm>0&&roomLengthMm>0&&itemWidthMm>0&&itemLengthMm>0&&reservePercent>=0)
+        val a=ceil(roomWidthMm/itemWidthMm).toInt()
+        val b=ceil(roomLengthMm/itemLengthMm).toInt()
+        val pieces=a*b
+        val area=roomWidthMm*roomLengthMm/1_000_000.0
+        val itemArea=itemWidthMm*itemLengthMm/1_000_000.0
+        val purchased=ceil(pieces*(1+reservePercent/100.0)).toInt()
+        return LayoutResult(b,a,pieces,purchased,area,(purchased*itemArea-area).coerceAtLeast(0.0))
+    }
+}
