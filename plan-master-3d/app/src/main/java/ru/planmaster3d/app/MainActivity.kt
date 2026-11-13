@@ -234,7 +234,6 @@ class MainActivity:ComponentActivity(){
               vertexDrafts=vertexDrafts-current.id
               geometryMessage="Вершина перемещена. Геометрия и расчёты обновлены; исходные векторные обмеры очищены, так как контур изменён вручную."
             }
-            }
           },
           modifier=Modifier.fillMaxWidth().height(250.dp)
         )
