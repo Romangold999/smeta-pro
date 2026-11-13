@@ -17,9 +17,11 @@ data class Opening(
     val height:Double,
     val sillHeight:Double=0.0,
     val depth:Double=0.0,
-    val hasSill:Boolean=false
+    val hasSill:Boolean=false,
+    val offsetFromStart:Double=0.0,
+    val kind:String="Проём"
 ) {
-    init { require(width>=0 && height>=0 && sillHeight>=0 && depth>=0) }
+    init { require(width>0 && height>0 && sillHeight>=0 && depth>=0 && offsetFromStart>=0) }
     val faceArea get()=width*height
     /** Два боковых откоса + верхний; подоконник учитывается отдельно по флагу. */
     fun revealArea():Double = depth*(2*height+width+(if(hasSill) width else 0.0))
@@ -87,6 +89,34 @@ object GeometryEngine {
         if(o1*o2 < -EPS && o3*o4 < -EPS)return true
         return (abs(o1)<=EPS&&onSegment(a,b,c))||(abs(o2)<=EPS&&onSegment(a,b,d))||(abs(o3)<=EPS&&onSegment(c,d,a))||(abs(o4)<=EPS&&onSegment(c,d,b))
     }
+    /** Проверяет привязку проёмов к стенам, габариты и взаимные пересечения. */
+    fun validateOpenings(room:RoomGeometry,defaultHeight:Double=2.7):List<String> {
+        val errors=mutableListOf<String>()
+        room.openingsByWall.forEach { (wallIndex, openings) ->
+            if(wallIndex !in room.vertices.indices) {
+                errors.add("Проёмы привязаны к отсутствующей стене №${wallIndex+1}")
+                return@forEach
+            }
+            val start=room.vertices[wallIndex]
+            val end=room.vertices[(wallIndex+1)%room.vertices.size]
+            val length=start.distanceTo(end)
+            val next=(wallIndex+1)%room.vertices.size
+            val maxHeight=min(room.wallHeights.getOrElse(wallIndex){defaultHeight},room.wallHeights.getOrElse(next){defaultHeight})
+            openings.forEach { opening ->
+                if(opening.offsetFromStart+opening.width>length+EPS) errors.add("${opening.name}: ширина выходит за пределы стены №${wallIndex+1}")
+                if(opening.sillHeight+opening.height>maxHeight+EPS) errors.add("${opening.name}: высота выходит за пределы стены №${wallIndex+1}")
+            }
+            val sorted=openings.sortedBy{it.offsetFromStart}
+            for(i in 1 until sorted.size) {
+                val previous=sorted[i-1]
+                val current=sorted[i]
+                if(previous.offsetFromStart+previous.width>current.offsetFromStart+EPS)
+                    errors.add("Проёмы «${previous.name}» и «${current.name}» пересекаются на стене №${wallIndex+1}")
+            }
+        }
+        return errors
+    }
+
     fun metrics(room:RoomGeometry,defaultHeight:Double=2.7):RoomMetrics {
         require(room.vertices.size>=3){"Для помещения нужны минимум три вершины"}
         require(room.wallHeights.isEmpty()||room.wallHeights.size==room.vertices.size)
