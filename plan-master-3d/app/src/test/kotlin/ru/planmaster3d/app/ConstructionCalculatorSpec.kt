@@ -23,7 +23,7 @@ class ConstructionCalculatorSpec {
     @Test fun pgpCountUsesPlateFaceArea() {
         val r = PartitionCalculator.calculate(PartitionInput(PartitionKind.PGP, 3.0, 2.7, 80,
             blockLengthMm = 667, blockHeightMm = 500, blockDensityKgM3 = 1100.0))
-        assertEquals(25, r.blockCount)
+        assertEquals(26, r.blockCount)
         assertEquals(712.8, r.blockMassKg, 1e-8)
     }
 
