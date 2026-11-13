@@ -45,10 +45,11 @@ CatalogWork("Установка зеркала",1300.0,"шт","Монтаж"),Ca
 CatalogWork("Распайка ПП трубы (1 точка)",2000.0,"точка","Сантехника"),CatalogWork("Канализация",2000.0,"точка","Сантехника"),CatalogWork("Установка водомера",800.0,"шт","Сантехника"),CatalogWork("Штроба в бетоне 20 мм",1000.0,"м.п.","Электрика"),CatalogWork("Штроба в бетоне 50 мм",1500.0,"м.п.","Электрика"),CatalogWork("Штроба в газоблоке 20 мм",700.0,"м.п.","Электрика"),CatalogWork("Заделка штробы",200.0,"м.п.","Подготовка"),CatalogWork("Отверстие в бетоне для подрозетника",400.0,"шт","Электрика"),CatalogWork("Монтаж подрозетника",100.0,"шт","Электрика"),CatalogWork("Установка розетки",250.0,"шт","Электрика"),CatalogWork("Демонтаж старой штукатурки",450.0,"м²","Демонтаж"),CatalogWork("Демонтаж плитки",1000.0,"м²","Демонтаж"),CatalogWork("Изготовление раковины из керамогранита (до 80 см)",25000.0,"шт","Сантехника"),CatalogWork("Монтаж раковины",7000.0,"шт","Сантехника",true)
 )
 
-data class Room(val id:Long,val name:String,val width:Double,val length:Double,val height:Double,val wall1:Double,val wall2:Double,val wall3:Double,val wall4:Double,val vertices:List<Vec2> = listOf(Vec2(0.0,0.0),Vec2(width,0.0),Vec2(width,length),Vec2(0.0,length))) {
+data class Room(val id:Long,val name:String,val width:Double,val length:Double,val height:Double,val wall1:Double,val wall2:Double,val wall3:Double,val wall4:Double,val vertices:List<Vec2> = listOf(Vec2(0.0,0.0),Vec2(width,0.0),Vec2(width,length),Vec2(0.0,length)),val wallHeights:List<Double> = emptyList(),val wallThicknesses:List<Double> = emptyList(),val openingsByWall:Map<Int,List<Opening>> = emptyMap()) {
     val floor get() = GeometryEngine.area(vertices)
     val perimeter get() = GeometryEngine.perimeter(vertices)
-    val walls get() = perimeter*height
+    val geometry get() = GeometryEngine.metrics(RoomGeometry(name,vertices,wallHeights,wallThicknesses,openingsByWall),height)
+    val walls get() = geometry.netWallArea
 }
 data class EstimateLine(val name:String,val unit:String,val price:Double,val qty:Double,val category:String,val material:Boolean=false) {
     val total get()=price*qty
@@ -75,7 +76,7 @@ class MainActivity:ComponentActivity(){
   val w=if(p.size>=2) (p.maxOf{it.x}-p.minOf{it.x}).coerceAtLeast(0.01) else 4.0
   val l=if(p.size>=3) (p.maxOf{it.y}-p.minOf{it.y}).coerceAtLeast(0.01) else 5.0
   val h=g.wallHeights.firstOrNull()?:2.7
-  Room(i+1L,g.name,w,l,h,w,l,w,l,p)
+  Room(i+1L,g.name,w,l,h,w,l,w,l,p,g.wallHeights,g.wallThicknesses,g.openingsByWall)
  }?.takeIf { it.isNotEmpty() } ?: listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0))
  var rooms by remember { mutableStateOf(toRoomModels(initialSaved)) }
  var selected by remember { mutableIntStateOf(0) }
@@ -147,7 +148,7 @@ class MainActivity:ComponentActivity(){
  val totalPerimeter=rooms.sumOf{it.perimeter}
  fun save(){
   val geometry=rooms.map { r ->
-   RoomGeometry(r.name,r.vertices,List(r.vertices.size){r.height},List(r.vertices.size){0.0})
+   RoomGeometry(r.name,r.vertices,if(r.wallHeights.size==r.vertices.size) r.wallHeights else List(r.vertices.size){r.height},if(r.wallThicknesses.size==r.vertices.size) r.wallThicknesses else List(r.vertices.size){0.0},r.openingsByWall.filterKeys{it in r.vertices.indices})
   }
   projectStore.saveProject(SavedProject(activeProjectId,project,geometry,lines,construction=constructionRecords))
   prefs.edit().putString("project",project).putString("active_project_id",activeProjectId).apply()
@@ -334,7 +335,7 @@ class MainActivity:ComponentActivity(){
               fun roomFromPolygon(id:Long,name:String,points:List<Vec2>):Room {
                 val w=(points.maxOf{it.x}-points.minOf{it.x}).coerceAtLeast(0.01)
                 val h=(points.maxOf{it.y}-points.minOf{it.y}).coerceAtLeast(0.01)
-                return Room(id,name,w,h,current.height,w,h,w,h,points)
+                return Room(id,name,w,h,current.height,w,h,w,h,points,List(points.size){current.height},List(points.size){0.0})
               }
               rooms=rooms.toMutableList().also { list ->
                 list[selected]=roomFromPolygon(current.id,current.name,split.first)
