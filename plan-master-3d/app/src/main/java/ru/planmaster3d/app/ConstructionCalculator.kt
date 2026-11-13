@@ -45,7 +45,7 @@ object DemolitionCalculator {
     }
 }
 
-enum class PartitionKind { AAC_BLOCK, GYPSUM_BOARD }
+enum class PartitionKind { AAC_BLOCK, PGP, BRICK, GYPSUM_BOARD }
 
 data class PartitionInput(
     val kind: PartitionKind,
@@ -95,13 +95,14 @@ object PartitionCalculator {
         val factor = 1.0 + input.reservePercent / 100.0
         val volume = net * input.thicknessMm / 1000.0
         return when (input.kind) {
-            PartitionKind.AAC_BLOCK -> {
+            PartitionKind.AAC_BLOCK, PartitionKind.PGP, PartitionKind.BRICK -> {
                 require(input.blockLengthMm > 0 && input.blockHeightMm > 0 && input.blockDensityKgM3 > 0.0)
                 val blockFaceArea = input.blockLengthMm * input.blockHeightMm / 1_000_000.0
                 val blocks = ceil(net / blockFaceArea * factor).toInt()
                 val mass = volume * input.blockDensityKgM3
-                // Approximate thin-bed adhesive allowance; user can replace this with the product data.
-                val adhesive = net * 5.0 * factor
+                // Preliminary consumption: adjust to the selected adhesive/mortar manufacturer's data.
+                val adhesiveRate = if (input.kind == PartitionKind.BRICK) 45.0 else 5.0
+                val adhesive = net * adhesiveRate * factor
                 PartitionResult(gross, net, volume, blocks, mass, adhesive,
                     0, 0, 0.0, 0, 0.0, 0.0, 0.0)
             }
