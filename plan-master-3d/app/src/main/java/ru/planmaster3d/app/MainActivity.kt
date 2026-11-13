@@ -696,13 +696,39 @@ class MainActivity:ComponentActivity(){
   order.forEach{i->
    val j=(i+1)%room.vertices.size
    val a=room.vertices[i];val b=room.vertices[j]
+   val length=a.distanceTo(b)
    val h=heights[i]
+   val openings=room.openingsByWall[i].orEmpty().filter{it.offsetFromStart>=0.0&&it.offsetFromStart+it.width<=length+1e-6&&it.sillHeight+it.height<=h+1e-6}
+   fun wallPoint(distance:Double,z:Double):Offset{
+    val t=(distance/length.coerceAtLeast(1e-9)).coerceIn(0.0,1.0)
+    return project(a+(b-a)*t,z)
+   }
+   // Разбиваем плоскость стены на прямоугольные участки и не рисуем ячейки проёмов.
+   val xs=(listOf(0.0,length)+openings.flatMap{listOf(it.offsetFromStart,it.offsetFromStart+it.width)}).distinct().sorted()
+   val ys=(listOf(0.0,h)+openings.flatMap{listOf(it.sillHeight,it.sillHeight+it.height)}).distinct().sorted()
+   for(xi in 0 until xs.lastIndex) for(yi in 0 until ys.lastIndex){
+    val x0=xs[xi];val x1=xs[xi+1];val z0=ys[yi];val z1=ys[yi+1]
+    val mx=(x0+x1)/2.0;val mz=(z0+z1)/2.0
+    val isOpening=openings.any{mx>it.offsetFromStart-1e-7&&mx<it.offsetFromStart+it.width+1e-7&&mz>it.sillHeight-1e-7&&mz<it.sillHeight+it.height+1e-7}
+    if(!isOpening&&x1-x0>1e-7&&z1-z0>1e-7){
+     val p1=wallPoint(x0,z0);val p2=wallPoint(x1,z0);val p3=wallPoint(x1,z1);val p4=wallPoint(x0,z1)
+     val panelPath=Path().apply{moveTo(p1.x,p1.y);lineTo(p2.x,p2.y);lineTo(p3.x,p3.y);lineTo(p4.x,p4.y);close()}
+     val tint=if(i%2==0)Color(0xFF6C879C) else Color(0xFF526D84)
+     drawPath(panelPath,tint)
+     drawPath(panelPath,Color(0xFFB7D0DE),style=Stroke(1.5f))
+    }
+   }
+   // Контур стены и цветная рама проёма помогают читать двери и окна в объёме.
    val p1=project(a);val p2=project(b);val p3=project(b,h);val p4=project(a,h)
-   val wall=Path().apply{moveTo(p1.x,p1.y);lineTo(p2.x,p2.y);lineTo(p3.x,p3.y);lineTo(p4.x,p4.y);close()}
-   val tint=if(i%2==0)Color(0xFF6C879C) else Color(0xFF526D84)
-   drawPath(wall,tint)
-   drawPath(wall,Color(0xFFB7D0DE),style=Stroke(2f))
-   drawLine(Color(0xFFB7D0DE),p4,p3,strokeWidth=2f)
+   val outline=Path().apply{moveTo(p1.x,p1.y);lineTo(p2.x,p2.y);lineTo(p3.x,p3.y);lineTo(p4.x,p4.y);close()}
+   drawPath(outline,Color(0xFFB7D0DE),style=Stroke(2f))
+   openings.forEach{opening->
+    val left=opening.offsetFromStart;val right=left+opening.width
+    val bottom=opening.sillHeight;val top=bottom+opening.height
+    val c=if(opening.kind.contains("окн",true))Color(0xFF80D8FF) else Color(0xFFFFB454)
+    val q1=wallPoint(left,bottom);val q2=wallPoint(right,bottom);val q3=wallPoint(right,top);val q4=wallPoint(left,top)
+    drawLine(c,q1,q2,3f);drawLine(c,q2,q3,3f);drawLine(c,q3,q4,3f);drawLine(c,q4,q1,3f)
+   }
   }
   drawPath(floor,Color(0xFF48C7D9),style=Stroke(3f))
  }
