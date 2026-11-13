@@ -400,7 +400,7 @@ class MainActivity:ComponentActivity(){
         Text("Поворот модели: ${view3dAngle.toInt()}°")
         Slider(value=view3dAngle,onValueChange={view3dAngle=it},valueRange=0f..360f)
         Text("Масштаб: ${(view3dZoom*100).toInt()}%")
-        Slider(value=view3dZoom,onValueChange={view3dZoom=it},valueRange=0.65f..1.8f)
+        Slider(value=view3dZoom,onValueChange={view3dZoom=it},valueRange=0.65f..2.4f)
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
           OutlinedButton(onClick={view3dAngle=(view3dAngle-15f+360f)%360f},modifier=Modifier.weight(1f)){Text("↶ 15°")}
           OutlinedButton(onClick={view3dAngle=(view3dAngle+15f)%360f},modifier=Modifier.weight(1f)){Text("15° ↷")}
@@ -745,9 +745,10 @@ class MainActivity:ComponentActivity(){
  onCameraGesture:(Offset,Float,Float)->Unit={_,_,_->},
  modifier:Modifier=Modifier
 ){
- Canvas(modifier.background(Color(0xFF111C2B)).pointerInput(angle,zoom){
+ val currentCameraGesture=rememberUpdatedState(onCameraGesture)
+ Canvas(modifier.background(Color(0xFF111C2B)).pointerInput(room.vertices){
   detectTransformGestures { _, gesturePan, gestureZoom, gestureRotation ->
-   onCameraGesture(gesturePan,gestureZoom,gestureRotation)
+   currentCameraGesture.value(gesturePan,gestureZoom,gestureRotation)
   }
  }){
   if(room.vertices.size<3)return@Canvas
