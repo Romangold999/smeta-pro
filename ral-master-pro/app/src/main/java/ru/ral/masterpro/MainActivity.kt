@@ -1,7 +1,10 @@
 package ru.ral.masterpro
 
 import android.content.SharedPreferences
+import androidx.compose.ui.platform.LocalContext
 import android.os.Bundle
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -47,6 +50,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RalMasterApp(prefs: SharedPreferences) {
+    val context = LocalContext.current
     var page by remember { mutableIntStateOf(0) }
     var search by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf(colors.first { it.code == "7016" }) }
@@ -63,6 +67,34 @@ private fun RalMasterApp(prefs: SharedPreferences) {
     var designHue by remember { mutableStateOf("270") }
     var designLightness by remember { mutableStateOf("50") }
     var designChroma by remember { mutableStateOf("40") }
+    var dataMessage by remember { mutableStateOf("") }
+    val exportFormulas = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            runCatching {
+                prefs.edit().putString("formulas", savedText).apply()
+                // The ActivityResult callback writes through the activity content resolver below.
+                uri
+            }.onSuccess { target ->
+                context.contentResolver?.openOutputStream(target)?.use {
+                    it.write(savedText.toByteArray(Charsets.UTF_8))
+                }
+                dataMessage = "Экспорт рецептур выполнен"
+            }.onFailure { dataMessage = "Ошибка экспорта: ${it.message}" }
+        }
+    }
+    val importFormulas = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching {
+                val imported = prefs.let { _ -> context.contentResolver?.openInputStream(uri)?.bufferedReader()?.use { it.readText() } }
+                    ?: throw IllegalStateException("Не удалось открыть файл")
+                val checked = JSONObject(imported)
+                savedText = checked.toString()
+                prefs.edit().putString("formulas", savedText).apply()
+                entries = emptyMap()
+                dataMessage = "Импортировано рецептур: ${checked.length()}"
+            }.onFailure { dataMessage = "Файл не подходит: ${it.message}" }
+        }
+    }
     val formulas = remember(savedText) { JSONObject(savedText) }
     val key = listOf(material, system, base, selected.code).joinToString("|")
     val formula = formulas.optJSONObject(key)
@@ -201,6 +233,15 @@ private fun RalMasterApp(prefs: SharedPreferences) {
                     }
                     else -> {
                         Text("РЕДАКТОР СОБСТВЕННЫХ РЕЦЕПТУР", color = gold, fontWeight = FontWeight.Bold)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(onClick = { exportFormulas.launch("ral-master-pro-formulas.json") }, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Default.FileUpload, null); Text("Экспорт")
+                            }
+                            OutlinedButton(onClick = { importFormulas.launch(arrayOf("application/json", "text/*")) }, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Default.FileDownload, null); Text("Импорт")
+                            }
+                        }
+                        if (dataMessage.isNotBlank()) Text(dataMessage, color = gold, fontSize = 11.sp)
                         Text("Введите дозировку в мл на 1 литр материала. Вносите только формулы из техкарты или проверенного подбора.",
                             color = muted, fontSize = 11.sp)
                         ChoiceField("Материал", material, materials) { material = it }
