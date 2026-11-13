@@ -173,8 +173,6 @@ class GeometryEngineTest {
   assertEquals(6.4,result.netWallVolumeM3,1e-8)
   assertEquals(0.7,result.walls.first().netVolumeM3,1e-8)
  }
-}
-
 
  @Test fun measuredRectangleClosesAndProducesVertices() {
   val measurements=listOf(WallVectorMeasurement(4.0,0.0),WallVectorMeasurement(3.0,90.0),WallVectorMeasurement(4.0,180.0),WallVectorMeasurement(3.0,270.0))
@@ -200,3 +198,4 @@ class GeometryEngineTest {
   assertTrue(GeometryEngine.validateRoom(room).any{it.contains("переполнению")})
   assertThrows(IllegalArgumentException::class.java){GeometryEngine.metrics(room)}
  }
+}
