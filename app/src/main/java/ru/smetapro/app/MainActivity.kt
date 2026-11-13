@@ -58,13 +58,20 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var currentId by remember{mutableLongStateOf(projects.first().id)}
  val project=projects.firstOrNull{it.id==currentId}?:projects.first()
  var page by remember{mutableStateOf("Смета")};var filter by remember{mutableStateOf("Все")};var query by remember{mutableStateOf("")}
+ val priceVersions=remember{mutableStateListOf<PriceVersion>().apply{addAll(readPriceVersions(prefs));if(isEmpty())add(PriceVersion(System.currentTimeMillis(),"Базовый прайс",System.currentTimeMillis(),catalog))}}
+ var activePriceId by remember{mutableLongStateOf(prefs.getLong("active_price_id",priceVersions.first().id))}
+ val activePrice=priceVersions.firstOrNull{it.id==activePriceId}?:priceVersions.first()
+ var priceDialog by remember{mutableStateOf(false)};var editingWork by remember{mutableStateOf<Work?>(null)}
+ var priceName by remember{mutableStateOf("")};var priceValue by remember{mutableStateOf("0")};var priceUnit by remember{mutableStateOf("шт")};var priceCategory by remember{mutableStateOf("Монтаж")};var priceFrom by remember{mutableStateOf(false)}
+ fun savePrices(){writePriceVersions(prefs,priceVersions);prefs.edit().putLong("active_price_id",activePriceId).apply()}
+ fun openPriceEditor(w:Work?){editingWork=w;priceName=w?.n?:"";priceValue=w?.p?.toString()?:"0";priceUnit=w?.u?:"шт";priceCategory=w?.c?:"Монтаж";priceFrom=w?.from?:false;priceDialog=true}
  var showAdd by remember{mutableStateOf(false)};var newTitle by remember{mutableStateOf("")};var customName by remember{mutableStateOf("")};var customPrice by remember{mutableStateOf("0")};var customUnit by remember{mutableStateOf("шт")}
  var edit by remember{mutableStateOf<Line?>(null)}
  fun save(){writeProjects(prefs,projects)}
  MaterialTheme(colorScheme=darkColorScheme(primary=blue,background=bg,surface=panel,onSurface=Color.White)){
- Scaffold(containerColor=bg,bottomBar={NavigationBar(containerColor=panel){listOf("Смета","Прайс","Проекты").forEach{p->NavigationBarItem(selected=page==p,onClick={page=p},icon={Text(if(p=="Смета")"₽" else if(p=="Прайс")"▤" else "▣")},label={Text(p)})}}}){pad->
+ Scaffold(containerColor=bg,bottomBar={NavigationBar(containerColor=panel){listOf("Смета","Прайс","Проекты","Настройки").forEach{p->NavigationBarItem(selected=page==p,onClick={page=p},icon={Text(if(p=="Смета")"₽" else if(p=="Прайс")"▤" else "▣")},label={Text(p)})}}}){pad->
  Column(Modifier.fillMaxSize().padding(pad).padding(horizontal=16.dp)){
- Row(Modifier.fillMaxWidth().padding(vertical=18.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text("СМЕТА PRO",color=blue,fontSize=12.sp,fontWeight=FontWeight.Bold,letterSpacing=2.sp);Text(if(page=="Смета")project.name else if(page=="Прайс")"Каталог работ" else "Мои проекты",fontSize=24.sp,fontWeight=FontWeight.Bold)};if(page=="Смета")IconButton(onClick={showAdd=true}){Icon(Icons.Default.Add,null,tint=blue)}}
+ Row(Modifier.fillMaxWidth().padding(vertical=18.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text("СМЕТА PRO",color=blue,fontSize=12.sp,fontWeight=FontWeight.Bold,letterSpacing=2.sp);Text(if(page=="Смета")project.name else if(page=="Прайс")"Каталог работ" else if(page=="Проекты")"Мои проекты" else "Настройки",fontSize=24.sp,fontWeight=FontWeight.Bold)};if(page=="Смета")IconButton(onClick={showAdd=true}){Icon(Icons.Default.Add,null,tint=blue)}}
  when(page){
  "Смета"->{
  Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){Card(Modifier.weight(1f),colors=CardDefaults.cardColors(containerColor=panel)){Column(Modifier.padding(14.dp)){Text("ПОЗИЦИЙ",color=muted,fontSize=10.sp);Text(project.lines.size.toString(),fontSize=23.sp,fontWeight=FontWeight.Bold)}};Card(Modifier.weight(1.4f),colors=CardDefaults.cardColors(containerColor=panel)){Column(Modifier.padding(14.dp)){Text("ИТОГО",color=muted,fontSize=10.sp);Text(rub(project.total),fontSize=23.sp,color=blue,fontWeight=FontWeight.ExtraBold)}}}
@@ -80,7 +87,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  ScrollableTabRow(selectedTabIndex=tabIndex,edgePadding=0.dp,containerColor=bg,contentColor=blue) {
   categories.forEachIndexed{index,name->Tab(selected=tabIndex==index,onClick={filter=name},text={Text(name,maxLines=1)})}
  }
- val filtered=catalog.filter{(filter=="Все"||it.c==filter)&&it.n.contains(query,true)}
+ val filtered=activePrice.items.filter{(filter=="Все"||it.c==filter)&&it.n.contains(query,true)}
  Text("${filtered.size} работ",color=muted,fontSize=11.sp,modifier=Modifier.padding(vertical=5.dp))
  LazyColumn(verticalArrangement=Arrangement.spacedBy(7.dp),contentPadding=PaddingValues(bottom=16.dp)){
   items(filtered){w->Card(Modifier.fillMaxWidth().clickable{project.lines.add(Line(w.n,w.p,1.0,w.u,w.from));save();page="Смета"},colors=CardDefaults.cardColors(containerColor=panel),shape=RoundedCornerShape(14.dp)){
