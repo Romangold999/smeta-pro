@@ -379,13 +379,27 @@ data class LayoutResult(val rows:Int,val columns:Int,val pieces:Int,val piecesWi
 object LayoutCalculator {
     /** Раскладка по прямой сетке. Для сложных рисунков и повторного использования обрезков нужен отдельный nesting-алгоритм. */
     fun grid(roomWidthMm:Double,roomLengthMm:Double,itemWidthMm:Double,itemLengthMm:Double,reservePercent:Double=10.0):LayoutResult {
-        require(roomWidthMm>0&&roomLengthMm>0&&itemWidthMm>0&&itemLengthMm>0&&reservePercent>=0)
-        val a=ceil(roomWidthMm/itemWidthMm).toInt()
-        val b=ceil(roomLengthMm/itemLengthMm).toInt()
-        val pieces=a*b
+        require(listOf(roomWidthMm,roomLengthMm,itemWidthMm,itemLengthMm,reservePercent).all{it.isFinite()}) {
+            "Размеры раскладки и запас должны быть конечными числами"
+        }
+        require(roomWidthMm>0&&roomLengthMm>0&&itemWidthMm>0&&itemLengthMm>0&&reservePercent>=0) {
+            "Размеры помещения и элемента должны быть больше нуля, запас — неотрицательным"
+        }
+        fun count(value:Double,label:String):Int {
+            require(value.isFinite()&&value>=1.0&&value<=Int.MAX_VALUE.toDouble()) { "$label превышает допустимый диапазон" }
+            return ceil(value).toInt()
+        }
+        val columns=count(roomWidthMm/itemWidthMm,"Количество колонок")
+        val rows=count(roomLengthMm/itemLengthMm,"Количество рядов")
+        val pieceCount=rows.toLong()*columns.toLong()
+        require(pieceCount<=Int.MAX_VALUE) { "Количество элементов раскладки превышает допустимый диапазон" }
+        val pieces=pieceCount.toInt()
+        val purchaseCount=ceil(pieces.toDouble()*(1.0+reservePercent/100.0))
+        val purchased=count(purchaseCount,"Количество элементов с запасом")
         val area=roomWidthMm*roomLengthMm/1_000_000.0
         val itemArea=itemWidthMm*itemLengthMm/1_000_000.0
-        val purchased=ceil(pieces*(1+reservePercent/100.0)).toInt()
-        return LayoutResult(b,a,pieces,purchased,area,(purchased*itemArea-area).coerceAtLeast(0.0))
+        val waste=(purchased.toDouble()*itemArea-area).coerceAtLeast(0.0)
+        require(area.isFinite()&&itemArea.isFinite()&&waste.isFinite()) { "Площадь раскладки превышает допустимый диапазон" }
+        return LayoutResult(rows,columns,pieces,purchased,area,waste)
     }
 }
