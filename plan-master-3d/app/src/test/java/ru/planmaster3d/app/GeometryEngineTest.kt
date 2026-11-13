@@ -159,6 +159,15 @@ class GeometryEngineTest {
   assertEquals(264.0,r.required,1e-8)
   assertEquals(11,r.packages)
  }
+ @Test fun layoutRejectsNonFiniteDimensions() {
+  assertThrows(IllegalArgumentException::class.java){LayoutCalculator.grid(Double.NaN,5000.0,600.0,600.0)}
+  assertThrows(IllegalArgumentException::class.java){LayoutCalculator.grid(4000.0,5000.0,600.0,600.0,Double.POSITIVE_INFINITY)}
+ }
+ @Test fun layoutRejectsOverflowingPieceCounts() {
+  assertThrows(IllegalArgumentException::class.java){LayoutCalculator.grid(1.0e12,1.0e12,1.0,1.0)}
+  assertThrows(IllegalArgumentException::class.java){LayoutCalculator.grid(4000.0,5000.0,600.0,600.0,Double.MAX_VALUE)}
+ }
+
  @Test fun layoutCountsRowsAndColumns() {
   val r=LayoutCalculator.grid(4000.0,5000.0,600.0,600.0,10.0)
   assertEquals(9,r.rows)
