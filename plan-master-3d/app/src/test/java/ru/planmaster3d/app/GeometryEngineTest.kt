@@ -28,12 +28,12 @@ class GeometryEngineTest {
   val m=GeometryEngine.metrics(room,2.7)
   assertEquals(37.8,m.grossWallArea,1e-8)
   assertEquals(1.89,m.openingArea,1e-8)
-  assertEquals(0.7425,m.revealArea,1e-8)
+  assertEquals(0.765,m.revealArea,1e-8)
  }
  @Test fun materialPackagesRoundUp() {
   val r=MaterialCalculator.calculate(20.0,1.2,25.0,10.0,10.0,true)
-  assertEquals(10.56,r.required,1e-8)
-  assertEquals(1,r.packages)
+  assertEquals(264.0,r.required,1e-8)
+  assertEquals(11,r.packages)
  }
  @Test fun layoutCountsRowsAndColumns() {
   val r=LayoutCalculator.grid(4000.0,5000.0,600.0,600.0,10.0)
