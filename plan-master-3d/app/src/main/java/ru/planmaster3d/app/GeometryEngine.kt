@@ -157,7 +157,37 @@ object GeometryEngine {
         return errors
     }
 
+    fun validateRoom(room:RoomGeometry,defaultHeight:Double=2.7):List<String> {
+        val errors=mutableListOf<String>()
+        if(room.vertices.size<3) return listOf("Для помещения нужны минимум три вершины")
+        if(room.vertices.any{!it.x.isFinite()||!it.y.isFinite()}) errors.add("Координаты вершин должны быть конечными числами")
+        if(!defaultHeight.isFinite()||defaultHeight<=0.0) errors.add("Высота помещения должна быть больше нуля")
+        if(room.wallHeights.isNotEmpty()&&room.wallHeights.size!=room.vertices.size) errors.add("Количество высот не совпадает с количеством стен")
+        if(room.wallThicknesses.isNotEmpty()&&room.wallThicknesses.size!=room.vertices.size) errors.add("Количество толщин не совпадает с количеством стен")
+        if(room.wallHeightOverrides.isNotEmpty()&&room.wallHeightOverrides.size!=room.vertices.size) errors.add("Количество индивидуальных высот не совпадает с количеством стен")
+        if(room.wallHeights.any{!it.isFinite()||it<=0.0}) errors.add("Высоты стен должны быть конечными и больше нуля")
+        if(room.wallHeightOverrides.any{!it.isFinite()||it<=0.0}) errors.add("Индивидуальные высоты стен должны быть конечными и больше нуля")
+        if(room.wallThicknesses.any{!it.isFinite()||it<0.0}) errors.add("Толщины стен должны быть конечными и неотрицательными")
+        if(room.vertices.all{it.x.isFinite()&&it.y.isFinite()} && (selfIntersects(room.vertices)||area(room.vertices)<=EPS))
+            errors.add("Контур пересекается сам с собой или имеет нулевую площадь")
+        if(room.vertices.all{it.x.isFinite()&&it.y.isFinite()} && room.wallHeights.size in 0..room.vertices.size &&
+            room.wallHeightOverrides.size in 0..room.vertices.size && room.wallThicknesses.size in 0..room.vertices.size) {
+            val walls=room.vertices.indices.map{i->
+                val next=(i+1)%room.vertices.size
+                val h=room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(i){defaultHeight}}
+                val thickness=room.wallThicknesses.getOrElse(i){0.0}
+                val length=room.vertices[i].distanceTo(room.vertices[next])
+                if(!length.isFinite()||!h.isFinite()||!(length*h).isFinite()||!(length*h*thickness).isFinite())
+                    errors.add("Размеры стены №${i+1} приводят к переполнению расчёта")
+            }
+        }
+        if(errors.isEmpty()) errors.addAll(validateOpenings(room,defaultHeight))
+        return errors
+    }
+
     fun metrics(room:RoomGeometry,defaultHeight:Double=2.7):RoomMetrics {
+        val validation=validateRoom(room,defaultHeight)
+        require(validation.isEmpty()){validation.joinToString("; ")}
         require(room.vertices.size>=3){"Для помещения нужны минимум три вершины"}
         require(room.wallHeights.isEmpty()||room.wallHeights.size==room.vertices.size)
         require(room.wallThicknesses.isEmpty()||room.wallThicknesses.size==room.vertices.size)

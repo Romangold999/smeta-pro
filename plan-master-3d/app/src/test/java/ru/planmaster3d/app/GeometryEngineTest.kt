@@ -4,6 +4,20 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class GeometryEngineTest {
+ @Test fun roomValidationRejectsNonFiniteCoordinates() {
+  val room=RoomGeometry("Bad",listOf(Vec2(0.0,0.0),Vec2(Double.NaN,0.0),Vec2(0.0,2.0)))
+  assertTrue(GeometryEngine.validateRoom(room).any{it.contains("Координаты")})
+  assertThrows(IllegalArgumentException::class.java){GeometryEngine.metrics(room)}
+ }
+ @Test fun roomValidationRejectsInfiniteWallThickness() {
+  val room=RoomGeometry("Bad",listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(0.0,3.0)),wallThicknesses=listOf(0.1,Double.POSITIVE_INFINITY,0.1))
+  assertTrue(GeometryEngine.validateRoom(room).any{it.contains("Толщины")})
+ }
+ @Test fun roomValidationRejectsOverflowingWallVolume() {
+  val room=RoomGeometry("Huge",listOf(Vec2(0.0,0.0),Vec2(1.0e200,0.0),Vec2(0.0,1.0e200)),
+   wallHeights=listOf(2.7,2.7,2.7),wallThicknesses=listOf(0.1,0.1,0.1))
+  assertTrue(GeometryEngine.validateRoom(room).any{it.contains("переполнению")})
+ }
  @Test fun polygonAreaAndPerimeterForRectangle() {
   val p=listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0))
   assertEquals(12.0,GeometryEngine.area(p),1e-8)
