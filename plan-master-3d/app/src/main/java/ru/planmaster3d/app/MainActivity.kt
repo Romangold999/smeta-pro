@@ -258,7 +258,7 @@ class MainActivity:ComponentActivity(){
           NumberField("Высота блока, мм",blockHeight){blockHeight=it}
           NumberField("Плотность блока, кг/м³",blockDensity){blockDensity=it}
           NumberField("Цена блока, ₽/шт",blockUnitPrice){blockUnitPrice=it}
-          NumberField("Цена клея, ₽/кг",adhesiveKgPrice){adhesiveKgPrice=it}
+          NumberField(if(partitionKind=="Кирпич") "Цена раствора, ₽/кг" else "Цена клея, ₽/кг",adhesiveKgPrice){adhesiveKgPrice=it}
           Text("В расчёт входят блоки, масса кладки и ориентировочный расход клея. Армирование и перемычки будут отдельными опциями.")
         } else {
           Text("Каркасная перегородка ГКЛ",fontWeight=FontWeight.Bold)
@@ -286,11 +286,11 @@ class MainActivity:ComponentActivity(){
         if(result!=null){
           Text("Площадь до вычета проёмов: ${df.format(result.grossAreaM2)} м²")
           Text("Чистая площадь: ${df.format(result.netAreaM2)} м²")
-          if(partitionKind=="Газобетон"){
+          if(partitionKind!="ГКЛ"){
             Text("Объём кладки: ${df.format(result.wallVolumeM3)} м³")
             Text("${if(partitionKind=="Газобетон") "Блоков" else if(partitionKind=="ПГП") "Пазогребневых плит" else "Кирпичей"} с запасом: ${result.blockCount} шт")
             Text("Ориентировочная масса блоков: ${df.format(result.blockMassKg)} кг")
-            Text("Клей для кладки: ${df.format(result.adhesiveKg)} кг")
+            Text("${if(partitionKind=="Кирпич") "Раствор" else "Клей"}: ${df.format(result.adhesiveKg)} кг")
           } else {
             Text("Листов ГКЛ с запасом: ${result.boardSheets} шт")
             Text("Стойки: ${result.studs} шт • шаг $studSpacing мм")
