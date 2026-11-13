@@ -56,6 +56,33 @@ class AutomaticEstimateGeneratorTest {
         }
     }
 
+    @Test fun customPaintingDecorativeAndFloorFinishesUseTheirOwnCatalogRates() {
+        val customCatalog = originalCatalog + listOf(
+            CatalogWork("Шпаклёвка стен", 500.0, "м²", "Малярные работы"),
+            CatalogWork("Покраска стен", 350.0, "м²", "Малярные работы"),
+            CatalogWork("Декоративная штукатурка стен", 1800.0, "м²", "Декоративные покрытия"),
+            CatalogWork("Покраска потолка", 400.0, "м²", "Потолки"),
+            CatalogWork("Укладка ламината", 900.0, "м²", "Напольные покрытия")
+        )
+        val result = AutomaticEstimateGenerator.generate(
+            takeoff,
+            customCatalog,
+            AutomaticEstimateOptions(
+                wallPutty = true,
+                wallPaint = true,
+                wallDecorative = true,
+                ceilingPaint = true,
+                floorLaminate = true
+            )
+        )
+        assertEquals(5, result.size)
+        assertEquals(500.0, result.first { it.name.contains("Шпаклёвка стен") }.price, 1e-8)
+        assertEquals(350.0, result.first { it.name.contains("Покраска стен") }.price, 1e-8)
+        assertEquals(1800.0, result.first { it.name.contains("Декоративная штукатурка") }.price, 1e-8)
+        assertEquals(400.0, result.first { it.name.contains("Покраска потолка") }.price, 1e-8)
+        assertEquals(900.0, result.first { it.name.contains("Укладка ламината") }.price, 1e-8)
+    }
+
     @Test fun zeroAreaDoesNotCreateEmptyWork() {
         val empty = takeoff.copy(floorAreaM2 = 0.0)
         val result = AutomaticEstimateGenerator.generate(

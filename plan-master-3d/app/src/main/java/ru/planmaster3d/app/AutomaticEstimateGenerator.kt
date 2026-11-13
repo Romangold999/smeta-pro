@@ -12,7 +12,14 @@ data class AutomaticEstimateOptions(
     val wallWaterproofing: Boolean = false,
     val floorWaterproofing: Boolean = false,
     val wallTile: Boolean = false,
-    val floorTile: Boolean = false
+    val floorTile: Boolean = false,
+    val wallPutty: Boolean = false,
+    val wallPaint: Boolean = false,
+    val wallDecorative: Boolean = false,
+    val ceilingPutty: Boolean = false,
+    val ceilingPaint: Boolean = false,
+    val stretchCeiling: Boolean = false,
+    val floorLaminate: Boolean = false
 )
 
 object AutomaticEstimateGenerator {
@@ -57,6 +64,13 @@ object AutomaticEstimateGenerator {
         add(options.floorWaterproofing, "Гидроизоляция (2 слоя)", "Гидроизоляция пола по геометрии", takeoff.floorAreaM2)
         add(options.floorTile, "Укладка керамогранита 60×60, 60×20, 120×20", "Укладка керамогранита на пол", takeoff.floorAreaM2)
         add(options.wallTile, "Укладка керамогранита 60×60, 60×20, 120×20", "Облицовка стен керамогранитом", takeoff.netWallAreaM2)
+        add(options.wallPutty, "Шпаклёвка стен", "Шпаклёвка стен", takeoff.netWallAreaM2)
+        add(options.wallPaint, "Покраска стен", "Покраска стен", takeoff.netWallAreaM2)
+        add(options.wallDecorative, "Декоративная штукатурка стен", "Декоративная штукатурка стен", takeoff.netWallAreaM2)
+        add(options.ceilingPutty, "Шпаклёвка потолка", "Шпаклёвка потолка", takeoff.ceilingAreaM2)
+        add(options.ceilingPaint, "Покраска потолка", "Покраска потолка", takeoff.ceilingAreaM2)
+        add(options.stretchCeiling, "Монтаж натяжного потолка", "Монтаж натяжного потолка", takeoff.ceilingAreaM2)
+        add(options.floorLaminate, "Укладка ламината", "Укладка ламината", takeoff.floorAreaM2)
         add(options.ceilingPrimer, "Грунтование", "Грунтование потолка по геометрии", takeoff.ceilingAreaM2)
 
         return generated

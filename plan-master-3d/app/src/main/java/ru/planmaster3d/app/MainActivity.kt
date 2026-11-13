@@ -106,6 +106,13 @@ class MainActivity:ComponentActivity(){
  var includeFloorWaterproofing by remember { mutableStateOf(false) }
  var includeWallTile by remember { mutableStateOf(false) }
  var includeFloorTile by remember { mutableStateOf(false) }
+ var includeWallPutty by remember { mutableStateOf(false) }
+ var includeWallPaint by remember { mutableStateOf(false) }
+ var includeWallDecorative by remember { mutableStateOf(false) }
+ var includeCeilingPutty by remember { mutableStateOf(false) }
+ var includeCeilingPaint by remember { mutableStateOf(false) }
+ var includeStretchCeiling by remember { mutableStateOf(false) }
+ var includeFloorLaminate by remember { mutableStateOf(false) }
  var materialMode by remember { mutableStateOf("Штукатурка") }
  var materialArea by remember { mutableStateOf("45") }
  var materialLayer by remember { mutableStateOf("10") }
@@ -508,6 +515,13 @@ class MainActivity:ComponentActivity(){
         Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeFloorWaterproofing,onCheckedChange={includeFloorWaterproofing=it});Text("Гидроизоляция пола, 2 слоя (${df.format(takeoff.floorAreaM2)} м²)")}
         Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeFloorTile,onCheckedChange={includeFloorTile=it});Text("Укладка керамогранита на пол (${df.format(takeoff.floorAreaM2)} м²)")}
         Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeWallTile,onCheckedChange={includeWallTile=it});Text("Облицовка стен керамогранитом (${df.format(takeoff.netWallAreaM2)} м²)")}
+        if(catalogItems.any{it.n=="Шпаклёвка стен"}) Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeWallPutty,onCheckedChange={includeWallPutty=it});Text("Шпаклёвка стен (${df.format(takeoff.netWallAreaM2)} м²)")}
+        if(catalogItems.any{it.n=="Покраска стен"}) Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeWallPaint,onCheckedChange={includeWallPaint=it});Text("Покраска стен (${df.format(takeoff.netWallAreaM2)} м²)")}
+        if(catalogItems.any{it.n=="Декоративная штукатурка стен"}) Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeWallDecorative,onCheckedChange={includeWallDecorative=it});Text("Декоративная штукатурка стен (${df.format(takeoff.netWallAreaM2)} м²)")}
+        if(catalogItems.any{it.n=="Шпаклёвка потолка"}) Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeCeilingPutty,onCheckedChange={includeCeilingPutty=it});Text("Шпаклёвка потолка (${df.format(takeoff.ceilingAreaM2)} м²)")}
+        if(catalogItems.any{it.n=="Покраска потолка"}) Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeCeilingPaint,onCheckedChange={includeCeilingPaint=it});Text("Покраска потолка (${df.format(takeoff.ceilingAreaM2)} м²)")}
+        if(catalogItems.any{it.n=="Монтаж натяжного потолка"}) Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeStretchCeiling,onCheckedChange={includeStretchCeiling=it});Text("Монтаж натяжного потолка (${df.format(takeoff.ceilingAreaM2)} м²)")}
+        if(catalogItems.any{it.n=="Укладка ламината"}) Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeFloorLaminate,onCheckedChange={includeFloorLaminate=it});Text("Укладка ламината (${df.format(takeoff.floorAreaM2)} м²)")}
         Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeCeilingPrimer,onCheckedChange={includeCeilingPrimer=it});Text("Грунтование потолка (${df.format(takeoff.ceilingAreaM2)} м²)")}
         Button(onClick={
           val generated=AutomaticEstimateGenerator.generate(
@@ -521,7 +535,14 @@ class MainActivity:ComponentActivity(){
               wallWaterproofing=includeWallWaterproofing,
               floorWaterproofing=includeFloorWaterproofing,
               wallTile=includeWallTile,
-              floorTile=includeFloorTile
+              floorTile=includeFloorTile,
+              wallPutty=includeWallPutty,
+              wallPaint=includeWallPaint,
+              wallDecorative=includeWallDecorative,
+              ceilingPutty=includeCeilingPutty,
+              ceilingPaint=includeCeilingPaint,
+              stretchCeiling=includeStretchCeiling,
+              floorLaminate=includeFloorLaminate
             )
           )
           lines=lines.filterNot{it.category=="Автообъёмы"}+generated
