@@ -73,7 +73,7 @@ class MainActivity:ComponentActivity(){
   val l=if(p.size>=3) p[1].distanceTo(p[2]) else 5.0
   val h=g.wallHeights.firstOrNull()?:2.7
   Room(i+1L,g.name,w,l,h,w,l,w,l)
- }?.ifEmpty { null } ?: listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0))
+ }?.takeIf { it.isNotEmpty() } ?: listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0))
  var rooms by remember { mutableStateOf(toRoomModels(initialSaved)) }
  var selected by remember { mutableIntStateOf(0) }
  var lines by remember { mutableStateOf(initialSaved?.estimate ?: emptyList()) }
