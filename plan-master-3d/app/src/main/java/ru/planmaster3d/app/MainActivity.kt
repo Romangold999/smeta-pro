@@ -130,6 +130,15 @@ class MainActivity:ComponentActivity(){
  var boardSides by remember { mutableStateOf("2") }
  var studSpacing by remember { mutableStateOf("600") }
  var insulation by remember { mutableStateOf(false) }
+ var openingWallIndex by remember { mutableIntStateOf(0) }
+ var openingName by remember { mutableStateOf("Дверь") }
+ var openingKind by remember { mutableStateOf("Дверь") }
+ var openingOffset by remember { mutableStateOf("0.5") }
+ var openingWidth by remember { mutableStateOf("0.9") }
+ var openingHeight by remember { mutableStateOf("2.1") }
+ var openingSill by remember { mutableStateOf("0") }
+ var openingDepth by remember { mutableStateOf("0.15") }
+ var openingMessage by remember { mutableStateOf("") }
  var partitionRate by remember { mutableStateOf("0") }
  var demolitionBagPrice by remember { mutableStateOf("0") }
  var demolitionHaulPrice by remember { mutableStateOf("0") }
@@ -176,13 +185,54 @@ class MainActivity:ComponentActivity(){
         Text("Конструктивных элементов в проекте: ${constructionRecords.size}",color=accent,fontSize=12.sp); Text("Периметр: ${df.format(totalPerimeter)} м  •  Стены: ${df.format(totalWalls)} м²"); Text(saveMessage,fontSize=11.sp,color=Color.LightGray); Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){Button(onClick={save()},modifier=Modifier.weight(1f)){Text("Сохранить")};OutlinedButton(onClick={showProjects=true},modifier=Modifier.weight(1f)){Text("Мои проекты")}}; OutlinedButton(onClick={createProject()},modifier=Modifier.fillMaxWidth()){Text("Создать новый проект")} } }
       item { Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){ Metric("Пол",totalFloor,"м²",Modifier.weight(1f)); Metric("Стены",totalWalls,"м²",Modifier.weight(1f)); Metric("Периметр",totalPerimeter,"м",Modifier.weight(1f)) } }
       item { CardBlock { Text("Помещения",fontWeight=FontWeight.Bold); rooms.forEachIndexed { i,r -> Row(Modifier.fillMaxWidth().clickable{selected=i;tab="Обмеры"}.padding(vertical=8.dp),horizontalArrangement=Arrangement.SpaceBetween){ Text("${r.name}  •  ${df.format(r.floor)} м²"); Text("Изменить ›",color=accent) } } ; Button(onClick={showAddRoom=true},modifier=Modifier.fillMaxWidth()){Text("Добавить помещение")} } }
-      item { CardBlock { Text("Быстрые ведомости",fontWeight=FontWeight.Bold); Text("Площадь пола: ${df.format(totalFloor)} м²"); Text("Площадь стен без вычета проёмов: ${df.format(totalWalls)} м²"); Text("Периметр: ${df.format(totalPerimeter)} м") } }
+      item { CardBlock { Text("Быстрые ведомости",fontWeight=FontWeight.Bold); Text("Площадь пола: ${df.format(totalFloor)} м²"); Text("Площадь стен с вычетом проёмов: ${df.format(totalWalls)} м²"); Text("Периметр: ${df.format(totalPerimeter)} м") } }
       item { CardBlock { Text("Строительные операции",fontWeight=FontWeight.Bold); Button(onClick={tab="Демонтаж"},modifier=Modifier.fillMaxWidth()){Text("Демонтаж и строительный мусор")}; OutlinedButton(onClick={tab="Перегородки"},modifier=Modifier.fillMaxWidth()){Text("Новые перегородки и материалы")} } }
     }
     "Обмеры" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock { Text("Геометрия помещения",fontSize=19.sp,fontWeight=FontWeight.Bold); Text("Базовый режим прямоугольного помещения. Длины каждой стены редактируются отдельно; исходные размеры не подгоняются автоматически.") ; Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){ rooms.forEachIndexed{i,r->FilterChip(selected=selected==i,onClick={selected=i},label={Text(r.name)})} } } }
       item { CardBlock { Text(current.name,fontWeight=FontWeight.Bold); NumberField("Ширина комнаты, м",roomW){roomW=it}; NumberField("Длина комнаты, м",roomL){roomL=it}; NumberField("Высота стен, м",roomH){roomH=it}; Button(onClick={ rooms=rooms.toMutableList().also{it[selected]=current.copy(width=roomW.toDoubleOrNull()?:current.width,length=roomL.toDoubleOrNull()?:current.length,height=roomH.toDoubleOrNull()?:current.height,wall1=roomW.toDoubleOrNull()?:current.wall1,wall3=roomW.toDoubleOrNull()?:current.wall3,wall2=roomL.toDoubleOrNull()?:current.wall2,wall4=roomL.toDoubleOrNull()?:current.wall4)} },modifier=Modifier.fillMaxWidth()){Text("Применить размеры")} } }
-      item { CardBlock { Text("Схема 2D",fontWeight=FontWeight.Bold); RoomPlan(current,Modifier.fillMaxWidth().height(220.dp)); Text("Контур помещения отображается по фактическим вершинам.") } }
+      item { CardBlock { Text("Двери, окна и проёмы",fontSize=18.sp,fontWeight=FontWeight.Bold)
+        Text("Добавляй проём на выбранную стену. Позиция измеряется от её начальной вершины; размеры проверяются по геометрии.")
+        Row(horizontalArrangement=Arrangement.spacedBy(6.dp),verticalAlignment=Alignment.CenterVertically) {
+          Text("Стена",color=Color.LightGray)
+          current.vertices.indices.forEach { i -> FilterChip(selected=openingWallIndex==i,onClick={openingWallIndex=i},label={Text("${i+1}")}) }
+        }
+        varType(openingKind,{openingKind=it;openingName=it;if(it=="Дверь"){openingWidth="0.9";openingHeight="2.1";openingSill="0"}else if(it=="Окно"){openingWidth="1.2";openingHeight="1.4";openingSill="0.9"}else{openingWidth="0.6";openingHeight="0.6";openingSill="1.0"}},listOf("Дверь","Окно","Ниша","Прочее"))
+        NumberField("Название",openingName){openingName=it}
+        NumberField("Отступ от начала стены, м",openingOffset){openingOffset=it}
+        NumberField("Ширина, м",openingWidth){openingWidth=it}
+        NumberField("Высота, м",openingHeight){openingHeight=it}
+        NumberField("Высота от пола / подоконника, м",openingSill){openingSill=it}
+        NumberField("Глубина откоса, м",openingDepth){openingDepth=it}
+        Button(onClick={
+          val candidate=Opening(java.util.UUID.randomUUID().toString(),openingName.ifBlank{openingKind},openingWidth.toDoubleOrNull()?:0.0,openingHeight.toDoubleOrNull()?:0.0,openingSill.toDoubleOrNull()?:0.0,openingDepth.toDoubleOrNull()?:0.0,openingKind=="Окно",openingOffset.toDoubleOrNull()?:0.0,openingKind)
+          val updated=current.copy(openingsByWall=current.openingsByWall+(openingWallIndex to (current.openingsByWall[openingWallIndex].orEmpty()+candidate)))
+          val roomGeometry=RoomGeometry(updated.name,updated.vertices,if(updated.wallHeights.size==updated.vertices.size)updated.wallHeights else List(updated.vertices.size){updated.height},updated.wallThicknesses,updated.openingsByWall)
+          val errors=runCatching{GeometryEngine.validateOpenings(roomGeometry)}.getOrElse{listOf(it.message?: "Некорректные параметры")}
+          if(errors.isEmpty()){
+            rooms=rooms.toMutableList().also{it[selected]=updated}
+            openingMessage="Проём добавлен. Не забудь сохранить проект."
+          }else openingMessage=errors.joinToString("; ")
+        },modifier=Modifier.fillMaxWidth()){Text("Добавить проём")}
+        if(openingMessage.isNotBlank()) Text(openingMessage,color=if(openingMessage.startsWith("Проём добавлен"))accent else Color(0xFFFFB86B),fontSize=12.sp)
+        current.openingsByWall.toSortedMap().forEach { (wall,items) ->
+          items.forEach { opening ->
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+              Column(Modifier.weight(1f)) {
+                Text("${opening.name} • стена ${wall+1}",fontWeight=FontWeight.SemiBold)
+                Text("${df.format(opening.width)} × ${df.format(opening.height)} м; отступ ${df.format(opening.offsetFromStart)} м",fontSize=12.sp,color=Color.LightGray)
+              }
+              TextButton(onClick={
+                val remaining=items.filterNot{it.id==opening.id}
+                val map=current.openingsByWall.toMutableMap()
+                if(remaining.isEmpty())map.remove(wall) else map[wall]=remaining
+                rooms=rooms.toMutableList().also{it[selected]=current.copy(openingsByWall=map)}
+                openingMessage="Проём удалён. Сохрани проект."
+              }){Text("Удалить")}
+            }
+          }
+        }
+        Text("Площадь проёмов: ${df.format(current.geometry.openingArea)} м² • откосы: ${df.format(current.geometry.revealArea)} м²",color=accent); Text("Схема 2D",fontWeight=FontWeight.Bold); RoomPlan(current,Modifier.fillMaxWidth().height(220.dp)); Text("Контур помещения отображается по фактическим вершинам.") } }
       item { CardBlock { Text("Автоматические расчёты",fontWeight=FontWeight.Bold); Text("Пол: ${df.format(current.floor)} м²"); Text("Стены: ${df.format(current.walls)} м²"); Text("Периметр: ${df.format(current.perimeter)} м"); Text("Потолок: ${df.format(current.floor)} м²") } }
     }
     "Смета" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp),contentPadding=PaddingValues(vertical=12.dp)){
