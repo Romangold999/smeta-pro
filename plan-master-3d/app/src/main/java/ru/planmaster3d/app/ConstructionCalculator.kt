@@ -98,49 +98,65 @@ data class PartitionResult(
 )
 
 object PartitionCalculator {
+    private fun safeCount(value: Double, label: String): Int {
+        require(value.isFinite() && value >= 0.0 && value <= Int.MAX_VALUE.toDouble()) {
+            "$label превышает допустимый диапазон"
+        }
+        return ceil(value).toInt()
+    }
+
+    private fun requireFiniteResults(vararg values: Double) {
+        require(values.all { it.isFinite() && it >= 0.0 }) {
+            "Параметры перегородки дают недопустимый результат"
+        }
+    }
+
     fun calculate(input: PartitionInput): PartitionResult {
         require(listOf(input.lengthM, input.heightM, input.openingsAreaM2, input.reservePercent,
             input.blockDensityKgM3, input.profileStockLengthM, input.insulationDensityKgM3).all { it.isFinite() }) {
-            "Все числовые параметры перегородки должны быть конечными"
+            "Все числовые параметры перегородки должны быть конечными числами"
         }
         require(input.lengthM > 0.0 && input.heightM > 0.0)
         require(input.thicknessMm > 0 && input.openingsAreaM2 >= 0.0)
-        require(input.openingsAreaM2 <= input.lengthM * input.heightM)
-        require(input.reservePercent >= 0.0)
         val gross = input.lengthM * input.heightM
+        require(gross.isFinite() && input.openingsAreaM2 <= gross) {
+            "Площадь проёмов не может превышать площадь перегородки"
+        }
+        require(input.reservePercent >= 0.0)
         val net = gross - input.openingsAreaM2
         val factor = 1.0 + input.reservePercent / 100.0
         val volume = net * input.thicknessMm / 1000.0
-        require(listOf(gross, net, factor, volume).all { it.isFinite() }) {
-            "Параметры перегородки дают недопустимо большой результат"
-        }
+        requireFiniteResults(gross, net, factor, volume)
+
         return when (input.kind) {
             PartitionKind.AAC_BLOCK, PartitionKind.PGP, PartitionKind.BRICK -> {
                 require(input.blockLengthMm > 0 && input.blockHeightMm > 0 && input.blockDensityKgM3 > 0.0)
-                val blockFaceArea = input.blockLengthMm * input.blockHeightMm / 1_000_000.0
+                val blockFaceArea = input.blockLengthMm.toDouble() * input.blockHeightMm / 1_000_000.0
                 val masonryAcrossFactor = if (input.kind == PartitionKind.BRICK) input.thicknessMm / 120.0 else 1.0
-                val blocks = ceil(net / blockFaceArea * factor * masonryAcrossFactor).toInt()
+                val blockCount = safeCount(net / blockFaceArea * factor * masonryAcrossFactor, "Количество блоков")
                 val mass = volume * input.blockDensityKgM3
-                // Preliminary consumption: adjust to the selected adhesive/mortar manufacturer's data.
                 val adhesiveRate = if (input.kind == PartitionKind.BRICK) 45.0 else 5.0
                 val adhesive = net * adhesiveRate * factor
-                PartitionResult(gross, net, volume, blocks, mass, adhesive,
+                requireFiniteResults(mass, adhesive)
+                PartitionResult(gross, net, volume, blockCount, mass, adhesive,
                     0, 0, 0.0, 0, 0.0, 0.0, 0.0)
             }
             PartitionKind.GYPSUM_BOARD -> {
                 require(input.boardWidthMm > 0 && input.boardHeightMm > 0)
                 require(input.boardLayersPerSide >= 1 && input.boardSides in 1..2)
                 require(input.studSpacingMm > 0 && input.profileStockLengthM > 0.0)
-                val sheetArea = input.boardWidthMm * input.boardHeightMm / 1_000_000.0
-                val sheets = ceil(net * input.boardLayersPerSide * input.boardSides / sheetArea * factor).toInt()
-                // One stud at each end plus intermediate studs at the selected centre spacing.
-                val studs = ceil(input.lengthM * 1000.0 / input.studSpacingMm).toInt() + 1
+                require(input.insulationDensityKgM3 > 0.0 || !input.insulation)
+                val sheetArea = input.boardWidthMm.toDouble() * input.boardHeightMm / 1_000_000.0
+                val sheets = safeCount(net * input.boardLayersPerSide * input.boardSides / sheetArea * factor, "Количество листов")
+                val studs = safeCount(input.lengthM * 1000.0 / input.studSpacingMm, "Количество стоек") + 1
+                require(studs > 0) { "Количество стоек превышает допустимый диапазон" }
                 val trackLength = input.lengthM * 2.0
-                val trackPieces = ceil(trackLength / input.profileStockLengthM * factor).toInt()
-                val studLength = studs * input.heightM
+                val trackPieces = safeCount(trackLength / input.profileStockLengthM * factor, "Количество направляющих")
+                val studLength = studs.toDouble() * input.heightM
                 val totalProfile = studLength + trackLength
                 val insulationVolume = if (input.insulation) net * input.thicknessMm / 1000.0 else 0.0
                 val insulationMass = insulationVolume * input.insulationDensityKgM3
+                requireFiniteResults(trackLength, studLength, totalProfile, insulationVolume, insulationMass)
                 PartitionResult(gross, net, volume, 0, 0.0, 0.0,
                     sheets, studs, trackLength, trackPieces, totalProfile,
                     insulationVolume, insulationMass)
