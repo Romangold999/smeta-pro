@@ -28,13 +28,15 @@ data class ConstructionRecord(
     val regionPoints:List<Vec2> = emptyList(),
     val createdAt:Long=System.currentTimeMillis()
 )
+data class EngineeringPoint(val id:String,val kind:String,val roomIndex:Int,val x:Double,val y:Double,val note:String="")
 data class SavedProject(
     val id:String,
     val name:String,
     val rooms:List<RoomGeometry>,
     val estimate:List<EstimateLine>,
     val updatedAt:Long=System.currentTimeMillis(),
-    val construction:List<ConstructionRecord> = emptyList()
+    val construction:List<ConstructionRecord> = emptyList(),
+    val engineeringPoints:List<EngineeringPoint> = emptyList()
 )
 data class PriceBookVersion(val id:String,val name:String,val createdAt:Long,val items:List<CatalogWork>)
 data class PriceBook(val activeVersionId:String,val versions:List<PriceBookVersion>)
@@ -81,6 +83,7 @@ class ProjectStore(context:Context) {
                 .put("quantity",e.quantity).put("regionPoints",JSONArray().also{arr->e.regionPoints.forEach{arr.put(JSONObject().put("x",it.x).put("y",it.y))}}).put("createdAt",e.createdAt))
         }
         root.put("construction",construction)
+        root.put("engineeringPoints",JSONArray().also{arr->project.engineeringPoints.forEach{p->arr.put(JSONObject().put("id",p.id).put("kind",p.kind).put("roomIndex",p.roomIndex).put("x",p.x).put("y",p.y).put("note",p.note))}})
         prefs.edit().putString("project_${project.id}",root.toString()).apply()
     }
     fun loadProject(id:String):SavedProject? = runCatching {
@@ -126,7 +129,8 @@ class ProjectStore(context:Context) {
                 ))
             }
         }
-        SavedProject(root.getString("id"),root.getString("name"),rooms,estimate,root.optLong("updatedAt",0L),construction)
+        val engineeringPoints=root.optJSONArray("engineeringPoints")?.let{arr->buildList{for(i in 0 until arr.length()){val p=arr.getJSONObject(i);add(EngineeringPoint(p.getString("id"),p.getString("kind"),p.optInt("roomIndex",0),p.optDouble("x",0.0),p.optDouble("y",0.0),p.optString("note","")))}}}.orEmpty()
+        SavedProject(root.getString("id"),root.getString("name"),rooms,estimate,root.optLong("updatedAt",0L),construction,engineeringPoints)
     }.getOrNull()
     fun deleteProject(id:String){prefs.edit().remove("project_$id").apply()}
     fun listProjectIds():List<String> = prefs.all.keys.filter{it.startsWith("project_")}.map{it.removePrefix("project_")}

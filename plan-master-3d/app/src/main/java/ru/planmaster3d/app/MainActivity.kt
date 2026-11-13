@@ -84,6 +84,12 @@ class MainActivity:ComponentActivity(){
  var selected by remember { mutableIntStateOf(0) }
  var lines by remember { mutableStateOf(initialSaved?.estimate ?: emptyList()) }
  var constructionRecords by remember { mutableStateOf(initialSaved?.construction ?: emptyList()) }
+ var engineeringPoints by remember { mutableStateOf(initialSaved?.engineeringPoints ?: emptyList()) }
+ var engineeringKind by remember { mutableStateOf("Розетка") }
+ var engineeringX by remember { mutableStateOf("1") }
+ var engineeringY by remember { mutableStateOf("1") }
+ var engineeringNote by remember { mutableStateOf("") }
+ var engineeringRoomIndex by remember { mutableIntStateOf(0) }
  var projectIds by remember { mutableStateOf(projectStore.listProjectIds()) }
  var showProjects by remember { mutableStateOf(false) }
  var saveMessage by remember { mutableStateOf("Автосохранение включено • изменения сохраняются локально") }
@@ -199,30 +205,30 @@ class MainActivity:ComponentActivity(){
   val geometry=rooms.map { r ->
    RoomGeometry(r.name,r.vertices,if(r.wallHeights.size==r.vertices.size) r.wallHeights else List(r.vertices.size){r.height},if(r.wallThicknesses.size==r.vertices.size) r.wallThicknesses else List(r.vertices.size){0.0},r.openingsByWall.filterKeys{it in r.vertices.indices},if(r.wallHeightOverrides.size==r.vertices.size) r.wallHeightOverrides else emptyList(),r.wallMeasurements)
   }
-  projectStore.saveProject(SavedProject(activeProjectId,project,geometry,lines,construction=constructionRecords))
+  projectStore.saveProject(SavedProject(activeProjectId,project,geometry,lines,construction=constructionRecords,engineeringPoints=engineeringPoints))
   prefs.edit().putString("project",project).putString("active_project_id",activeProjectId).apply()
   projectIds=projectStore.listProjectIds()
   saveMessage="Сохранено: ${java.text.SimpleDateFormat("HH:mm:ss",java.util.Locale.getDefault()).format(java.util.Date())}"
  }
  fun openProject(id:String){
   val saved=projectStore.loadProject(id) ?: return
-  activeProjectId=id;project=saved.name;rooms=toRoomModels(saved);lines=saved.estimate;constructionRecords=saved.construction;selected=0
+  activeProjectId=id;project=saved.name;rooms=toRoomModels(saved);lines=saved.estimate;constructionRecords=saved.construction;engineeringPoints=saved.engineeringPoints;selected=0
   prefs.edit().putString("active_project_id",id).putString("project",project).apply()
   showProjects=false;saveMessage="Открыт проект «${saved.name}»"
  }
  // Автосохранение проекта: изменения геометрии, сметы и конструктивных записей
  // фиксируются локально при каждом изменении состояния, а не только по кнопке.
- LaunchedEffect(activeProjectId, project, rooms, lines, constructionRecords) {
+ LaunchedEffect(activeProjectId, project, rooms, lines, constructionRecords, engineeringPoints) {
   save()
  }
  fun createProject(){
   activeProjectId="project_${System.currentTimeMillis()}"
-  project="Новый объект";rooms=listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0));lines=emptyList();constructionRecords=emptyList();selected=0
+  project="Новый объект";rooms=listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0));lines=emptyList();constructionRecords=emptyList();engineeringPoints=emptyList();selected=0
   prefs.edit().putString("active_project_id",activeProjectId).putString("project",project).apply()
   save();showProjects=false
  }
  Scaffold(containerColor=navy, topBar={ TopAppBar(title={Column { Text("PLAN MASTER 3D",fontWeight=FontWeight.Bold); Text(project,fontSize=12.sp,color=Color.LightGray) }},actions={IconButton(onClick={save()}){Icon(Icons.Default.Save,"Сохранить")}},colors=TopAppBarDefaults.topAppBarColors(containerColor=navy)) },
- bottomBar={NavigationBar(containerColor=panel){ listOf("Объект","Обмеры","3D","Смета","Материалы","Раскладка").forEach { label -> NavigationBarItem(selected=tab==label,onClick={tab=label},icon={Icon(when(label){"Объект"->Icons.Default.Home;"Обмеры"->Icons.Default.SquareFoot;"3D"->Icons.Default.Layers;"Смета"->Icons.Default.Receipt;"Материалы"->Icons.Default.Inventory2;else->Icons.Default.GridOn},null)},label={Text(label,fontSize=10.sp)}) } } }) { pad ->
+ bottomBar={NavigationBar(containerColor=panel){ listOf("Объект","Обмеры","3D","Смета","Материалы","Раскладка","Инженерия").forEach { label -> NavigationBarItem(selected=tab==label,onClick={tab=label},icon={Icon(when(label){"Объект"->Icons.Default.Home;"Обмеры"->Icons.Default.SquareFoot;"3D"->Icons.Default.Layers;"Смета"->Icons.Default.Receipt;"Материалы"->Icons.Default.Inventory2;"Инженерия"->Icons.Default.Build;else->Icons.Default.GridOn},null)},label={Text(label,fontSize=10.sp)}) } } }) { pad ->
   Column(Modifier.fillMaxSize().padding(pad).padding(horizontal=14.dp)) {
    when(tab){
     "Объект" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
@@ -231,7 +237,7 @@ class MainActivity:ComponentActivity(){
       item { Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){ Metric("Пол",totalFloor,"м²",Modifier.weight(1f)); Metric("Стены",totalWalls,"м²",Modifier.weight(1f)); Metric("Периметр",totalPerimeter,"м",Modifier.weight(1f)) } }
       item { CardBlock { Text("Помещения",fontWeight=FontWeight.Bold); rooms.forEachIndexed { i,r -> Row(Modifier.fillMaxWidth().clickable{selected=i;tab="Обмеры"}.padding(vertical=8.dp),horizontalArrangement=Arrangement.SpaceBetween){ Text("${r.name}  •  ${df.format(r.floor)} м²"); Text("Изменить ›",color=accent) } } ; Button(onClick={showAddRoom=true},modifier=Modifier.fillMaxWidth()){Text("Добавить помещение")} } }
       item { CardBlock { Text("Быстрые ведомости",fontWeight=FontWeight.Bold); Text("Площадь пола: ${df.format(totalFloor)} м²"); Text("Площадь стен с вычетом проёмов: ${df.format(totalWalls)} м²"); Text("Периметр: ${df.format(totalPerimeter)} м") } }
-      item { CardBlock { Text("Строительные операции",fontWeight=FontWeight.Bold); Button(onClick={tab="Демонтаж"},modifier=Modifier.fillMaxWidth()){Text("Демонтаж и строительный мусор")}; OutlinedButton(onClick={tab="Перегородки"},modifier=Modifier.fillMaxWidth()){Text("Новые перегородки и материалы")} } }
+      item { CardBlock { Text("Строительные операции",fontWeight=FontWeight.Bold); Button(onClick={tab="Демонтаж"},modifier=Modifier.fillMaxWidth()){Text("Демонтаж и строительный мусор")}; OutlinedButton(onClick={tab="Перегородки"},modifier=Modifier.fillMaxWidth()){Text("Новые перегородки и материалы")}; OutlinedButton(onClick={tab="Инженерия"},modifier=Modifier.fillMaxWidth()){Text("Электрика и сантехника — точки на плане")} } }
     }
     "Обмеры" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock { Text("Геометрия помещения",fontSize=19.sp,fontWeight=FontWeight.Bold); Text("Базовый режим прямоугольного помещения. Длины каждой стены редактируются отдельно; исходные размеры не подгоняются автоматически.") ; Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){ rooms.forEachIndexed{i,r->FilterChip(selected=selected==i,onClick={selected=i},label={Text(r.name)})} } } }
@@ -682,6 +688,53 @@ class MainActivity:ComponentActivity(){
     "Раскладка" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock { Text("Калькулятор раскладки",fontSize=19.sp,fontWeight=FontWeight.Bold); varType(layoutType,{layoutType=it},listOf("Плитка","Ламинат","Панели")); NumberField("Размер элемента A, мм",layoutA){layoutA=it}; NumberField("Размер элемента B, мм",layoutB){layoutB=it}; NumberField("Размер помещения A, мм",layoutRoomA){layoutRoomA=it}; NumberField("Размер помещения B, мм",layoutRoomB){layoutRoomB=it}; Slider(waste,{waste=it},valueRange=0f..25f); Text("Запас: ${waste.toInt()}%"); val a=(layoutA.toDoubleOrNull()?:1.0).coerceAtLeast(1.0); val b=(layoutB.toDoubleOrNull()?:1.0).coerceAtLeast(1.0); val ra=(layoutRoomA.toDoubleOrNull()?:0.0); val rb=(layoutRoomB.toDoubleOrNull()?:0.0); val count=ceil(ra/a)*ceil(rb/b); val area=(ra*rb)/1_000_000.0; Text("Площадь: ${df.format(area)} м² • элементов без запаса: ${count.toInt()} • с запасом: ${ceil(count*(1+waste/100)).toInt()}",color=accent,fontWeight=FontWeight.Bold); Text("Предварительная сетка без оптимизации раскроя по рисунку, швам и повторному использованию обрезков.") } }
     }
+    "Инженерия" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
+      item { CardBlock {
+        Text("Электрика и сантехника",fontSize=19.sp,fontWeight=FontWeight.Bold)
+        Text("Размещай инженерные точки касанием по плану или введи координаты X/Y в метрах. Точки сохраняются в проекте.")
+        Text("Помещение",fontWeight=FontWeight.SemiBold)
+        Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) { rooms.forEachIndexed{i,r->FilterChip(selected=engineeringRoomIndex==i,onClick={engineeringRoomIndex=i;engineeringX="1";engineeringY="1"},label={Text(r.name)})} }
+        Text("Тип точки",fontWeight=FontWeight.SemiBold)
+        varType(engineeringKind,{engineeringKind=it},listOf("Розетка","Выключатель","Светильник","Вентилятор"))
+        varType(engineeringKind,{engineeringKind=it},listOf("Водорозетка","Канализация","Унитаз","Раковина"))
+        val targetRoom=rooms.getOrNull(engineeringRoomIndex) ?: current
+        EngineeringPointCanvas(targetRoom,engineeringPoints.filter{it.roomIndex==engineeringRoomIndex},Modifier.fillMaxWidth().height(220.dp)){ placed -> engineeringX=df.format(placed.x).replace(',','.');engineeringY=df.format(placed.y).replace(',','.') }
+        NumberField("Координата X, м",engineeringX){engineeringX=it}
+        NumberField("Координата Y, м",engineeringY){engineeringY=it}
+        OutlinedTextField(value=engineeringNote,onValueChange={engineeringNote=it},label={Text("Примечание (необязательно)")},modifier=Modifier.fillMaxWidth(),singleLine=true)
+        val point=Vec2(engineeringX.replace(',','.').toDoubleOrNull()?:Double.NaN,engineeringY.replace(',','.').toDoubleOrNull()?:Double.NaN)
+        val pointValid=point.x.isFinite()&&point.y.isFinite()&&GeometryEngine.containsPoint(targetRoom.vertices,point)
+        Text(if(pointValid) "Координаты внутри помещения «${targetRoom.name}»" else "Точка должна находиться внутри контура помещения",color=if(pointValid)accent else Color(0xFFFFB86B),fontSize=12.sp)
+        Button(onClick={
+          engineeringPoints=engineeringPoints+EngineeringPoint(java.util.UUID.randomUUID().toString(),engineeringKind,engineeringRoomIndex,point.x,point.y,engineeringNote.trim())
+          engineeringNote=""
+          saveMessage="Инженерная точка добавлена и сохранена в проекте."
+        },enabled=pointValid,modifier=Modifier.fillMaxWidth()){Text("Добавить точку")}
+      } }
+      item { CardBlock {
+        Text("Точки проекта: ${engineeringPoints.size}",fontWeight=FontWeight.Bold)
+        if(engineeringPoints.isEmpty()) Text("Пока нет инженерных точек.")
+        engineeringPoints.forEach { p ->
+          val roomName=rooms.getOrNull(p.roomIndex)?.name ?: "Помещение удалено"
+          Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+              Text(p.kind,fontWeight=FontWeight.SemiBold)
+              Text("$roomName • X ${df.format(p.x)} м • Y ${df.format(p.y)} м",fontSize=12.sp,color=Color.LightGray)
+              if(p.note.isNotBlank()) Text(p.note,fontSize=11.sp,color=Color.LightGray)
+            }
+            IconButton(onClick={engineeringPoints=engineeringPoints.filterNot{it.id==p.id}}){Icon(Icons.Default.Delete,"Удалить точку")}
+          }
+          Divider(color=Color(0xFF35465B))
+        }
+        Button(onClick={
+          val generated=EngineeringEstimateGenerator.generate(engineeringPoints,catalogItems)
+          lines=lines.filterNot{it.category.startsWith("Инженерия · ")}+generated
+          saveMessage=if(generated.isEmpty()) "Точки сохранены. Для сметы добавь соответствующие расценки в активный прайс." else "Инженерные работы добавлены в смету по активному прайсу."
+          tab="Смета"
+        },enabled=engineeringPoints.isNotEmpty(),modifier=Modifier.fillMaxWidth()){Text("Рассчитать инженерные работы в смету")}
+        Text("Используются только цены активного прайса. Для отсутствующих расценок стоимость не выдумывается.",fontSize=11.sp,color=Color.LightGray)
+      } }
+    }
     "Демонтаж" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock {
         Text("Выбор участка демонтажа",fontSize=19.sp,fontWeight=FontWeight.Bold)
@@ -1123,6 +1176,28 @@ class MainActivity:ComponentActivity(){
    val p=map(point)
    drawCircle(if(index==selectedVertex)Color(0xFFFFB454) else Color(0xFF48C7D9),if(index==selectedVertex)12f else 9f,p)
    drawCircle(Color.White,2.5f,p)
+  }
+ }
+}
+
+@Composable fun EngineeringPointCanvas(room:Room,points:List<EngineeringPoint>,modifier:Modifier=Modifier,onPlace:(Vec2)->Unit){
+ Canvas(modifier.pointerInput(room.vertices){detectTapGestures { tap ->
+  val minX=room.vertices.minOf{it.x};val maxX=room.vertices.maxOf{it.x};val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
+  val bw=(maxX-minX).coerceAtLeast(0.01).toFloat();val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
+  val scale=min(size.width/(bw+1f),size.height/(bh+1f));val left=(size.width-bw*scale)/2;val top=(size.height-bh*scale)/2
+  val point=Vec2(minX+(tap.x-left)/scale,minY+(tap.y-top)/scale)
+  if(GeometryEngine.containsPoint(room.vertices,point))onPlace(point)
+ } }){
+  val minX=room.vertices.minOf{it.x};val maxX=room.vertices.maxOf{it.x};val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
+  val bw=(maxX-minX).coerceAtLeast(0.01).toFloat();val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
+  val scale=min(size.width/(bw+1f),size.height/(bh+1f));val left=(size.width-bw*scale)/2;val top=(size.height-bh*scale)/2
+  fun map(p:Vec2)=Offset(left+(p.x-minX).toFloat()*scale,top+(p.y-minY).toFloat()*scale)
+  val boundary=Path();room.vertices.forEachIndexed{i,p->val q=map(p);if(i==0)boundary.moveTo(q.x,q.y)else boundary.lineTo(q.x,q.y)};boundary.close()
+  drawPath(boundary,Color(0xFF6ED4E5),style=Stroke(4f))
+  points.forEach{p->
+   val color=when(p.kind){"Розетка","Выключатель"->Color(0xFFFFB454);"Светильник","Вентилятор"->Color(0xFF80D8FF);else->Color(0xFF8BE28B)}
+   drawCircle(color,8f,map(Vec2(p.x,p.y)))
+   drawCircle(Color.White,8f,map(Vec2(p.x,p.y)),style=Stroke(2f))
   }
  }
 }
