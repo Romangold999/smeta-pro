@@ -138,6 +138,10 @@ class MainActivity:ComponentActivity(){
  var profileMeterPrice by remember { mutableStateOf("0") }
  var insulationM3Price by remember { mutableStateOf("0") }
  val current=rooms.getOrNull(selected) ?: rooms.first()
+  val demolitionEdgeLength=current.vertices.getOrNull(selectedDemolitionWallIndex)?.let { a -> a.distanceTo(current.vertices[(selectedDemolitionWallIndex+1)%current.vertices.size]) } ?: 0.0
+  val demolitionStartOffset=(demolitionOffset.toDoubleOrNull()?:0.0).coerceIn(0.0,demolitionEdgeLength)
+  val demolitionEffectiveLength=(demolitionLength.toDoubleOrNull()?:0.0).coerceAtLeast(0.0).coerceAtMost((demolitionEdgeLength-demolitionStartOffset).coerceAtLeast(0.0))
+  val partitionMeasuredLength=if(partitionStart!=null&&partitionEnd!=null) partitionStart!!.distanceTo(partitionEnd!!) else partitionLength.toDoubleOrNull()?:0.0
  val totalFloor=rooms.sumOf{it.floor}
  val totalWalls=rooms.sumOf{it.walls}
  val totalPerimeter=rooms.sumOf{it.perimeter}
@@ -198,12 +202,15 @@ class MainActivity:ComponentActivity(){
         SelectableRoomPlan(current,selectedDemolitionWallIndex,Modifier.fillMaxWidth().height(230.dp)){ index ->
           selectedDemolitionWallIndex=index
           demolitionWall="Стена ${index+1}"
-          demolitionLength=if(index%2==0) current.width.toString() else current.length.toString()
+          demolitionLength=df.format(current.vertices[index].distanceTo(current.vertices[(index+1)%current.vertices.size])).replace(',','.')
+          demolitionOffset="0"
           demolitionHeight=current.height.toString()
         }
         Text("Выбран участок: $demolitionWall. Нажми на другую стену, чтобы переключить её. Длину можно уменьшить для частичного демонтажа.",color=accent,fontSize=12.sp)
         varType(demolitionMaterial,{demolitionMaterial=it;demolitionDensity=ConstructionMaterialPresets.demolitionDensities[it]?.toString()?:demolitionDensity;demolitionThickness=when(it){"Керамическая плитка"->"10";"ГКЛ"->"12.5";"Гипсовая штукатурка","Цементная штукатурка"->"20";"Цементная стяжка/бетон"->"50";"Газобетон"->"100";else->"120"}},ConstructionMaterialPresets.demolitionDensities.keys.toList())
-        NumberField("Длина демонтируемого участка, м",demolitionLength){demolitionLength=it}
+        NumberField("Отступ от начала выбранной стены, м",demolitionOffset){demolitionOffset=it}
+         NumberField("Длина демонтируемого участка, м",demolitionLength){demolitionLength=it}
+         Text("Доступная длина стены: ${df.format(demolitionEdgeLength)} м • к расчёту: ${df.format(demolitionEffectiveLength)} м",color=accent,fontSize=12.sp)
         NumberField("Высота участка, м",demolitionHeight){demolitionHeight=it}
         NumberField("Толщина снимаемого слоя/конструкции, мм",demolitionThickness){demolitionThickness=it}
         NumberField("Плотность материала, кг/м³",demolitionDensity){demolitionDensity=it}
@@ -230,8 +237,8 @@ class MainActivity:ComponentActivity(){
             val rate=demolitionRate.toDoubleOrNull()?:0.0
             val workName=if(demolitionMaterial=="Керамическая плитка") "Демонтаж плитки" else if(demolitionMaterial=="Гипсовая штукатурка"||demolitionMaterial=="Цементная штукатурка") "Демонтаж старой штукатурки" else "Демонтаж: $demolitionMaterial"
             val wallIndex=selectedDemolitionWallIndex
-            val start=when(wallIndex){0->Vec2(0.0,0.0);1->Vec2(current.width,0.0);2->Vec2(current.width,current.length);else->Vec2(0.0,current.length)}
-            val end=when(wallIndex){0->Vec2(demolitionLength.toDouble(),0.0);1->Vec2(current.width,demolitionLength.toDouble());2->Vec2((current.width-demolitionLength.toDouble()).coerceAtLeast(0.0),current.length);else->Vec2(0.0,(current.length-demolitionLength.toDouble()).coerceAtLeast(0.0))}
+            val start=GeometryEngine.pointOnEdge(current.vertices,wallIndex,demolitionStartOffset) ?: current.vertices[wallIndex]
+            val end=GeometryEngine.pointOnEdge(current.vertices,wallIndex,demolitionStartOffset+demolitionEffectiveLength) ?: start
             constructionRecords=constructionRecords+ConstructionRecord(
               id=java.util.UUID.randomUUID().toString(),kind="DEMOLITION",roomIndex=selected,
               material=demolitionMaterial,wallIndex=wallIndex,startX=start.x,startY=start.y,endX=end.x,endY=end.y,
@@ -262,7 +269,7 @@ class MainActivity:ComponentActivity(){
           if(splitPreview!=null) Text("Контур делится на ${df.format(GeometryEngine.area(splitPreview.first))} м² и ${df.format(GeometryEngine.area(splitPreview.second))} м²",color=accent)
           else Text("Невозможно разделить: обе точки должны лежать на границе, а линия проходить внутри помещения.",color=Color(0xFFFFB86B))
         }
-        NumberField("Длина перегородки, м",partitionLength){partitionLength=it}
+        Text("Длина фиксируется по плану и не редактируется отдельно.",color=Color.LightGray,fontSize=12.sp)
         NumberField("Высота перегородки, м",partitionHeight){partitionHeight=it}
         NumberField("Площадь дверных/прочих проёмов, м²",partitionOpenings){partitionOpenings=it}
         NumberField("Запас материала, %",partitionReserve){partitionReserve=it}
