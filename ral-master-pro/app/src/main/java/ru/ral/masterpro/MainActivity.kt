@@ -75,7 +75,7 @@ private fun RalMasterApp(prefs: SharedPreferences) {
                 // The ActivityResult callback writes through the activity content resolver below.
                 uri
             }.onSuccess { target ->
-                context.contentResolver?.openOutputStream(target)?.use {
+                context.contentResolver.openOutputStream(target)?.use {
                     it.write(savedText.toByteArray(Charsets.UTF_8))
                 }
                 dataMessage = "Экспорт рецептур выполнен"
@@ -85,7 +85,7 @@ private fun RalMasterApp(prefs: SharedPreferences) {
     val importFormulas = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             runCatching {
-                val imported = prefs.let { _ -> context.contentResolver?.openInputStream(uri)?.bufferedReader()?.use { it.readText() } }
+                val imported = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                     ?: throw IllegalStateException("Не удалось открыть файл")
                 val checked = JSONObject(imported)
                 savedText = checked.toString()
@@ -139,7 +139,11 @@ private fun RalMasterApp(prefs: SharedPreferences) {
                         }
                         LazyVerticalGrid(columns = GridCells.Adaptive(100.dp), modifier = Modifier.weight(1f),
                             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(colors.filter { it.code.contains(search.trim()) || it.name.contains(search.trim(), true) }) { shade ->
+                            items(colors.filter {
+                                val q = search.trim().removePrefix("#").uppercase()
+                                it.code.contains(q, true) || it.name.contains(search.trim(), true) ||
+                                    "%06X".format(it.hex and 0xFFFFFF).contains(q, true)
+                            }) { shade ->
                                 val textColor = if (shade.hex == 0xFF0A0A0A) Color.White else Color.Black
                                 Column(Modifier.height(90.dp).fillMaxWidth().background(Color(shade.hex), RoundedCornerShape(10.dp))
                                     .border(if (shade == selected) 3.dp else 1.dp, if (shade == selected) gold else Color.White.copy(.3f), RoundedCornerShape(10.dp))
