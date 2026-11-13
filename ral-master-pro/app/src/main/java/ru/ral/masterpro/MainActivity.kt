@@ -32,25 +32,7 @@ private val gold = Color(0xFFFFC247)
 private val muted = Color(0xFF9AA5B3)
 
 data class RalColor(val code: String, val name: String, val hex: Long)
-private val colors = listOf(
-    RalColor("1000","Зелёно-бежевый",0xFFBEBD7F), RalColor("1001","Бежевый",0xFFC2B078),
-    RalColor("1002","Песочно-жёлтый",0xFFC6A664), RalColor("1003","Сигнальный жёлтый",0xFFE5BE01),
-    RalColor("1004","Золотисто-жёлтый",0xFFCDA434), RalColor("1013","Жемчужно-белый",0xFFEAE3D2),
-    RalColor("1015","Светлая слоновая кость",0xFFE6D2B5), RalColor("1021","Рапсово-жёлтый",0xFFEEC200),
-    RalColor("2004","Чистый оранжевый",0xFFE76500), RalColor("3000","Огненно-красный",0xFFAF2B1E),
-    RalColor("3003","Рубиново-красный",0xFF8F1D21), RalColor("3015","Светло-розовый",0xFFE4A0A0),
-    RalColor("3020","Транспортный красный",0xFFCC0605), RalColor("4008","Сигнальный фиолетовый",0xFF8F4082),
-    RalColor("5002","Ультрамариново-синий",0xFF202060), RalColor("5005","Сигнальный синий",0xFF154889),
-    RalColor("5012","Голубой",0xFF2874B2), RalColor("6001","Изумрудно-зелёный",0xFF287233),
-    RalColor("6005","Зелёный мох",0xFF0E4235), RalColor("6018","Жёлто-зелёный",0xFF48A421),
-    RalColor("6027","Светло-зелёный",0xFF81D0D5), RalColor("7001","Серебристо-серый",0xFF8A9597),
-    RalColor("7016","Антрацитово-серый",0xFF383E42), RalColor("7024","Графитовый серый",0xFF474A51),
-    RalColor("7035","Светло-серый",0xFFD7D7D7), RalColor("7040","Оконный серый",0xFF9DA1AA),
-    RalColor("8004","Медно-коричневый",0xFF8E402A), RalColor("8017","Шоколадно-коричневый",0xFF45332E),
-    RalColor("9001","Кремово-белый",0xFFF1EBDB), RalColor("9003","Сигнальный белый",0xFFF4F4F4),
-    RalColor("9005","Чёрный янтарь",0xFF0A0A0A), RalColor("9010","Чисто-белый",0xFFF1F0E8),
-    RalColor("9016","Транспортный белый",0xFFF6F6F6)
-)
+private val colors = ralClassicColors
 private val materials = listOf("Краска и эмаль","Декоративная штукатурка","Бетон","Микроцемент")
 private val systems = listOf("Водно-дисперсионная","Растворительная","Минеральная / цементная","Универсальная","Своя система")
 private val initialPigments = listOf("Белый","Чёрный","Жёлтый","Охра","Оранжевый","Красный","Оксид красный","Синий","Фталоцианиновый синий","Зелёный","Фталоцианиновый зелёный","Фиолетовый","Коричневый","Умбра","Оксид жёлтый")
