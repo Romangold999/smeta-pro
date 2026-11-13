@@ -52,6 +52,15 @@ class GeometryEngineTest {
   val room=listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,1.0),Vec2(1.0,1.0),Vec2(1.0,4.0),Vec2(0.0,4.0))
   assertNull(GeometryEngine.splitByBoundaryChord(room,Vec2(4.0,0.5),Vec2(0.0,3.5)))
  }
+ @Test fun splitRoomMetricsPreserveFloorAndAddBothPartitionFaces() {
+  val room=listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0))
+  val split=GeometryEngine.splitByBoundaryChord(room,Vec2(2.0,0.0),Vec2(2.0,3.0))!!
+  val first=GeometryEngine.metrics(RoomGeometry("A",split.first,List(split.first.size){2.7}))
+  val second=GeometryEngine.metrics(RoomGeometry("B",split.second,List(split.second.size){2.7}))
+  assertEquals(12.0,first.floorArea+second.floorArea,1e-8)
+  assertEquals(20.0,first.perimeter+second.perimeter,1e-8)
+  assertEquals(54.0,(first.grossWallArea+second.grossWallArea),1e-8)
+ }
  @Test fun materialPackagesRoundUp() {
   val r=MaterialCalculator.calculate(20.0,1.2,25.0,10.0,10.0,true)
   assertEquals(264.0,r.required,1e-8)
