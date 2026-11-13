@@ -105,6 +105,28 @@ class ConstructionCalculatorTest {
         )
     }
 
+    @Test(expected = IllegalArgumentException::class)
+    fun partitionRejectsOverflowingBlockCount() {
+        PartitionCalculator.calculate(
+            PartitionInput(PartitionKind.AAC_BLOCK, 1.0e100, 1.0, 100)
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun partitionRejectsOverflowingDrywallStudCount() {
+        PartitionCalculator.calculate(
+            PartitionInput(PartitionKind.GYPSUM_BOARD, 1.0e12, 2.5, 100)
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun partitionRejectsOverflowingMaterialMass() {
+        PartitionCalculator.calculate(
+            PartitionInput(PartitionKind.AAC_BLOCK, 1.0, 2.5, 100,
+                blockDensityKgM3 = Double.MAX_VALUE)
+        )
+    }
+
     @Test fun drywallPartitionCalculatesBoardsStudsAndInsulation() {
         val result = PartitionCalculator.calculate(
             PartitionInput(
