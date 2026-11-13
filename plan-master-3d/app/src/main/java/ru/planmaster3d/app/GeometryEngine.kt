@@ -160,7 +160,11 @@ object GeometryEngine {
             for(i in sorted.indices) for(j in i+1 until sorted.size) {
                 val first=sorted[i];val second=sorted[j]
                 if(second.offsetFromStart>=first.offsetFromStart+first.width-EPS) break
-                errors.add("Проёмы «${first.name}» и «${second.name}» пересекаются на стене №${wallIndex+1}")
+                val horizontalOverlap=second.offsetFromStart<first.offsetFromStart+first.width-EPS
+                val verticalOverlap=second.sillHeight<first.sillHeight+first.height-EPS &&
+                    first.sillHeight<second.sillHeight+second.height-EPS
+                if(horizontalOverlap&&verticalOverlap)
+                    errors.add("Проёмы «${first.name}» и «${second.name}» пересекаются на стене №${wallIndex+1}")
             }
         }
         return errors

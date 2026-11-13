@@ -72,6 +72,16 @@ class GeometryEngineTest {
   assertTrue(errors.any{it.contains("пересекаются")})
   assertTrue(errors.any{it.contains("выходит за пределы стены")})
  }
+ @Test fun verticallySeparatedOpeningsMayOverlapInWallWidth() {
+  val room=RoomGeometry("Combined opening",listOf(
+   Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0)
+  ),wallHeights=listOf(3.5,3.5,3.5,3.5),openingsByWall=mapOf(0 to listOf(
+   Opening("door","Door",1.2,2.1,sillHeight=0.0,offsetFromStart=1.0),
+   Opening("window","High window",1.2,1.2,sillHeight=2.1,offsetFromStart=1.2)
+  )))
+  assertFalse(GeometryEngine.validateOpenings(room).any{it.contains("пересекаются")})
+ }
+
  @Test fun detectsNestedOpeningOverlapNotOnlyAdjacentPairs() {
   val room=RoomGeometry("Test",listOf(Vec2(0.0,0.0),Vec2(6.0,0.0),Vec2(6.0,3.0),Vec2(0.0,3.0)),
    openingsByWall=mapOf(0 to listOf(
