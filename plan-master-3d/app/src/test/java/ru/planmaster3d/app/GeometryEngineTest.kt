@@ -46,7 +46,7 @@ class GeometryEngineTest {
  @Test fun detectsNestedOpeningOverlapNotOnlyAdjacentPairs() {
   val room=RoomGeometry("Test",listOf(Vec2(0.0,0.0),Vec2(6.0,0.0),Vec2(6.0,3.0),Vec2(0.0,3.0)),
    openingsByWall=mapOf(0 to listOf(
-    Opening("a","Wide",0.9,2.0,offsetFromStart=0.5),
+    Opening("a","Wide",1.6,2.0,offsetFromStart=0.5),
     Opening("b","Small",0.5,1.0,offsetFromStart=1.0),
     Opening("c","Later",0.7,1.0,offsetFromStart=1.8)
    )))
