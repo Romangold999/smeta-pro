@@ -77,6 +77,10 @@ private fun RalMasterApp(prefs: SharedPreferences) {
     var entries by remember { mutableStateOf(mapOf<String, String>()) }
     var showAdd by remember { mutableStateOf(false) }
     var newPigment by remember { mutableStateOf("") }
+    var favorites by remember { mutableStateOf(prefs.getString("favorites", "7016")!!.split("|").filter { it.isNotBlank() }.toSet()) }
+    var designHue by remember { mutableStateOf("270") }
+    var designLightness by remember { mutableStateOf("50") }
+    var designChroma by remember { mutableStateOf("40") }
     val formulas = remember(savedText) { JSONObject(savedText) }
     val key = listOf(material, system, base, selected.code).joinToString("|")
     val formula = formulas.optJSONObject(key)
@@ -96,8 +100,8 @@ private fun RalMasterApp(prefs: SharedPreferences) {
             },
             bottomBar = {
                 NavigationBar(containerColor = panel) {
-                    val labels = listOf("Каталог", "Расчёт", "Пигменты", "Рецепты")
-                    val icons = listOf(Icons.Default.Palette, Icons.Default.Calculate, Icons.Default.Science, Icons.Default.MenuBook)
+                    val labels = listOf("Каталог", "Расчёт", "Пигменты", "Рецепты", "Design", "Избранное")
+                    val icons = listOf(Icons.Default.Palette, Icons.Default.Calculate, Icons.Default.Science, Icons.Default.MenuBook, Icons.Default.ColorLens, Icons.Default.Favorite)
                     labels.forEachIndexed { i, label ->
                         NavigationBarItem(selected = page == i, onClick = { page = i },
                             icon = { Icon(icons[i], contentDescription = null) }, label = { Text(label) })
@@ -112,7 +116,13 @@ private fun RalMasterApp(prefs: SharedPreferences) {
                         OutlinedTextField(search, { search = it }, Modifier.fillMaxWidth(), singleLine = true,
                             placeholder = { Text("Поиск: 7016 или антрацит") },
                             leadingIcon = { Icon(Icons.Default.Search, null) }, colors = fieldColors())
-                        Text("RAL CLASSIC · подборка " + colors.size + " оттенков", color = gold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("RAL CLASSIC · " + colors.size + " оттенков", Modifier.weight(1f), color = gold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            IconButton(onClick = {
+                                favorites = if (favorites.contains(selected.code)) favorites - selected.code else favorites + selected.code
+                                prefs.edit().putString("favorites", favorites.joinToString("|")).apply()
+                            }) { Icon(if (favorites.contains(selected.code)) Icons.Default.Favorite else Icons.Default.FavoriteBorder, null, tint = gold) }
+                        }
                         LazyVerticalGrid(columns = GridCells.Adaptive(100.dp), modifier = Modifier.weight(1f),
                             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             items(colors.filter { it.code.contains(search.trim()) || it.name.contains(search.trim(), true) }) { shade ->
@@ -175,6 +185,36 @@ private fun RalMasterApp(prefs: SharedPreferences) {
                         }
                         Button(onClick = { showAdd = true }, Modifier.fillMaxWidth()) {
                             Icon(Icons.Default.Add, null); Text("Добавить пигмент")
+                        }
+                    }
+                    4 -> {
+                        Text("RAL DESIGN SYSTEM PLUS · LAB EXPLORER", color = gold, fontWeight = FontWeight.Bold)
+                        Text("Код RAL Design задаёт H° / L* / C*. Введите параметры, чтобы получить математическую экранную визуализацию. Это НЕ официальный образец и не подтверждение наличия такого оттенка в каталоге RAL.", color = muted, fontSize = 11.sp)
+                        OutlinedTextField(designHue, { designHue = it.filter(Char::isDigit).take(3) }, Modifier.fillMaxWidth(), label = { Text("Hue H° (000–360)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, colors = fieldColors())
+                        OutlinedTextField(designLightness, { designLightness = it.filter(Char::isDigit).take(2) }, Modifier.fillMaxWidth(), label = { Text("Lightness L* (0–100)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, colors = fieldColors())
+                        OutlinedTextField(designChroma, { designChroma = it.filter(Char::isDigit).take(2) }, Modifier.fillMaxWidth(), label = { Text("Chroma C* (0–100)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, colors = fieldColors())
+                        val h = designHue.toDoubleOrNull()?.coerceIn(0.0, 360.0) ?: 270.0
+                        val l = designLightness.toDoubleOrNull()?.coerceIn(0.0, 100.0) ?: 50.0
+                        val chroma = designChroma.toDoubleOrNull()?.coerceIn(0.0, 100.0) ?: 40.0
+                        val preview = labToColor(l, chroma * kotlin.math.cos(Math.toRadians(h)), chroma * kotlin.math.sin(Math.toRadians(h)))
+                        Card(colors = CardDefaults.cardColors(containerColor = panel)) {
+                            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Box(Modifier.fillMaxWidth().height(150.dp).background(preview, RoundedCornerShape(12.dp)))
+                                Text("Расчётный код: %03d %02d %02d".format(h.toInt(), l.toInt(), chroma.toInt()), color = gold, fontWeight = FontWeight.Bold)
+                                Text("RGB: %02X %02X %02X".format((preview.red * 255).toInt(), (preview.green * 255).toInt(), (preview.blue * 255).toInt()), color = Color.White)
+                            }
+                        }
+                        Text("Для точного соответствия нужен официальный веер RAL Design и спектрофотометрическая проверка.", color = muted, fontSize = 11.sp)
+                    }
+                    5 -> {
+                        Text("ИЗБРАННЫЕ ОТТЕНКИ", color = gold, fontWeight = FontWeight.Bold)
+                        LazyVerticalGrid(columns = GridCells.Adaptive(110.dp), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(colors.filter { favorites.contains(it.code) }) { shade ->
+                                Column(Modifier.height(90.dp).fillMaxWidth().background(Color(shade.hex), RoundedCornerShape(10.dp)).clickable { selected = shade; page = 1 }.padding(8.dp), verticalArrangement = Arrangement.Bottom) {
+                                    Text("RAL " + shade.code, color = if (shade.hex == 0xFF0A0A0A) Color.White else Color.Black, fontWeight = FontWeight.Bold)
+                                    Text(shade.name, color = if (shade.hex == 0xFF0A0A0A) Color.White else Color.Black, fontSize = 9.sp)
+                                }
+                            }
                         }
                     }
                     else -> {
@@ -247,4 +287,23 @@ private fun ChoiceField(label: String, value: String, options: List<String>, onS
             }
         }
     }
+}
+
+private fun labToColor(l: Double, a: Double, b: Double): Color {
+    val fy = (l + 16.0) / 116.0
+    val fx = fy + a / 500.0
+    val fz = fy - b / 200.0
+    fun inv(t: Double): Double = if (t * t * t > 0.008856) t * t * t else (t - 16.0 / 116.0) / 7.787
+    val x = inv(fx) * 0.95047
+    val y = inv(fy)
+    val z = inv(fz) * 1.08883
+    var rr = x * 3.2406 + y * -1.5372 + z * -0.4986
+    var gg = x * -0.9689 + y * 1.8758 + z * 0.0415
+    var bb = x * 0.0557 + y * -0.2040 + z * 1.0570
+    fun gamma(v: Double): Double {
+        val clamped = v.coerceIn(0.0, 1.0)
+        return if (clamped <= 0.0031308) 12.92 * clamped else 1.055 * Math.pow(clamped, 1.0 / 2.4) - 0.055
+    }
+    rr = gamma(rr); gg = gamma(gg); bb = gamma(bb)
+    return Color(rr.toFloat(), gg.toFloat(), bb.toFloat(), 1f)
 }
