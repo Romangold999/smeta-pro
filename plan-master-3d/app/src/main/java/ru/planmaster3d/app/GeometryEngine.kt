@@ -87,6 +87,25 @@ object GeometryEngine {
         if(points.size<2) return 0.0
         return points.indices.sumOf{points[it].distanceTo(points[(it+1)%points.size])}
     }
+    /**
+     * Проверяет, что весь простой многоугольник расположен внутри другого.
+     * Одной проверки вершин недостаточно: ребро зоны может пересечь выемку
+     * в вогнутом контуре комнаты, даже если обе его вершины внутри.
+     */
+    fun polygonContainedBy(container:List<Vec2>, polygon:List<Vec2>):Boolean {
+        if(container.size<3 || polygon.size<3 || selfIntersects(container) || selfIntersects(polygon)) return false
+        if(area(polygon)<=EPS || !polygon.all{containsPoint(container,it)}) return false
+        for(i in polygon.indices) {
+            val a=polygon[i]; val b=polygon[(i+1)%polygon.size]
+            // Проверяем внутренние точки ребра, чтобы не пропустить выход через вершину контура.
+            for(t in listOf(0.25,0.5,0.75)) if(!containsPoint(container,a+(b-a)*t)) return false
+            for(j in container.indices) {
+                val c=container[j]; val d=container[(j+1)%container.size]
+                if(segmentsIntersect(a,b,c,d)) return false
+            }
+        }
+        return true
+    }
     fun selfIntersects(p:List<Vec2>):Boolean {
         if(p.size<4)return false
         for(i in p.indices) for(j in i+1 until p.size) {
