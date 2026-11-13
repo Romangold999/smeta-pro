@@ -105,6 +105,7 @@ class MainActivity:ComponentActivity(){
  var selectedDemolitionWallIndex by remember { mutableIntStateOf(0) }
  var demolitionMaterial by remember { mutableStateOf("Керамическая плитка") }
  var demolitionLength by remember { mutableStateOf("4") }
+ var demolitionOffset by remember { mutableStateOf("0") }
  var demolitionHeight by remember { mutableStateOf("2.7") }
  var demolitionThickness by remember { mutableStateOf("10") }
  var demolitionDensity by remember { mutableStateOf("2300") }
@@ -216,7 +217,7 @@ class MainActivity:ComponentActivity(){
         NumberField("Цена демонтажа, ₽/м²",demolitionRate){demolitionRate=it}
         NumberField("Упаковка: цена мешка, ₽/шт",demolitionBagPrice){demolitionBagPrice=it}
         NumberField("Вывоз: цена за тонну, ₽/т",demolitionHaulPrice){demolitionHaulPrice=it}
-        val result=runCatching { DemolitionCalculator.calculate(DemolitionInput(demolitionLength.toDouble(),demolitionHeight.toDouble(),demolitionThickness.toDouble(),demolitionDensity.toDouble(),demolitionBulking.toDouble(),bagLitres.toDouble(),bagMaxKg.toDouble(),bagFill.toDouble())) }.getOrNull()
+        val result=runCatching { DemolitionCalculator.calculate(DemolitionInput(demolitionEffectiveLength,demolitionHeight.toDouble(),demolitionThickness.toDouble(),demolitionDensity.toDouble(),demolitionBulking.toDouble(),bagLitres.toDouble(),bagMaxKg.toDouble(),bagFill.toDouble())) }.getOrNull()
         if(result!=null){
           Text("Площадь: ${df.format(result.areaM2)} м²")
           Text("Объём до разрыхления: ${df.format(result.solidVolumeM3)} м³")
@@ -234,7 +235,7 @@ class MainActivity:ComponentActivity(){
             constructionRecords=constructionRecords+ConstructionRecord(
               id=java.util.UUID.randomUUID().toString(),kind="DEMOLITION",roomIndex=selected,
               material=demolitionMaterial,wallIndex=wallIndex,startX=start.x,startY=start.y,endX=end.x,endY=end.y,
-              lengthM=demolitionLength.toDouble(),heightM=demolitionHeight.toDouble(),thicknessMm=demolitionThickness.toDouble(),
+              lengthM=demolitionEffectiveLength,heightM=demolitionHeight.toDouble(),thicknessMm=demolitionThickness.toDouble(),
               densityKgM3=demolitionDensity.toDouble(),quantity=result.areaM2
             )
             lines=lines+EstimateLine(workName,"м²",rate,result.areaM2,"Демонтаж")+EstimateLine("Упаковка мусора ($demolitionMaterial)","меш",demolitionBagPrice.toDoubleOrNull()?:0.0,result.bagsRequired.toDouble(),"Демонтаж")+EstimateLine("Вывоз строительного мусора","т",demolitionHaulPrice.toDoubleOrNull()?:0.0,result.solidMassKg/1000.0,"Вывоз")
@@ -247,13 +248,13 @@ class MainActivity:ComponentActivity(){
     "Перегородки" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock {
         Text("Новая перегородка",fontSize=19.sp,fontWeight=FontWeight.Bold)
-        Text("Отметь на плане начало и конец новой перегородки двумя касаниями. Длина рассчитается по координатам; при необходимости её можно поправить вручную.")
+        Text("Отметь на плане начало и конец новой перегородки двумя касаниями. Длина и расчёт материалов берутся строго по фактическому отрезку на плане.")
         PartitionPlacementCanvas(current,partitionStart,partitionEnd,Modifier.fillMaxWidth().height(230.dp)){ point ->
           if(partitionStart==null || partitionEnd!=null){partitionStart=point;partitionEnd=null}
           else {partitionEnd=point;partitionLength=df.format(partitionStart!!.distanceTo(point)).replace(',','.')}
         }
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically){
-          Text(if(partitionStart==null) "Точка начала не выбрана" else if(partitionEnd==null) "Выбери точку окончания" else "Длина по плану: $partitionLength м",color=accent,modifier=Modifier.weight(1f))
+          Text(if(partitionStart==null) "Точка начала не выбрана" else if(partitionEnd==null) "Выбери точку окончания" else "Фактическая длина по плану: ${df.format(partitionMeasuredLength)} м",color=accent,modifier=Modifier.weight(1f))
           TextButton(onClick={partitionStart=null;partitionEnd=null}){Text("Сбросить")}
         }
         val splitPreview=if(partitionStart!=null && partitionEnd!=null) GeometryEngine.splitByBoundaryChord(current.vertices,partitionStart!!,partitionEnd!!) else null
@@ -297,8 +298,8 @@ class MainActivity:ComponentActivity(){
       } }
       item { CardBlock {
         val result=runCatching {
-          if(partitionKind!="ГКЛ") PartitionCalculator.calculate(PartitionInput(when(partitionKind){"Газобетон"->PartitionKind.AAC_BLOCK;"ПГП"->PartitionKind.PGP;else->PartitionKind.BRICK},partitionLength.toDouble(),partitionHeight.toDouble(),partitionThickness.toInt(),partitionOpenings.toDouble(),partitionReserve.toDouble(),blockLength.toInt(),blockHeight.toInt(),blockDensity.toDouble()))
-          else PartitionCalculator.calculate(PartitionInput(PartitionKind.GYPSUM_BOARD,partitionLength.toDouble(),partitionHeight.toDouble(),partitionThickness.toInt(),partitionOpenings.toDouble(),partitionReserve.toDouble(),boardLayersPerSide=boardLayers.toInt(),boardSides=boardSides.toInt(),studSpacingMm=studSpacing.toInt(),insulation=insulation))
+          if(partitionKind!="ГКЛ") PartitionCalculator.calculate(PartitionInput(when(partitionKind){"Газобетон"->PartitionKind.AAC_BLOCK;"ПГП"->PartitionKind.PGP;else->PartitionKind.BRICK},partitionMeasuredLength,partitionHeight.toDouble(),partitionThickness.toInt(),partitionOpenings.toDouble(),partitionReserve.toDouble(),blockLength.toInt(),blockHeight.toInt(),blockDensity.toDouble()))
+          else PartitionCalculator.calculate(PartitionInput(PartitionKind.GYPSUM_BOARD,partitionMeasuredLength,partitionHeight.toDouble(),partitionThickness.toInt(),partitionOpenings.toDouble(),partitionReserve.toDouble(),boardLayersPerSide=boardLayers.toInt(),boardSides=boardSides.toInt(),studSpacingMm=studSpacing.toInt(),insulation=insulation))
         }.getOrNull()
         Text("Расчёт материалов и работ",fontWeight=FontWeight.Bold)
         if(result!=null){
@@ -336,7 +337,7 @@ class MainActivity:ComponentActivity(){
               constructionRecords=constructionRecords+ConstructionRecord(
                 id=java.util.UUID.randomUUID().toString(),kind="PARTITION",roomIndex=partitionRoomIndex,
                 material=partitionKind,wallIndex=-1,startX=p1.x,startY=p1.y,endX=p2.x,endY=p2.y,
-                lengthM=partitionLength.toDouble(),heightM=partitionHeight.toDouble(),thicknessMm=partitionThickness.toDouble(),
+                lengthM=partitionMeasuredLength,heightM=partitionHeight.toDouble(),thicknessMm=partitionThickness.toDouble(),
                 openingsAreaM2=partitionOpenings.toDouble(),reservePercent=partitionReserve.toDouble(),
                 layersPerSide=boardLayers.toIntOrNull()?:1,sides=boardSides.toIntOrNull()?:2,
                 studSpacingMm=studSpacing.toIntOrNull()?:600,insulation=insulation,
