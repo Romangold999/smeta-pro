@@ -285,7 +285,7 @@ class MainActivity:ComponentActivity(){
         Button(onClick={
           val candidate=Opening(java.util.UUID.randomUUID().toString(),openingName.ifBlank{openingKind},openingWidth.toDoubleOrNull()?:0.0,openingHeight.toDoubleOrNull()?:0.0,openingSill.toDoubleOrNull()?:0.0,openingDepth.toDoubleOrNull()?:0.0,openingKind=="Окно",openingOffset.toDoubleOrNull()?:0.0,openingKind)
           val updated=current.copy(openingsByWall=current.openingsByWall+(openingWallIndex to (current.openingsByWall[openingWallIndex].orEmpty()+candidate)))
-          val roomGeometry=RoomGeometry(updated.name,updated.vertices,if(updated.wallHeights.size==updated.vertices.size)updated.wallHeights else List(updated.vertices.size){updated.height},updated.wallThicknesses,updated.openingsByWall)
+          val roomGeometry=RoomGeometry(updated.name,updated.vertices,if(updated.wallHeights.size==updated.vertices.size)updated.wallHeights else List(updated.vertices.size){updated.height},updated.wallThicknesses,updated.openingsByWall,updated.wallHeightOverrides)
           val errors=runCatching{GeometryEngine.validateOpenings(roomGeometry)}.getOrElse{listOf(it.message?: "Некорректные параметры")}
           if(errors.isEmpty()){
             rooms=rooms.toMutableList().also{it[selected]=updated}
