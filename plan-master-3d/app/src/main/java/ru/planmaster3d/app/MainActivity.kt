@@ -218,7 +218,7 @@ class MainActivity:ComponentActivity(){
                 length=(parsed.maxOf{it.y}-parsed.minOf{it.y}).coerceAtLeast(0.01),
                 height=roomH.toDoubleOrNull()?:current.height,
                 vertices=parsed,
-                wallHeights=if(sameCount&&current.wallHeights.size==parsed.size)current.wallHeights else List(parsed.size){roomH.toDoubleOrNull()?:current.height},
+                wallHeights=List(parsed.size){roomH.toDoubleOrNull()?:current.height},
                 wallThicknesses=if(sameCount&&current.wallThicknesses.size==parsed.size)current.wallThicknesses else List(parsed.size){0.0},
                 openingsByWall=if(sameCount)current.openingsByWall else emptyMap()
               )
