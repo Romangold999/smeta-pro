@@ -380,7 +380,20 @@ class MainActivity:ComponentActivity(){
             val p1=partitionStart
             val p2=partitionEnd
             val partitionRoomIndex=selected
-            val split=if(p1!=null && p2!=null) GeometryEngine.splitByBoundaryChord(current.vertices,p1,p2) else null
+            val rawSplit=if(p1!=null && p2!=null) GeometryEngine.splitByBoundaryChord(current.vertices,p1,p2) else null
+            fun cutPassesThroughOpening(point:Vec2):Boolean = current.vertices.indices.any { edge ->
+              val a=current.vertices[edge];val b=current.vertices[(edge+1)%current.vertices.size];val d=b-a
+              val len2=d.x*d.x+d.y*d.y
+              if(len2<1e-12) false else {
+                val t=((point.x-a.x)*d.x+(point.y-a.y)*d.y)/len2
+                val projected=a+d*t.coerceIn(0.0,1.0)
+                val onEdge=t in 0.0..1.0 && projected.distanceTo(point)<1e-6
+                val distance=t.coerceIn(0.0,1.0)*a.distanceTo(b)
+                onEdge && current.openingsByWall[edge].orEmpty().any { distance>it.offsetFromStart+1e-7 && distance<it.offsetFromStart+it.width-1e-7 }
+              }
+            }
+            val cutsOpening=(p1!=null&&cutPassesThroughOpening(p1))||(p2!=null&&cutPassesThroughOpening(p2))
+            val split=if(cutsOpening) null else rawSplit
             if(p1!=null && p2!=null && split!=null){
               fun roomFromPolygon(id:Long,name:String,points:List<Vec2>):Room {
                 val w=(points.maxOf{it.x}-points.minOf{it.x}).coerceAtLeast(0.01)
@@ -445,7 +458,7 @@ class MainActivity:ComponentActivity(){
               )
               saveMessage="Помещение разделено на две области. Нажми «Сохранить» для записи."
             } else {
-              saveMessage="Разделение не выполнено: выбери две точки на границе помещения."
+              saveMessage=if(cutsOpening) "Разделение отменено: точка попала внутрь существующего проёма. Перенеси точку разреза на участок стены вне проёма." else "Разделение не выполнено: выбери две точки на границе помещения."
               return@Button
             }
             val rows=mutableListOf<EstimateLine>()
