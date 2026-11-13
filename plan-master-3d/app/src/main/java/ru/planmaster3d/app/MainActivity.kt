@@ -374,7 +374,7 @@ class MainActivity:ComponentActivity(){
 @Composable fun Metric(name:String,value:Double,unit:String,modifier:Modifier=Modifier){Card(modifier,colors=CardDefaults.cardColors(containerColor=panel)){Column(Modifier.padding(10.dp)){Text(name,fontSize=11.sp,color=Color.LightGray);Text(df.format(value),fontWeight=FontWeight.Bold,fontSize=17.sp);Text(unit,fontSize=11.sp,color=Color.LightGray)}}}
 @Composable fun NumberField(label:String,value:String,onChange:(String)->Unit){OutlinedTextField(value,onChange,label={Text(label)},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth(),singleLine=true)}
 @Composable fun varType(value:String,onChange:(String)->Unit,options:List<String>){Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){options.forEach{FilterChip(selected=value==it,onClick={onChange(it)},label={Text(it,fontSize=11.sp)})}}}
-@Composable fun RoomPlan(room:Room,modifier:Modifier=Modifier){Canvas(modifier){val scale=min(size.width/(room.width.toFloat()+1),size.height/(room.length.toFloat()+1));val w=room.width.toFloat()*scale;val h=room.length.toFloat()*scale;val left=(size.width-w)/2;val top=(size.height-h)/2;drawRect(Color(0xFF6ED4E5),Offset(left,top),androidx.compose.ui.geometry.Size(w,h),style=Stroke(5f));drawLine(Color.White,Offset(left,top),Offset(left+w,top),2f);drawLine(Color.White,Offset(left+w,top),Offset(left+w,top+h),2f)}}
+@Composable fun RoomPlan(room:Room,modifier:Modifier=Modifier){Canvas(modifier){val scale=min(size.width/(room.width.toFloat()+1),size.height/(room.length.toFloat()+1));val w=room.width.toFloat()*scale;val h=room.length.toFloat()*scale;val left=(size.width-w)/2;val top=(size.height-h)/2;val path=Path();room.vertices.forEachIndexed{i,p->val pt=Offset(left+p.x.toFloat()*scale,top+p.y.toFloat()*scale);if(i==0)path.moveTo(pt.x,pt.y)else path.lineTo(pt.x,pt.y)};path.close();drawPath(path,Color(0xFF6ED4E5),style=Stroke(5f))}}
 @Composable fun SelectableRoomPlan(room:Room,selectedWall:Int,modifier:Modifier=Modifier,onSelect:(Int)->Unit){
  Canvas(modifier.pointerInput(room.width,room.length){detectTapGestures { tap ->
   val scale=min(size.width/(room.width.toFloat()+1),size.height/(room.length.toFloat()+1))
@@ -396,13 +396,20 @@ class MainActivity:ComponentActivity(){
  Canvas(modifier.pointerInput(room.width,room.length,start,end){detectTapGestures { tap ->
   val scale=min(size.width/(room.width.toFloat()+1),size.height/(room.length.toFloat()+1))
   val w=room.width.toFloat()*scale;val h=room.length.toFloat()*scale;val left=(size.width-w)/2;val top=(size.height-h)/2
-  val x=((tap.x-left)/scale).coerceIn(0f,room.width.toFloat()).toDouble()
-  val y=((tap.y-top)/scale).coerceIn(0f,room.length.toFloat()).toDouble()
-  onPoint(Vec2(x,y))
+  val raw=Vec2(((tap.x-left)/scale).coerceIn(0f,room.width.toFloat()).toDouble(),((tap.y-top)/scale).coerceIn(0f,room.length.toFloat()).toDouble())
+  val snapped=room.vertices.indices.map { i ->
+   val a=room.vertices[i];val b=room.vertices[(i+1)%room.vertices.size];val d=b-a
+   val den=d.x*d.x+d.y*d.y
+   val t=if(den<=1e-12) 0.0 else (((raw.x-a.x)*d.x+(raw.y-a.y)*d.y)/den).coerceIn(0.0,1.0)
+   val q=a+d*t
+   q to q.distanceTo(raw)
+  }.minByOrNull{it.second}?.first ?: raw
+  onPoint(snapped)
  } }){
   val scale=min(size.width/(room.width.toFloat()+1),size.height/(room.length.toFloat()+1))
   val w=room.width.toFloat()*scale;val h=room.length.toFloat()*scale;val left=(size.width-w)/2;val top=(size.height-h)/2
-  drawRect(Color(0xFF6ED4E5),Offset(left,top),androidx.compose.ui.geometry.Size(w,h),style=Stroke(4f))
+  val boundary=Path();room.vertices.forEachIndexed{i,p->val pt=Offset(left+p.x.toFloat()*scale,top+p.y.toFloat()*scale);if(i==0)boundary.moveTo(pt.x,pt.y)else boundary.lineTo(pt.x,pt.y)};boundary.close()
+  drawPath(boundary,Color(0xFF6ED4E5),style=Stroke(4f))
   fun map(p:Vec2)=Offset(left+p.x.toFloat()*scale,top+p.y.toFloat()*scale)
   if(start!=null) drawCircle(Color(0xFFFFB454),9f,map(start))
   if(start!=null&&end!=null){drawLine(Color(0xFFFFB454),map(start),map(end),7f);drawCircle(Color(0xFFFFB454),9f,map(end))}
