@@ -107,6 +107,13 @@ class MainActivity:ComponentActivity(){
  var studSpacing by remember { mutableStateOf("600") }
  var insulation by remember { mutableStateOf(false) }
  var partitionRate by remember { mutableStateOf("0") }
+ var demolitionBagPrice by remember { mutableStateOf("0") }
+ var demolitionHaulPrice by remember { mutableStateOf("0") }
+ var blockUnitPrice by remember { mutableStateOf("0") }
+ var adhesiveKgPrice by remember { mutableStateOf("0") }
+ var boardSheetPrice by remember { mutableStateOf("0") }
+ var profileMeterPrice by remember { mutableStateOf("0") }
+ var insulationM3Price by remember { mutableStateOf("0") }
  val current=rooms.getOrNull(selected) ?: rooms.first()
  val totalFloor=rooms.sumOf{it.floor}
  val totalWalls=rooms.sumOf{it.walls}
@@ -158,6 +165,8 @@ class MainActivity:ComponentActivity(){
         NumberField("Допустимая масса одного мешка, кг",bagMaxKg){bagMaxKg=it}
         NumberField("Коэффициент заполнения мешка (0,1–1)",bagFill){bagFill=it}
         NumberField("Цена демонтажа, ₽/м²",demolitionRate){demolitionRate=it}
+        NumberField("Упаковка: цена мешка, ₽/шт",demolitionBagPrice){demolitionBagPrice=it}
+        NumberField("Вывоз: цена за тонну, ₽/т",demolitionHaulPrice){demolitionHaulPrice=it}
         val result=runCatching { DemolitionCalculator.calculate(DemolitionInput(demolitionLength.toDouble(),demolitionHeight.toDouble(),demolitionThickness.toDouble(),demolitionDensity.toDouble(),demolitionBulking.toDouble(),bagLitres.toDouble(),bagMaxKg.toDouble(),bagFill.toDouble())) }.getOrNull()
         if(result!=null){
           Text("Площадь: ${df.format(result.areaM2)} м²")
@@ -170,7 +179,7 @@ class MainActivity:ComponentActivity(){
           Button(onClick={
             val rate=demolitionRate.toDoubleOrNull()?:0.0
             val workName=if(demolitionMaterial=="Керамическая плитка") "Демонтаж плитки" else if(demolitionMaterial=="Гипсовая штукатурка"||demolitionMaterial=="Цементная штукатурка") "Демонтаж старой штукатурки" else "Демонтаж: $demolitionMaterial"
-            lines=lines+EstimateLine(workName,"м²",rate,result.areaM2,"Демонтаж")+EstimateLine("Упаковка мусора ($demolitionMaterial)","меш",0.0,result.bagsRequired.toDouble(),"Демонтаж")+EstimateLine("Масса строительного мусора","т",0.0,result.solidMassKg/1000.0,"Вывоз")
+            lines=lines+EstimateLine(workName,"м²",rate,result.areaM2,"Демонтаж")+EstimateLine("Упаковка мусора ($demolitionMaterial)","меш",demolitionBagPrice.toDoubleOrNull()?:0.0,result.bagsRequired.toDouble(),"Демонтаж")+EstimateLine("Вывоз строительного мусора","т",demolitionHaulPrice.toDoubleOrNull()?:0.0,result.solidMassKg/1000.0,"Вывоз")
             tab="Смета"
           },modifier=Modifier.fillMaxWidth()){Text("Добавить демонтаж и отходы в смету")}
         } else Text("Проверь размеры, плотность и параметры мешка.",color=Color(0xFFFFB86B))
@@ -194,6 +203,8 @@ class MainActivity:ComponentActivity(){
           NumberField("Длина блока, мм",blockLength){blockLength=it}
           NumberField("Высота блока, мм",blockHeight){blockHeight=it}
           NumberField("Плотность блока, кг/м³",blockDensity){blockDensity=it}
+          NumberField("Цена блока, ₽/шт",blockUnitPrice){blockUnitPrice=it}
+          NumberField("Цена клея, ₽/кг",adhesiveKgPrice){adhesiveKgPrice=it}
           Text("В расчёт входят блоки, масса кладки и ориентировочный расход клея. Армирование и перемычки будут отдельными опциями.")
         } else {
           Text("Каркасная перегородка ГКЛ",fontWeight=FontWeight.Bold)
@@ -206,6 +217,9 @@ class MainActivity:ComponentActivity(){
           varType(studSpacing,{studSpacing=it},listOf("400","600"))
           Text("Шаг стоек: $studSpacing мм")
           Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=insulation,onCheckedChange={insulation=it});Text("Шумоизоляция внутри каркаса")}
+          NumberField("Цена листа ГКЛ, ₽/шт",boardSheetPrice){boardSheetPrice=it}
+          NumberField("Цена профиля, ₽/м.п.",profileMeterPrice){profileMeterPrice=it}
+          if(insulation) NumberField("Цена шумоизоляции, ₽/м³",insulationM3Price){insulationM3Price=it}
         }
         NumberField("Цена монтажа, ₽/м² (задай свою)",partitionRate){partitionRate=it}
       } }
@@ -240,7 +254,7 @@ class MainActivity:ComponentActivity(){
             } else {
               rows.add(EstimateLine("ГКЛ ($boardLayers слоя, $boardSides сторон)","лист",0.0,result.boardSheets.toDouble(),"Материалы",true))
               rows.add(EstimateLine("Профиль каркаса, стойки + направляющие","м.п.",0.0,result.profileTotalLengthM,"Материалы",true))
-              if(insulation) rows.add(EstimateLine("Шумоизоляционное заполнение","м³",0.0,result.insulationVolumeM3,"Материалы",true))
+              if(insulation) rows.add(EstimateLine("Шумоизоляционное заполнение","м³",insulationM3Price.toDoubleOrNull()?:0.0,result.insulationVolumeM3,"Материалы",true))
             }
             lines=lines+rows
             tab="Смета"
