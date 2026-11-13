@@ -228,7 +228,7 @@ class MainActivity:ComponentActivity(){
   save();showProjects=false
  }
  Scaffold(containerColor=navy, topBar={ TopAppBar(title={Column { Text("PLAN MASTER 3D",fontWeight=FontWeight.Bold); Text(project,fontSize=12.sp,color=Color.LightGray) }},actions={IconButton(onClick={save()}){Icon(Icons.Default.Save,"Сохранить")}},colors=TopAppBarDefaults.topAppBarColors(containerColor=navy)) },
- bottomBar={NavigationBar(containerColor=panel){ listOf("Объект","Обмеры","3D","Смета","Материалы","Раскладка","Инженерия").forEach { label -> NavigationBarItem(selected=tab==label,onClick={tab=label},icon={Icon(when(label){"Объект"->Icons.Default.Home;"Обмеры"->Icons.Default.SquareFoot;"3D"->Icons.Default.Layers;"Смета"->Icons.Default.Receipt;"Материалы"->Icons.Default.Inventory2;"Инженерия"->Icons.Default.Build;else->Icons.Default.GridOn},null)},label={Text(label,fontSize=10.sp)}) } } }) { pad ->
+ bottomBar={NavigationBar(containerColor=panel){ listOf("Объект","Обмеры","3D","Смета","Материалы","Раскладка").forEach { label -> NavigationBarItem(selected=tab==label,onClick={tab=label},icon={Icon(when(label){"Объект"->Icons.Default.Home;"Обмеры"->Icons.Default.SquareFoot;"3D"->Icons.Default.Layers;"Смета"->Icons.Default.Receipt;"Материалы"->Icons.Default.Inventory2;else->Icons.Default.GridOn},null)},label={Text(label,fontSize=10.sp)}) } } }) { pad ->
   Column(Modifier.fillMaxSize().padding(pad).padding(horizontal=14.dp)) {
    when(tab){
     "Объект" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
@@ -695,8 +695,15 @@ class MainActivity:ComponentActivity(){
         Text("Помещение",fontWeight=FontWeight.SemiBold)
         Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) { rooms.forEachIndexed{i,r->FilterChip(selected=engineeringRoomIndex==i,onClick={engineeringRoomIndex=i;engineeringX="1";engineeringY="1"},label={Text(r.name)})} }
         Text("Тип точки",fontWeight=FontWeight.SemiBold)
-        varType(engineeringKind,{engineeringKind=it},listOf("Розетка","Выключатель","Светильник","Вентилятор"))
-        varType(engineeringKind,{engineeringKind=it},listOf("Водорозетка","Канализация","Унитаз","Раковина"))
+        varType(engineeringKind,{engineeringKind=it},listOf("Розетка","Выключатель"))
+        varType(engineeringKind,{engineeringKind=it},listOf("Светильник","Вентилятор"))
+        varType(engineeringKind,{engineeringKind=it},listOf("Электровывод","Интернет"))
+        Divider(color=Color(0xFF35465B))
+        varType(engineeringKind,{engineeringKind=it},listOf("Водорозетка","Канализация"))
+        varType(engineeringKind,{engineeringKind=it},listOf("Унитаз","Раковина"))
+        varType(engineeringKind,{engineeringKind=it},listOf("Смеситель","Душ"))
+        varType(engineeringKind,{engineeringKind=it},listOf("Полотенцесушитель","Ванна"))
+        varType(engineeringKind,{engineeringKind=it},listOf("Водомер","Инсталляция"))
         val targetRoom=rooms.getOrNull(engineeringRoomIndex) ?: current
         EngineeringPointCanvas(targetRoom,engineeringPoints.filter{it.roomIndex==engineeringRoomIndex},Modifier.fillMaxWidth().height(220.dp)){ placed -> engineeringX=df.format(placed.x).replace(',','.');engineeringY=df.format(placed.y).replace(',','.') }
         NumberField("Координата X, м",engineeringX){engineeringX=it}
@@ -1195,7 +1202,7 @@ class MainActivity:ComponentActivity(){
   val boundary=Path();room.vertices.forEachIndexed{i,p->val q=map(p);if(i==0)boundary.moveTo(q.x,q.y)else boundary.lineTo(q.x,q.y)};boundary.close()
   drawPath(boundary,Color(0xFF6ED4E5),style=Stroke(4f))
   points.forEach{p->
-   val color=when(p.kind){"Розетка","Выключатель"->Color(0xFFFFB454);"Светильник","Вентилятор"->Color(0xFF80D8FF);else->Color(0xFF8BE28B)}
+   val color=when(p.kind){"Розетка","Выключатель","Электровывод","Интернет"->Color(0xFFFFB454);"Светильник","Вентилятор"->Color(0xFF80D8FF);else->Color(0xFF8BE28B)}
    drawCircle(color,8f,map(Vec2(p.x,p.y)))
    drawCircle(Color.White,8f,map(Vec2(p.x,p.y)),style=Stroke(2f))
   }
