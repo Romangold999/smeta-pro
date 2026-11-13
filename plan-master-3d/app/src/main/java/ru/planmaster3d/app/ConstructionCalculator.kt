@@ -27,6 +27,10 @@ data class DemolitionResult(
 
 object DemolitionCalculator {
     fun calculate(input: DemolitionInput): DemolitionResult {
+        require(listOf(input.lengthM, input.heightM, input.thicknessMm, input.densityKgM3,
+            input.bulkingFactor, input.bagVolumeLitres, input.bagMaxKg, input.bagFillFactor).all { it.isFinite() }) {
+            "Все параметры демонтажа должны быть конечными числами"
+        }
         require(input.lengthM > 0.0 && input.heightM > 0.0)
         require(input.thicknessMm > 0.0 && input.densityKgM3 > 0.0)
         require(input.bulkingFactor >= 1.0)
@@ -37,8 +41,16 @@ object DemolitionCalculator {
         val mass = volume * input.densityKgM3
         val loose = volume * input.bulkingFactor
         val bagCapacityM3 = input.bagVolumeLitres / 1000.0 * input.bagFillFactor
-        val byVolume = ceil(loose / bagCapacityM3).toInt()
-        val byWeight = ceil(mass / input.bagMaxKg).toInt()
+        require(listOf(area, volume, mass, loose, bagCapacityM3).all { it.isFinite() } && bagCapacityM3 > 0.0) {
+            "Параметры дают недопустимо большой результат"
+        }
+        val volumeCount = ceil(loose / bagCapacityM3)
+        val weightCount = ceil(mass / input.bagMaxKg)
+        require(volumeCount <= Int.MAX_VALUE && weightCount <= Int.MAX_VALUE) {
+            "Количество мешков превышает допустимый диапазон"
+        }
+        val byVolume = volumeCount.toInt()
+        val byWeight = weightCount.toInt()
         val bags = max(byVolume, byWeight)
         return DemolitionResult(area, volume, mass, loose, byVolume, byWeight, bags,
             if (bags == 0) 0.0 else mass / bags)
@@ -87,13 +99,21 @@ data class PartitionResult(
 
 object PartitionCalculator {
     fun calculate(input: PartitionInput): PartitionResult {
+        require(listOf(input.lengthM, input.heightM, input.openingsAreaM2, input.reservePercent,
+            input.blockDensityKgM3, input.profileStockLengthM, input.insulationDensityKgM3).all { it.isFinite() }) {
+            "Все числовые параметры перегородки должны быть конечными"
+        }
         require(input.lengthM > 0.0 && input.heightM > 0.0)
         require(input.thicknessMm > 0 && input.openingsAreaM2 >= 0.0)
+        require(input.openingsAreaM2 <= input.lengthM * input.heightM)
         require(input.reservePercent >= 0.0)
         val gross = input.lengthM * input.heightM
-        val net = (gross - input.openingsAreaM2).coerceAtLeast(0.0)
+        val net = gross - input.openingsAreaM2
         val factor = 1.0 + input.reservePercent / 100.0
         val volume = net * input.thicknessMm / 1000.0
+        require(listOf(gross, net, factor, volume).all { it.isFinite() }) {
+            "Параметры перегородки дают недопустимо большой результат"
+        }
         return when (input.kind) {
             PartitionKind.AAC_BLOCK, PartitionKind.PGP, PartitionKind.BRICK -> {
                 require(input.blockLengthMm > 0 && input.blockHeightMm > 0 && input.blockDensityKgM3 > 0.0)
