@@ -46,6 +46,36 @@ class ConstructionCalculatorTest {
         assertEquals(38.52, result.adhesiveKg, 1e-8)
     }
 
+
+    @Test fun pgpPartitionUsesSelectedPlateFormat() {
+        val result = PartitionCalculator.calculate(
+            PartitionInput(
+                kind = PartitionKind.PGP,
+                lengthM = 3.0,
+                heightM = 2.7,
+                thicknessMm = 80,
+                blockLengthMm = 667,
+                blockHeightMm = 500,
+                blockDensityKgM3 = 1100.0
+            )
+        )
+        assertEquals(9, result.blockCount)
+        assertEquals(712.8, result.blockMassKg, 1e-8)
+    }
+
+    @Test fun brickCountScalesWithWallThickness() {
+        val halfBrick = PartitionCalculator.calculate(
+            PartitionInput(PartitionKind.BRICK, 1.0, 1.0, 120, reservePercent = 0.0,
+                blockLengthMm = 250, blockHeightMm = 65, blockDensityKgM3 = 1800.0)
+        )
+        val fullBrick = PartitionCalculator.calculate(
+            PartitionInput(PartitionKind.BRICK, 1.0, 1.0, 250, reservePercent = 0.0,
+                blockLengthMm = 250, blockHeightMm = 65, blockDensityKgM3 = 1800.0)
+        )
+        assertEquals(62, halfBrick.blockCount)
+        assertEquals(129, fullBrick.blockCount)
+    }
+
     @Test fun drywallPartitionCalculatesBoardsStudsAndInsulation() {
         val result = PartitionCalculator.calculate(
             PartitionInput(
