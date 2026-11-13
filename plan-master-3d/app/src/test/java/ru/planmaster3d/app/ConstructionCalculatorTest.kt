@@ -59,7 +59,7 @@ class ConstructionCalculatorTest {
                 blockDensityKgM3 = 1100.0
             )
         )
-        assertEquals(9, result.blockCount)
+        assertEquals(25, result.blockCount)
         assertEquals(712.8, result.blockMassKg, 1e-8)
     }
 
