@@ -43,6 +43,19 @@ class GeometryEngineTest {
   assertTrue(errors.any{it.contains("пересекаются")})
   assertTrue(errors.any{it.contains("выходит за пределы стены")})
  }
+ @Test fun detectsNestedOpeningOverlapNotOnlyAdjacentPairs() {
+  val room=RoomGeometry("Test",listOf(Vec2(0.0,0.0),Vec2(6.0,0.0),Vec2(6.0,3.0),Vec2(0.0,3.0)),
+   openingsByWall=mapOf(0 to listOf(
+    Opening("a","Wide",0.9,2.0,offsetFromStart=0.5),
+    Opening("b","Small",0.5,1.0,offsetFromStart=1.0),
+    Opening("c","Later",0.7,1.0,offsetFromStart=1.8)
+   )))
+  val errors=GeometryEngine.validateOpenings(room)
+  assertTrue(errors.any{it.contains("Wide")&&it.contains("Later")})
+ }
+ @Test fun openingRejectsNonFiniteDimensions() {
+  assertThrows(IllegalArgumentException::class.java) { Opening("bad","Bad",Double.NaN,2.0) }
+ }
  @Test fun openingOffsetDefaultsToWallStartForOldProjects() {
   val opening=Opening("legacy","Legacy",0.9,2.1)
   assertEquals(0.0,opening.offsetFromStart,1e-8)
