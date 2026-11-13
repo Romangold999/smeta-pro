@@ -91,6 +91,7 @@ class MainActivity:ComponentActivity(){
  var materialLayer by remember { mutableStateOf("10") }
  var materialCoverage by remember { mutableStateOf("1.2") }
  var materialPack by remember { mutableStateOf("25") }
+ var materialReserve by remember { mutableStateOf("10") }
  var layoutType by remember { mutableStateOf("Плитка") }
  var layoutA by remember { mutableStateOf("600") }
  var layoutB by remember { mutableStateOf("600") }
@@ -319,8 +320,30 @@ class MainActivity:ComponentActivity(){
       if(lines.isNotEmpty()) item { CardBlock { Text("Смета",fontWeight=FontWeight.Bold); lines.forEachIndexed{i,line->Text("${line.name}: ${df.format(line.qty)} ${line.unit} × ${df.format(line.price)} ₽ = ${df.format(line.total)} ₽"); Row { TextButton(onClick={lines=lines.toMutableList().also{it[i]=line.copy(qty=(line.qty-1).coerceAtLeast(0.0))}}){Text("−")}; TextButton(onClick={lines=lines.toMutableList().also{it[i]=line.copy(qty=line.qty+1)}}){Text("+")}; TextButton(onClick={lines=lines.toMutableList().also{it.removeAt(i)}}){Text("Удалить")} } }; Text("ИТОГО: ${df.format(lines.sumOf{it.total})} ₽",fontWeight=FontWeight.Bold); Button(onClick={shareEstimate(ctx,lines)},modifier=Modifier.fillMaxWidth()){Text("Поделиться сметой / текст")} ; OutlinedButton(onClick={shareCsv(ctx,lines)},modifier=Modifier.fillMaxWidth()){Text("Экспорт таблицы CSV (Excel)")} } }
     }
     "Материалы" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
-      item { CardBlock { Text("Калькулятор расхода материалов",fontSize=19.sp,fontWeight=FontWeight.Bold); varType(materialMode,{materialMode=it},listOf("Штукатурка","Шпаклёвка","Краска","Грунтовка","Клей")); NumberField("Площадь, м²",materialArea){materialArea=it}; NumberField("Толщина слоя, мм",materialLayer){materialLayer=it}; NumberField("Расход на 1 м² (на 1 мм для сухих смесей)",materialCoverage){materialCoverage=it}; NumberField("Фасовка, кг или л",materialPack){materialPack=it}; val area=materialArea.toDoubleOrNull()?:0.0; val layer=materialLayer.toDoubleOrNull()?:1.0; val rate=materialCoverage.toDoubleOrNull()?:0.0; val pack=materialPack.toDoubleOrNull()?:1.0; val amount=area*rate*(if(materialMode=="Штукатурка"||materialMode=="Шпаклёвка") layer else 1.0); Text("Расход: ${df.format(amount)} кг/л • Упаковок: ${ceil(amount/pack.coerceAtLeast(0.01)).toInt()}",color=accent,fontWeight=FontWeight.Bold); Text("Расчёт ориентировочный: фактический расход задаётся по паспорту выбранного материала.") } }
-    }
+      item { CardBlock {
+        Text("Калькулятор расхода материалов",fontSize=19.sp,fontWeight=FontWeight.Bold)
+        varType(materialMode,{materialMode=it},listOf("Штукатурка","Шпаклёвка","Краска","Грунтовка","Клей"))
+        Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.fillMaxWidth()) {
+          OutlinedButton(onClick={materialArea=current.walls.toString()},modifier=Modifier.weight(1f)){Text("Стены комнаты")}
+          OutlinedButton(onClick={materialArea=current.floor.toString()},modifier=Modifier.weight(1f)){Text("Пол комнаты")}
+        }
+        NumberField("Площадь, м²",materialArea){materialArea=it}
+        NumberField("Толщина слоя, мм",materialLayer){materialLayer=it}
+        NumberField("Расход на 1 м² (на 1 мм для сухих смесей)",materialCoverage){materialCoverage=it}
+        NumberField("Фасовка, кг или л",materialPack){materialPack=it}
+        NumberField("Запас, %",materialReserve){materialReserve=it}
+        val area=materialArea.toDoubleOrNull()?:0.0
+        val layer=materialLayer.toDoubleOrNull()?:1.0
+        val rate=materialCoverage.toDoubleOrNull()?:0.0
+        val pack=materialPack.toDoubleOrNull()?:1.0
+        val reserve=materialReserve.toDoubleOrNull()?:0.0
+        val dryMix=materialMode=="Штукатурка"||materialMode=="Шпаклёвка"
+        val valid=area>=0&&layer>=0&&rate>=0&&pack>0&&reserve>=0&&listOf(area,layer,rate,pack,reserve).all{it.isFinite()}
+        val amount=if(valid) area*rate*(if(dryMix)layer else 1.0)*(1+reserve/100.0) else 0.0
+        val packages=if(valid)ceil(amount/pack).toInt() else 0
+        Text(if(valid) "Расход с запасом: ${df.format(amount)} кг/л • Упаковок: $packages" else "Проверь значения: фасовка должна быть больше нуля, остальные значения — неотрицательными.",color=if(valid)accent else Color(0xFFFFB86B),fontWeight=FontWeight.Bold)
+        Text("Для штукатурки и шпаклёвки расход умножается на толщину слоя. Для краски, грунта и клея — на площадь. Запас учитывается отдельно. Используй расход из паспорта конкретного материала.",fontSize=12.sp,color=Color.LightGray)
+      } }
     "Раскладка" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock { Text("Калькулятор раскладки",fontSize=19.sp,fontWeight=FontWeight.Bold); varType(layoutType,{layoutType=it},listOf("Плитка","Ламинат","Панели")); NumberField("Размер элемента A, мм",layoutA){layoutA=it}; NumberField("Размер элемента B, мм",layoutB){layoutB=it}; NumberField("Размер помещения A, мм",layoutRoomA){layoutRoomA=it}; NumberField("Размер помещения B, мм",layoutRoomB){layoutRoomB=it}; Slider(waste,{waste=it},valueRange=0f..25f); Text("Запас: ${waste.toInt()}%"); val a=(layoutA.toDoubleOrNull()?:1.0).coerceAtLeast(1.0); val b=(layoutB.toDoubleOrNull()?:1.0).coerceAtLeast(1.0); val ra=(layoutRoomA.toDoubleOrNull()?:0.0); val rb=(layoutRoomB.toDoubleOrNull()?:0.0); val count=ceil(ra/a)*ceil(rb/b); val area=(ra*rb)/1_000_000.0; Text("Площадь: ${df.format(area)} м² • элементов без запаса: ${count.toInt()} • с запасом: ${ceil(count*(1+waste/100)).toInt()}",color=accent,fontWeight=FontWeight.Bold); Text("Предварительная сетка без оптимизации раскроя по рисунку, швам и повторному использованию обрезков.") } }
     }
