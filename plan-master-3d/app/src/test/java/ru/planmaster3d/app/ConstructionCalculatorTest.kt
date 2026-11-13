@@ -122,7 +122,7 @@ class ConstructionCalculatorTest {
     @Test(expected = IllegalArgumentException::class)
     fun partitionRejectsOverflowingMaterialMass() {
         PartitionCalculator.calculate(
-            PartitionInput(PartitionKind.AAC_BLOCK, 1.0, 2.5, 100,
+            PartitionInput(PartitionKind.AAC_BLOCK, 1.0, 2.5, 1000,
                 blockDensityKgM3 = Double.MAX_VALUE)
         )
     }
