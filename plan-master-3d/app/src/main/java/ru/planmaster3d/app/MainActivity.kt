@@ -150,6 +150,7 @@ class MainActivity:ComponentActivity(){
  var demolitionBagPrice by remember { mutableStateOf("0") }
  var view3dAngle by remember { mutableFloatStateOf(35f) }
  var view3dZoom by remember { mutableFloatStateOf(1f) }
+ var hidden3dWalls by remember { mutableStateOf(setOf<Int>()) }
  var demolitionHaulPrice by remember { mutableStateOf("0") }
  var blockUnitPrice by remember { mutableStateOf("0") }
  var adhesiveKgPrice by remember { mutableStateOf("0") }
@@ -320,7 +321,14 @@ class MainActivity:ComponentActivity(){
       item { CardBlock {
         Text("Интерактивная 3D-модель помещения",fontSize=19.sp,fontWeight=FontWeight.Bold)
         Text("${current.name} • ${current.vertices.size} стен • высота и толщина учитываются по каждой стене")
-        RoomModel3D(current,view3dAngle,view3dZoom,Modifier.fillMaxWidth().height(340.dp))
+        RoomModel3D(current,view3dAngle,view3dZoom,hidden3dWalls,Modifier.fillMaxWidth().height(340.dp))
+        Text("Видимость стен",fontWeight=FontWeight.SemiBold)
+        Row(horizontalArrangement=Arrangement.spacedBy(6.dp),modifier=Modifier.fillMaxWidth()){
+          current.vertices.indices.forEach { wallIndex ->
+            FilterChip(selected=wallIndex !in hidden3dWalls,onClick={hidden3dWalls=if(wallIndex in hidden3dWalls) hidden3dWalls-wallIndex else hidden3dWalls+wallIndex},label={Text("Стена ${wallIndex+1}")})
+          }
+        }
+        OutlinedButton(onClick={hidden3dWalls=emptySet()},modifier=Modifier.fillMaxWidth()){Text("Показать все стены")}
         Text("Поворот модели: ${view3dAngle.toInt()}°")
         Slider(value=view3dAngle,onValueChange={view3dAngle=it},valueRange=0f..360f)
         Text("Масштаб: ${(view3dZoom*100).toInt()}%")
@@ -660,7 +668,7 @@ class MainActivity:ComponentActivity(){
   }
  }
 }}
-@Composable fun RoomModel3D(room:Room,angle:Float,zoom:Float,modifier:Modifier=Modifier){
+@Composable fun RoomModel3D(room:Room,angle:Float,zoom:Float,hiddenWalls:Set<Int>,modifier:Modifier=Modifier){
  Canvas(modifier.background(Color(0xFF111C2B))){
   if(room.vertices.size<3)return@Canvas
   val radians=Math.toRadians(angle.toDouble())
@@ -694,6 +702,7 @@ class MainActivity:ComponentActivity(){
    mid.x*sinA+mid.y*cosA
   }
   order.forEach{i->
+   if(i in hiddenWalls) return@forEach
    val j=(i+1)%room.vertices.size
    val a=room.vertices[i];val b=room.vertices[j]
    val length=a.distanceTo(b)
