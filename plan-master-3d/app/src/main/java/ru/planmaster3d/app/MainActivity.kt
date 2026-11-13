@@ -94,6 +94,10 @@ class MainActivity:ComponentActivity(){
  var catalogItems by remember { mutableStateOf(initialCatalog ?: originalCatalog) }
  var catalogPriceDrafts by remember { mutableStateOf<Map<String,String>>(emptyMap()) }
  var priceBookName by remember { mutableStateOf(initialPriceBook?.versions?.firstOrNull{it.id==initialPriceBook.activeVersionId}?.name ?: "Мой прайс-лист") }
+ var newCatalogWorkName by remember { mutableStateOf("") }
+ var newCatalogWorkCategory by remember { mutableStateOf("Малярные работы") }
+ var newCatalogWorkUnit by remember { mutableStateOf("м²") }
+ var newCatalogWorkPrice by remember { mutableStateOf("0") }
  var includeWallPlaster by remember { mutableStateOf(true) }
  var includeWallPrimer by remember { mutableStateOf(true) }
  var includeFloorScreed by remember { mutableStateOf(false) }
@@ -550,6 +554,33 @@ class MainActivity:ComponentActivity(){
               }
             }
           }
+        }
+        Divider(color=Color(0xFF35465B))
+        Text("Добавить собственную работу",fontWeight=FontWeight.SemiBold)
+        OutlinedTextField(value=newCatalogWorkName,onValueChange={newCatalogWorkName=it},label={Text("Наименование работы или услуги")},modifier=Modifier.fillMaxWidth(),singleLine=true)
+        Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+          OutlinedTextField(value=newCatalogWorkCategory,onValueChange={newCatalogWorkCategory=it},label={Text("Раздел")},modifier=Modifier.weight(1f),singleLine=true)
+          OutlinedTextField(value=newCatalogWorkUnit,onValueChange={newCatalogWorkUnit=it},label={Text("Ед. изм.")},modifier=Modifier.width(100.dp),singleLine=true)
+        }
+        Row(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically) {
+          OutlinedTextField(value=newCatalogWorkPrice,onValueChange={newCatalogWorkPrice=it},label={Text("Цена, ₽")},modifier=Modifier.weight(1f),singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal))
+          Button(onClick={
+            val name=newCatalogWorkName.trim()
+            val category=newCatalogWorkCategory.trim()
+            val unit=newCatalogWorkUnit.trim()
+            val price=newCatalogWorkPrice.trim().replace(',','.').toDoubleOrNull()
+            when {
+              name.isBlank() || category.isBlank() || unit.isBlank() -> saveMessage="Заполни название, раздел и единицу измерения."
+              price==null || !price.isFinite() || price<0.0 -> saveMessage="Укажи корректную цену — число не меньше нуля."
+              catalogItems.any{it.n.equals(name,true)} -> saveMessage="Такая позиция уже есть в каталоге."
+              else -> {
+                catalogItems=catalogItems+CatalogWork(name,price,unit,category)
+                catalogPriceDrafts=catalogPriceDrafts+(name to price.toString())
+                newCatalogWorkName=""
+                saveMessage="Позиция добавлена в черновик прайса. Сохрани новую версию, чтобы закрепить изменения."
+              }
+            }
+          }){Text("Добавить")}
         }
         Button(onClick={
           var valid=true
