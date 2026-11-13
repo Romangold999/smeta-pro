@@ -512,9 +512,18 @@ class MainActivity:ComponentActivity(){
       item { CardBlock {
         Text("Калькулятор расхода материалов",fontSize=19.sp,fontWeight=FontWeight.Bold)
         varType(materialMode,{materialMode=it},listOf("Штукатурка","Шпаклёвка","Краска","Грунтовка","Клей"))
+        val projectTakeoff=GeometryTakeoff.calculate(rooms)
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.fillMaxWidth()) {
           OutlinedButton(onClick={materialArea=current.walls.toString()},modifier=Modifier.weight(1f)){Text("Стены комнаты")}
           OutlinedButton(onClick={materialArea=current.floor.toString()},modifier=Modifier.weight(1f)){Text("Пол комнаты")}
+        }
+        Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.fillMaxWidth()) {
+          OutlinedButton(onClick={materialArea=projectTakeoff.netWallAreaM2.toString()},modifier=Modifier.weight(1f)){Text("Стены всего объекта")}
+          OutlinedButton(onClick={materialArea=projectTakeoff.floorAreaM2.toString()},modifier=Modifier.weight(1f)){Text("Пол всего объекта")}
+        }
+        Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.fillMaxWidth()) {
+          OutlinedButton(onClick={materialArea=projectTakeoff.ceilingAreaM2.toString()},modifier=Modifier.weight(1f)){Text("Потолок всего объекта")}
+          OutlinedButton(onClick={materialArea=projectTakeoff.revealAreaM2.toString()},modifier=Modifier.weight(1f)){Text("Откосы всего объекта")}
         }
         NumberField("Площадь, м²",materialArea){materialArea=it}
         NumberField("Толщина слоя, мм",materialLayer){materialLayer=it}
@@ -527,10 +536,8 @@ class MainActivity:ComponentActivity(){
         val pack=materialPack.toDoubleOrNull()?:1.0
         val reserve=materialReserve.toDoubleOrNull()?:0.0
         val dryMix=materialMode=="Штукатурка"||materialMode=="Шпаклёвка"
-        val valid=area>=0&&layer>=0&&rate>=0&&pack>0&&reserve>=0&&listOf(area,layer,rate,pack,reserve).all{it.isFinite()}
-        val amount=if(valid) area*rate*(if(dryMix)layer else 1.0)*(1+reserve/100.0) else 0.0
-        val packages=if(valid)ceil(amount/pack).toInt() else 0
-        Text(if(valid) "Расход с запасом: ${df.format(amount)} кг/л • Упаковок: $packages" else "Проверь значения: фасовка должна быть больше нуля, остальные значения — неотрицательными.",color=if(valid)accent else Color(0xFFFFB86B),fontWeight=FontWeight.Bold)
+        val calculation=runCatching { MaterialCalculator.calculate(MaterialCalculationInput(area,layer,rate,pack,reserve,dryMix)) }.getOrNull()
+        Text(if(calculation!=null) "Расход: ${df.format(calculation.baseAmount)} кг/л • с запасом: ${df.format(calculation.amountWithReserve)} кг/л • упаковок: ${calculation.packages}" else "Проверь значения: параметры должны быть конечными, площадь/расход/слой/запас — неотрицательными, фасовка — больше нуля, результат не должен превышать допустимый диапазон.",color=if(calculation!=null)accent else Color(0xFFFFB86B),fontWeight=FontWeight.Bold)
         Text("Для штукатурки и шпаклёвки расход умножается на толщину слоя. Для краски, грунта и клея — на площадь. Запас учитывается отдельно. Используй расход из паспорта конкретного материала.",fontSize=12.sp,color=Color.LightGray)
       } }
     }

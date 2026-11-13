@@ -1,42 +1,41 @@
 package ru.planmaster3d.app
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class MaterialCalculatorTest {
     @Test fun dryMixUsesLayerThicknessAndReserve() {
         val result = MaterialCalculator.calculate(
-            area = 20.0,
-            ratePerM2 = 1.2,
-            packageSize = 25.0,
-            wastePercent = 10.0,
-            layerMm = 10.0,
-            perMillimetre = true
+            MaterialCalculationInput(10.0, 10.0, 1.2, 25.0, 10.0, true)
         )
-        assertEquals(264.0, result.required, 1e-8)
-        assertEquals(11, result.packages)
+        assertEquals(120.0, result.baseAmount, 1e-8)
+        assertEquals(132.0, result.amountWithReserve, 1e-8)
+        assertEquals(6, result.packages)
     }
 
-    @Test fun paintUsesAreaRateWithoutLayerMultiplier() {
+    @Test fun paintUsesAreaRateWithoutLayerThickness() {
         val result = MaterialCalculator.calculate(
-            area = 30.0,
-            ratePerM2 = 0.15,
-            packageSize = 5.0,
-            wastePercent = 10.0,
-            layerMm = 3.0,
-            perMillimetre = false
+            MaterialCalculationInput(10.0, 8.0, 0.15, 1.0, 10.0, false)
         )
-        assertEquals(4.95, result.required, 1e-8)
-        assertEquals(1, result.packages)
+        assertEquals(1.5, result.baseAmount, 1e-8)
+        assertEquals(1.65, result.amountWithReserve, 1e-8)
+        assertEquals(2, result.packages)
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun rejectsInfiniteArea() {
-        MaterialCalculator.calculate(Double.POSITIVE_INFINITY, 1.0, 10.0)
+    @Test fun rejectsOverflowingConsumption() {
+        assertThrows(IllegalArgumentException::class.java) {
+            MaterialCalculator.calculate(
+                MaterialCalculationInput(1.0e308, 1.0, 2.0, 25.0, 0.0, true)
+            )
+        }
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun rejectsPackageOverflow() {
-        MaterialCalculator.calculate(Double.MAX_VALUE, 1.0, 0.01)
+    @Test fun rejectsPackageCountOverflow() {
+        assertThrows(IllegalArgumentException::class.java) {
+            MaterialCalculator.calculate(
+                MaterialCalculationInput(1.0e100, 1.0, 1.0, 1.0, 0.0, false)
+            )
+        }
     }
 }
