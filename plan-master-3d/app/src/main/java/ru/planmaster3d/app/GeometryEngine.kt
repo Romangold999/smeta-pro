@@ -52,9 +52,18 @@ data class RoomGeometry(
     val wallThicknesses:List<Double> = emptyList(),
     val openingsByWall:Map<Int,List<Opening>> = emptyMap(),
     /** Optional constant height override per wall. */
-    val wallHeightOverrides:List<Double> = emptyList()
+    val wallHeightOverrides:List<Double> = emptyList(),
+    /** Original field measurements, retained independently from calculated vertices. */
+    val measurements:List<WallVectorMeasurement> = emptyList()
 )
 data class ClosureResult(val dx:Double,val dy:Double,val residual:Double,val closed:Boolean)
+data class WallVectorMeasurement(val lengthM:Double,val azimuthDegrees:Double,val label:String="")
+data class MeasurementBuildResult(
+    val pathPoints:List<Vec2>,
+    /** Polygon vertices are exposed only when the measured vectors actually close. */
+    val roomVertices:List<Vec2>,
+    val closure:ClosureResult
+)
 data class RoomMetrics(
     val floorArea:Double,
     val perimeter:Double,
@@ -168,16 +177,25 @@ object GeometryEngine {
         if(room.wallHeights.any{!it.isFinite()||it<=0.0}) errors.add("Высоты стен должны быть конечными и больше нуля")
         if(room.wallHeightOverrides.any{!it.isFinite()||it<=0.0}) errors.add("Индивидуальные высоты стен должны быть конечными и больше нуля")
         if(room.wallThicknesses.any{!it.isFinite()||it<0.0}) errors.add("Толщины стен должны быть конечными и неотрицательными")
-        if(room.vertices.all{it.x.isFinite()&&it.y.isFinite()} && (selfIntersects(room.vertices)||area(room.vertices)<=EPS))
-            errors.add("Контур пересекается сам с собой или имеет нулевую площадь")
+        if(room.vertices.all{it.x.isFinite()&&it.y.isFinite()}) {
+            val polygonArea=area(room.vertices)
+            val polygonPerimeter=perimeter(room.vertices)
+            if(!polygonArea.isFinite()||!polygonPerimeter.isFinite())
+                errors.add("Размеры контура приводят к переполнению площади или периметра")
+            else if(selfIntersects(room.vertices)||polygonArea<=EPS)
+                errors.add("Контур пересекается сам с собой или имеет нулевую площадь")
+        }
         if(room.vertices.all{it.x.isFinite()&&it.y.isFinite()} && room.wallHeights.size in 0..room.vertices.size &&
             room.wallHeightOverrides.size in 0..room.vertices.size && room.wallThicknesses.size in 0..room.vertices.size) {
             val walls=room.vertices.indices.map{i->
                 val next=(i+1)%room.vertices.size
-                val h=room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(i){defaultHeight}}
+                val h1=room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(i){defaultHeight}}
+                val h2=room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(next){defaultHeight}}
                 val thickness=room.wallThicknesses.getOrElse(i){0.0}
                 val length=room.vertices[i].distanceTo(room.vertices[next])
-                if(!length.isFinite()||!h.isFinite()||!(length*h).isFinite()||!(length*h*thickness).isFinite())
+                val grossArea=length*(h1+h2)/2.0
+                val volume=grossArea*thickness
+                if(!length.isFinite()||!grossArea.isFinite()||!volume.isFinite())
                     errors.add("Размеры стены №${i+1} приводят к переполнению расчёта")
             }
         }
@@ -209,9 +227,44 @@ object GeometryEngine {
     }
     /** Невязка исходных измеренных векторов до принудительного замыкания контура. */
     fun closure(vectors:List<Vec2>,tolerance:Double=0.01):ClosureResult {
+        require(tolerance.isFinite() && tolerance>=0.0) { "Допуск замыкания должен быть конечным и неотрицательным" }
+        require(vectors.all{it.x.isFinite()&&it.y.isFinite()}) { "Измеренные векторы должны содержать конечные координаты" }
         val dx=vectors.sumOf{it.x};val dy=vectors.sumOf{it.y}
         val residual=hypot(dx,dy)
+        require(dx.isFinite()&&dy.isFinite()&&residual.isFinite()) { "Сумма измерений выходит за допустимый диапазон" }
         return ClosureResult(dx,dy,residual,residual<=tolerance)
+    }
+
+    /**
+     * Builds a measured path from side lengths and azimuths in degrees.
+     * Azimuth is measured counter-clockwise from the positive X axis.
+     * No Bowditch adjustment or forced closure is applied: an open traverse
+     * returns its path and closure residual, but never a room polygon.
+     */
+    fun buildFromMeasurements(
+        measurements:List<WallVectorMeasurement>,
+        origin:Vec2=Vec2(0.0,0.0),
+        tolerance:Double=0.01
+    ):MeasurementBuildResult {
+        require(measurements.size>=3) { "Для контура нужны минимум три измеренных участка" }
+        require(origin.x.isFinite()&&origin.y.isFinite()) { "Начальная точка должна содержать конечные координаты" }
+        require(tolerance.isFinite()&&tolerance>=0.0) { "Допуск замыкания должен быть конечным и неотрицательным" }
+        require(measurements.all{it.lengthM.isFinite()&&it.lengthM>0.0&&it.azimuthDegrees.isFinite()}) {
+            "Длины должны быть больше нуля, а углы — конечными числами"
+        }
+        val vectors=measurements.map { measurement ->
+            val angle=Math.toRadians(measurement.azimuthDegrees % 360.0)
+            Vec2(measurement.lengthM*cos(angle),measurement.lengthM*sin(angle))
+        }
+        val path=mutableListOf(origin)
+        vectors.forEach { vector ->
+            val next=path.last()+vector
+            require(next.x.isFinite()&&next.y.isFinite()) { "Координаты обмерного контура выходят за допустимый диапазон" }
+            path.add(next)
+        }
+        val result=closure(vectors,tolerance)
+        val vertices=if(result.closed) path.dropLast(1) else emptyList()
+        return MeasurementBuildResult(path,vertices,result)
     }
     fun diagonal(a:Vec2,b:Vec2)=a.distanceTo(b)
     fun wallLengths(points:List<Vec2>)=points.indices.map{points[it].distanceTo(points[(it+1)%points.size])}

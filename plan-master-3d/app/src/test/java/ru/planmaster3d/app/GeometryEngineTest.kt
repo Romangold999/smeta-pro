@@ -174,3 +174,29 @@ class GeometryEngineTest {
   assertEquals(0.7,result.walls.first().netVolumeM3,1e-8)
  }
 }
+
+
+ @Test fun measuredRectangleClosesAndProducesVertices() {
+  val measurements=listOf(WallVectorMeasurement(4.0,0.0),WallVectorMeasurement(3.0,90.0),WallVectorMeasurement(4.0,180.0),WallVectorMeasurement(3.0,270.0))
+  val result=GeometryEngine.buildFromMeasurements(measurements)
+  assertTrue(result.closure.closed)
+  assertEquals(0.0,result.closure.residual,1e-8)
+  assertEquals(4,result.roomVertices.size)
+  assertEquals(12.0,GeometryEngine.area(result.roomVertices),1e-8)
+ }
+ @Test fun nonClosingMeasurementsNeverBecomeRoomPolygon() {
+  val result=GeometryEngine.buildFromMeasurements(listOf(WallVectorMeasurement(4.0,0.0),WallVectorMeasurement(3.0,90.0),WallVectorMeasurement(3.0,180.0)))
+  assertFalse(result.closure.closed)
+  assertTrue(result.closure.residual>0.0)
+  assertTrue(result.roomVertices.isEmpty())
+  assertEquals(4,result.pathPoints.size)
+ }
+ @Test fun measurementBuilderRejectsInvalidLengthsAndAngles() {
+  assertThrows(IllegalArgumentException::class.java){GeometryEngine.buildFromMeasurements(listOf(WallVectorMeasurement(0.0,0.0),WallVectorMeasurement(1.0,90.0),WallVectorMeasurement(1.0,180.0)))}
+  assertThrows(IllegalArgumentException::class.java){GeometryEngine.buildFromMeasurements(listOf(WallVectorMeasurement(1.0,Double.NaN),WallVectorMeasurement(1.0,90.0),WallVectorMeasurement(1.0,180.0)))}
+ }
+ @Test fun roomValidationRejectsOverflowingPolygonAreaAndPerimeter() {
+  val room=RoomGeometry("Huge",listOf(Vec2(0.0,0.0),Vec2(1.0e200,0.0),Vec2(0.0,1.0e200)))
+  assertTrue(GeometryEngine.validateRoom(room).any{it.contains("переполнению")})
+  assertThrows(IllegalArgumentException::class.java){GeometryEngine.metrics(room)}
+ }
