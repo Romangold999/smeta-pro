@@ -335,7 +335,49 @@ class MainActivity:ComponentActivity(){
               fun roomFromPolygon(id:Long,name:String,points:List<Vec2>):Room {
                 val w=(points.maxOf{it.x}-points.minOf{it.x}).coerceAtLeast(0.01)
                 val h=(points.maxOf{it.y}-points.minOf{it.y}).coerceAtLeast(0.01)
-                return Room(id,name,w,h,current.height,w,h,w,h,points,List(points.size){current.height},List(points.size){0.0})
+                val original=current.vertices
+                val originalHeights=if(current.wallHeights.size==original.size) current.wallHeights else List(original.size){current.height}
+                val originalThicknesses=if(current.wallThicknesses.size==original.size) current.wallThicknesses else List(original.size){0.0}
+                fun projection(a:Vec2,b:Vec2,p:Vec2):Double? {
+                  val d=b-a;val len2=d.x*d.x+d.y*d.y
+                  if(len2<1e-12)return null
+                  val t=((p.x-a.x)*d.x+(p.y-a.y)*d.y)/len2
+                  if(t < -1e-7 || t > 1.0000001)return null
+                  val q=a+d*t.coerceIn(0.0,1.0)
+                  return if(q.distanceTo(p)<1e-6)t.coerceIn(0.0,1.0) else null
+                }
+                fun sourceEdge(a:Vec2,b:Vec2):Int? = original.indices.firstOrNull { i ->
+                  projection(original[i],original[(i+1)%original.size],a)!=null &&
+                  projection(original[i],original[(i+1)%original.size],b)!=null
+                }
+                val heights=points.map { point ->
+                  val edge=original.indices.firstOrNull { projection(original[it],original[(it+1)%original.size],point)!=null }
+                  if(edge==null) current.height else {
+                    val t=projection(original[edge],original[(edge+1)%original.size],point)!!
+                    originalHeights[edge]+(originalHeights[(edge+1)%original.size]-originalHeights[edge])*t
+                  }
+                }
+                val thicknesses=points.indices.map { i ->
+                  val edge=sourceEdge(points[i],points[(i+1)%points.size])
+                  if(edge==null) partitionThickness.toDouble()/1000.0 else originalThicknesses[edge]
+                }
+                val openings=mutableMapOf<Int,List<Opening>>()
+                points.indices.forEach { newIndex ->
+                  val source=sourceEdge(points[newIndex],points[(newIndex+1)%points.size]) ?: return@forEach
+                  val a=original[source];val b=original[(source+1)%original.size]
+                  val newStart=projection(a,b,points[newIndex])!!*a.distanceTo(b)
+                  val newEnd=projection(a,b,points[(newIndex+1)%points.size])!!*a.distanceTo(b)
+                  val sameDirection=newEnd>=newStart
+                  val segmentMin=minOf(newStart,newEnd);val segmentMax=maxOf(newStart,newEnd)
+                  val mapped=current.openingsByWall[source].orEmpty().mapNotNull { opening ->
+                    val openingStart=opening.offsetFromStart
+                    val openingEnd=openingStart+opening.width
+                    if(openingStart<segmentMin-1e-7 || openingEnd>segmentMax+1e-7) null
+                    else opening.copy(offsetFromStart=if(sameDirection) openingStart-newStart else newStart-openingEnd)
+                  }
+                  if(mapped.isNotEmpty()) openings[newIndex]=mapped
+                }
+                return Room(id,name,w,h,current.height,w,h,w,h,points,heights,thicknesses,openings)
               }
               rooms=rooms.toMutableList().also { list ->
                 list[selected]=roomFromPolygon(current.id,current.name,split.first)
