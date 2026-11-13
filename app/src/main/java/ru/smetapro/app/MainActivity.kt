@@ -98,6 +98,20 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
   }}
  }
  }
+ "Настройки"->{
+  Text("Управление прайсом",fontSize=18.sp,fontWeight=FontWeight.Bold)
+  Text("Активный прайс: ${activePrice.title}",color=blue,modifier=Modifier.padding(vertical=6.dp))
+  Button(onClick={val now=System.currentTimeMillis();val title="Прайс от "+java.text.SimpleDateFormat("dd.MM.yyyy",java.util.Locale("ru")).format(java.util.Date(now));val v=PriceVersion(now,title,now,activePrice.items.toList());priceVersions.add(0,v);activePriceId=v.id;savePrices()},modifier=Modifier.fillMaxWidth()){Text("＋ Создать новую версию прайса")}
+  Text("Версии прайса",fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=12.dp,bottom=5.dp))
+  LazyColumn(Modifier.weight(0.8f),verticalArrangement=Arrangement.spacedBy(5.dp)){
+   items(priceVersions){v->Card(colors=CardDefaults.cardColors(containerColor=panel),modifier=Modifier.fillMaxWidth()){Row(Modifier.padding(10.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text(v.title,fontWeight=FontWeight.SemiBold);Text("${v.items.size} позиций",color=muted,fontSize=11.sp)};if(v.id==activePriceId)Text("АКТИВЕН",color=blue,fontSize=10.sp) else TextButton(onClick={activePriceId=v.id;savePrices()}){Text("Выбрать")}}}}
+  }
+  Divider(color=muted.copy(alpha=.25f),modifier=Modifier.padding(vertical=7.dp))
+  Row(verticalAlignment=Alignment.CenterVertically){Text("Позиции активного прайса",fontWeight=FontWeight.Bold,modifier=Modifier.weight(1f));TextButton(onClick={openPriceEditor(null)}){Text("＋ Добавить")}}
+  LazyColumn(Modifier.weight(1.2f),verticalArrangement=Arrangement.spacedBy(5.dp),contentPadding=PaddingValues(bottom=12.dp)){
+   items(activePrice.items){w->Card(colors=CardDefaults.cardColors(containerColor=panel),modifier=Modifier.fillMaxWidth().clickable{openPriceEditor(w)}){Row(Modifier.padding(9.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text(w.n,fontSize=13.sp,fontWeight=FontWeight.Medium);Text(w.c+" · "+w.u,color=muted,fontSize=10.sp)};Column(horizontalAlignment=Alignment.End){Text(rub(w.p)+(if(w.from)" от" else ""),color=blue,fontWeight=FontWeight.Bold);Text("Изменить",color=muted,fontSize=10.sp)}}}}
+  }
+ }
  else->{Button(onClick={showAdd=true},Modifier.fillMaxWidth()){Text("＋ Создать смету")};LazyColumn{items(projects){p->Card(Modifier.fillMaxWidth().padding(vertical=5.dp).clickable{currentId=p.id;page="Смета"},colors=CardDefaults.cardColors(containerColor=panel)){Row(Modifier.padding(16.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text(p.name,fontWeight=FontWeight.Bold);Text(p.lines.size.toString()+" позиций",color=muted)};Text(rub(p.total),color=blue,fontWeight=FontWeight.Bold)}}}}}
  }
  }
