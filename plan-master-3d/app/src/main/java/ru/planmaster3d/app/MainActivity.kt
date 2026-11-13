@@ -80,6 +80,7 @@ class MainActivity:ComponentActivity(){
  var rooms by remember { mutableStateOf(toRoomModels(initialSaved)) }
  var selected by remember { mutableIntStateOf(0) }
  var lines by remember { mutableStateOf(initialSaved?.estimate ?: emptyList()) }
+ var constructionRecords by remember { mutableStateOf(initialSaved?.construction ?: emptyList()) }
  var projectIds by remember { mutableStateOf(projectStore.listProjectIds()) }
  var showProjects by remember { mutableStateOf(false) }
  var saveMessage by remember { mutableStateOf("Изменения сохраняются локально после нажатия «Сохранить»") }
@@ -143,20 +144,20 @@ class MainActivity:ComponentActivity(){
   val geometry=rooms.map { r ->
    RoomGeometry(r.name,listOf(Vec2(0.0,0.0),Vec2(r.width,0.0),Vec2(r.width,r.length),Vec2(0.0,r.length)),List(4){r.height},List(4){0.0})
   }
-  projectStore.saveProject(SavedProject(activeProjectId,project,geometry,lines))
+  projectStore.saveProject(SavedProject(activeProjectId,project,geometry,lines,construction=constructionRecords))
   prefs.edit().putString("project",project).putString("active_project_id",activeProjectId).apply()
   projectIds=projectStore.listProjectIds()
   saveMessage="Сохранено: ${java.text.SimpleDateFormat("HH:mm:ss",java.util.Locale.getDefault()).format(java.util.Date())}"
  }
  fun openProject(id:String){
   val saved=projectStore.loadProject(id) ?: return
-  activeProjectId=id;project=saved.name;rooms=toRoomModels(saved);lines=saved.estimate;selected=0
+  activeProjectId=id;project=saved.name;rooms=toRoomModels(saved);lines=saved.estimate;constructionRecords=saved.construction;selected=0
   prefs.edit().putString("active_project_id",id).putString("project",project).apply()
   showProjects=false;saveMessage="Открыт проект «${saved.name}»"
  }
  fun createProject(){
   activeProjectId="project_${System.currentTimeMillis()}"
-  project="Новый объект";rooms=listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0));lines=emptyList();selected=0
+  project="Новый объект";rooms=listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0));lines=emptyList();constructionRecords=emptyList();selected=0
   prefs.edit().putString("active_project_id",activeProjectId).putString("project",project).apply()
   save();showProjects=false
  }
@@ -165,7 +166,8 @@ class MainActivity:ComponentActivity(){
   Column(Modifier.fillMaxSize().padding(pad).padding(horizontal=14.dp)) {
    when(tab){
     "Объект" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
-      item { CardBlock { Text("Панель объекта",fontSize=20.sp,fontWeight=FontWeight.Bold); OutlinedTextField(project,{project=it},label={Text("Название объекта")},modifier=Modifier.fillMaxWidth()); Text("Помещений: ${rooms.size}  •  Площадь пола: ${df.format(totalFloor)} м²"); Text("Периметр: ${df.format(totalPerimeter)} м  •  Стены: ${df.format(totalWalls)} м²"); Text(saveMessage,fontSize=11.sp,color=Color.LightGray); Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){Button(onClick={save()},modifier=Modifier.weight(1f)){Text("Сохранить")};OutlinedButton(onClick={showProjects=true},modifier=Modifier.weight(1f)){Text("Мои проекты")}}; OutlinedButton(onClick={createProject()},modifier=Modifier.fillMaxWidth()){Text("Создать новый проект")} } }
+      item { CardBlock { Text("Панель объекта",fontSize=20.sp,fontWeight=FontWeight.Bold); OutlinedTextField(project,{project=it},label={Text("Название объекта")},modifier=Modifier.fillMaxWidth()); Text("Помещений: ${rooms.size}  •  Площадь пола: ${df.format(totalFloor)} м²");
+        Text("Конструктивных элементов в проекте: ${constructionRecords.size}",color=accent,fontSize=12.sp); Text("Периметр: ${df.format(totalPerimeter)} м  •  Стены: ${df.format(totalWalls)} м²"); Text(saveMessage,fontSize=11.sp,color=Color.LightGray); Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){Button(onClick={save()},modifier=Modifier.weight(1f)){Text("Сохранить")};OutlinedButton(onClick={showProjects=true},modifier=Modifier.weight(1f)){Text("Мои проекты")}}; OutlinedButton(onClick={createProject()},modifier=Modifier.fillMaxWidth()){Text("Создать новый проект")} } }
       item { Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){ Metric("Пол",totalFloor,"м²",Modifier.weight(1f)); Metric("Стены",totalWalls,"м²",Modifier.weight(1f)); Metric("Периметр",totalPerimeter,"м",Modifier.weight(1f)) } }
       item { CardBlock { Text("Помещения",fontWeight=FontWeight.Bold); rooms.forEachIndexed { i,r -> Row(Modifier.fillMaxWidth().clickable{selected=i;tab="Обмеры"}.padding(vertical=8.dp),horizontalArrangement=Arrangement.SpaceBetween){ Text("${r.name}  •  ${df.format(r.floor)} м²"); Text("Изменить ›",color=accent) } } ; Button(onClick={showAddRoom=true},modifier=Modifier.fillMaxWidth()){Text("Добавить помещение")} } }
       item { CardBlock { Text("Быстрые ведомости",fontWeight=FontWeight.Bold); Text("Площадь пола: ${df.format(totalFloor)} м²"); Text("Площадь стен без вычета проёмов: ${df.format(totalWalls)} м²"); Text("Периметр: ${df.format(totalPerimeter)} м") } }
@@ -226,9 +228,19 @@ class MainActivity:ComponentActivity(){
           Button(onClick={
             val rate=demolitionRate.toDoubleOrNull()?:0.0
             val workName=if(demolitionMaterial=="Керамическая плитка") "Демонтаж плитки" else if(demolitionMaterial=="Гипсовая штукатурка"||demolitionMaterial=="Цементная штукатурка") "Демонтаж старой штукатурки" else "Демонтаж: $demolitionMaterial"
+            val wallIndex=selectedDemolitionWallIndex
+            val start=when(wallIndex){0->Vec2(0.0,0.0);1->Vec2(current.width,0.0);2->Vec2(current.width,current.length);else->Vec2(0.0,current.length)}
+            val end=when(wallIndex){0->Vec2(demolitionLength.toDouble(),0.0);1->Vec2(current.width,demolitionLength.toDouble());2->Vec2((current.width-demolitionLength.toDouble()).coerceAtLeast(0.0),current.length);else->Vec2(0.0,(current.length-demolitionLength.toDouble()).coerceAtLeast(0.0))}
+            constructionRecords=constructionRecords+ConstructionRecord(
+              id=java.util.UUID.randomUUID().toString(),kind="DEMOLITION",roomIndex=selected,
+              material=demolitionMaterial,wallIndex=wallIndex,startX=start.x,startY=start.y,endX=end.x,endY=end.y,
+              lengthM=demolitionLength.toDouble(),heightM=demolitionHeight.toDouble(),thicknessMm=demolitionThickness.toDouble(),
+              densityKgM3=demolitionDensity.toDouble(),quantity=result.areaM2
+            )
             lines=lines+EstimateLine(workName,"м²",rate,result.areaM2,"Демонтаж")+EstimateLine("Упаковка мусора ($demolitionMaterial)","меш",demolitionBagPrice.toDoubleOrNull()?:0.0,result.bagsRequired.toDouble(),"Демонтаж")+EstimateLine("Вывоз строительного мусора","т",demolitionHaulPrice.toDoubleOrNull()?:0.0,result.solidMassKg/1000.0,"Вывоз")
+            saveMessage="Демонтажный участок сохранён в проекте. Нажми «Сохранить» для записи."
             tab="Смета"
-          },modifier=Modifier.fillMaxWidth()){Text("Добавить демонтаж и отходы в смету")}
+          },modifier=Modifier.fillMaxWidth()){Text("Сохранить демонтаж и добавить в смету")}
         } else Text("Проверь размеры, плотность и параметры мешка.",color=Color(0xFFFFB86B))
       } }
     }
@@ -301,6 +313,20 @@ class MainActivity:ComponentActivity(){
           }
           Button(onClick={
             val rate=partitionRate.toDoubleOrNull()?:0.0
+            val p1=partitionStart
+            val p2=partitionEnd
+            if(p1!=null && p2!=null){
+              constructionRecords=constructionRecords+ConstructionRecord(
+                id=java.util.UUID.randomUUID().toString(),kind="PARTITION",roomIndex=selected,
+                material=partitionKind,wallIndex=-1,startX=p1.x,startY=p1.y,endX=p2.x,endY=p2.y,
+                lengthM=partitionLength.toDouble(),heightM=partitionHeight.toDouble(),thicknessMm=partitionThickness.toDouble(),
+                openingsAreaM2=partitionOpenings.toDouble(),reservePercent=partitionReserve.toDouble(),
+                layersPerSide=boardLayers.toIntOrNull()?:1,sides=boardSides.toIntOrNull()?:2,
+                studSpacingMm=studSpacing.toIntOrNull()?:600,insulation=insulation,
+                densityKgM3=blockDensity.toDoubleOrNull()?:0.0,quantity=result.netAreaM2
+              )
+              saveMessage="Перегородка сохранена как элемент проекта. Нажми «Сохранить» для записи."
+            }
             val rows=mutableListOf<EstimateLine>()
             rows.add(EstimateLine(if(partitionKind=="ГКЛ") "Монтаж каркасной перегородки ГКЛ $partitionThickness мм" else "Монтаж перегородки: $partitionKind $partitionThickness мм","м²",rate,result.netAreaM2,"Перегородки"))
             if(partitionKind!="ГКЛ"){
