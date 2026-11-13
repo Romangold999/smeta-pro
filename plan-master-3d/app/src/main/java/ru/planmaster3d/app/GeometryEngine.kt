@@ -187,7 +187,9 @@ object GeometryEngine {
         }
         if(room.vertices.all{it.x.isFinite()&&it.y.isFinite()} && room.wallHeights.size in 0..room.vertices.size &&
             room.wallHeightOverrides.size in 0..room.vertices.size && room.wallThicknesses.size in 0..room.vertices.size) {
-            val walls=room.vertices.indices.map{i->
+            var totalGrossWallArea=0.0
+            var totalGrossWallVolume=0.0
+            room.vertices.indices.forEach{i->
                 val next=(i+1)%room.vertices.size
                 val h1=room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(i){defaultHeight}}
                 val h2=room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(next){defaultHeight}}
@@ -195,9 +197,13 @@ object GeometryEngine {
                 val length=room.vertices[i].distanceTo(room.vertices[next])
                 val grossArea=length*(h1+h2)/2.0
                 val volume=grossArea*thickness
+                totalGrossWallArea+=grossArea
+                totalGrossWallVolume+=volume
                 if(!length.isFinite()||!grossArea.isFinite()||!volume.isFinite())
                     errors.add("Размеры стены №${i+1} приводят к переполнению расчёта")
             }
+            if(!totalGrossWallArea.isFinite()||!totalGrossWallVolume.isFinite())
+                errors.add("Суммарная площадь или объём стен приводят к переполнению расчёта")
         }
         if(errors.isEmpty()) errors.addAll(validateOpenings(room,defaultHeight))
         return errors

@@ -244,6 +244,56 @@ class MainActivity:ComponentActivity(){
         },modifier=Modifier.fillMaxWidth()){Text("Применить контур")}
         if(geometryMessage.isNotBlank())Text(geometryMessage,color=if(geometryMessage.startsWith("Контур обновлён"))accent else Color(0xFFFFB86B),fontSize=12.sp)
       } }
+      item { CardBlock {
+        Text("Обмер по длинам и направлениям",fontSize=18.sp,fontWeight=FontWeight.Bold)
+        Text("Введи каждый участок отдельной строкой: длина в метрах; азимут в градусах. Угол отсчитывается против часовой стрелки от оси X: 0° — вправо, 90° — вверх. Приложение покажет невязку и не будет принудительно замыкать неточный контур.")
+        var measurementDraft by remember(current.id) { mutableStateOf(current.wallMeasurements.joinToString("\n"){ "${it.lengthM};${it.azimuthDegrees}" }) }
+        var measurementStatus by remember(current.id) { mutableStateOf("") }
+        OutlinedTextField(value=measurementDraft,onValueChange={measurementDraft=it},modifier=Modifier.fillMaxWidth(),minLines=4,label={Text("Длина;азимут — одна стена на строку")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal))
+        Button(onClick={
+          val parsed=runCatching {
+            measurementDraft.lines().filter{it.isNotBlank()}.mapIndexed { index,line ->
+              val pair=line.trim().split(";")
+              require(pair.size==2) { "В строке ${index+1} укажи длину и азимут через ;" }
+              WallVectorMeasurement(pair[0].trim().replace(',','.').toDouble(),pair[1].trim().replace(',','.').toDouble(),"Стена ${index+1}")
+            }
+          }.getOrElse { measurementStatus=it.message?: "Ошибка обмеров";emptyList() }
+          if(parsed.size>=3) {
+            val result=runCatching { GeometryEngine.buildFromMeasurements(parsed,tolerance=0.01) }
+              .getOrElse { measurementStatus=it.message?: "Некорректные обмеры";null }
+            if(result!=null) {
+              if(!result.closure.closed) {
+                rooms=rooms.toMutableList().also{it[selected]=current.copy(wallMeasurements=parsed)}
+                measurementStatus="Невязка ${df.format(result.closure.residual)} м (ΔX ${df.format(result.closure.dx)}; ΔY ${df.format(result.closure.dy)}). Исходные обмеры сохранены; существующий контур не изменён."
+              } else if(parsed.size!=current.vertices.size&&current.openingsByWall.isNotEmpty()) {
+                rooms=rooms.toMutableList().also{it[selected]=current.copy(wallMeasurements=parsed)}
+                measurementStatus="Обмеры сохранены, но число стен изменилось. Перенеси или удали проёмы перед применением нового контура."
+              } else {
+                val sameCount=parsed.size==current.vertices.size
+                val updated=current.copy(
+                  width=(result.roomVertices.maxOf{it.x}-result.roomVertices.minOf{it.x}).coerceAtLeast(0.01),
+                  length=(result.roomVertices.maxOf{it.y}-result.roomVertices.minOf{it.y}).coerceAtLeast(0.01),
+                  vertices=result.roomVertices,
+                  wallMeasurements=parsed,
+                  wallHeights=if(sameCount&&current.wallHeights.size==parsed.size)current.wallHeights else List(parsed.size){current.height},
+                  wallThicknesses=if(sameCount&&current.wallThicknesses.size==parsed.size)current.wallThicknesses else List(parsed.size){0.0},
+                  openingsByWall=if(sameCount)current.openingsByWall else emptyMap(),
+                  wallHeightOverrides=if(sameCount&&current.wallHeightOverrides.size==parsed.size)current.wallHeightOverrides else emptyList()
+                )
+                val errors=GeometryEngine.validateRoom(RoomGeometry(updated.name,updated.vertices,updated.wallHeights,updated.wallThicknesses,updated.openingsByWall,updated.wallHeightOverrides,parsed),updated.height)
+                if(errors.isNotEmpty())measurementStatus=errors.joinToString("; ")
+                else {
+                  rooms=rooms.toMutableList().also{it[selected]=updated}
+                  vertexDrafts=vertexDrafts-current.id
+                  measurementStatus="Контур построен по исходным обмерам. Невязка: ${df.format(result.closure.residual)} м. Автоматическая корректировка не выполнялась."
+                }
+              }
+            }
+          } else if(measurementStatus.isBlank()) measurementStatus="Нужно минимум три участка обмера."
+        },modifier=Modifier.fillMaxWidth()){Text("Рассчитать и применить обмеры")}
+        if(measurementStatus.isNotBlank()) Text(measurementStatus,color=if(measurementStatus.startsWith("Контур построен"))accent else Color(0xFFFFB86B),fontSize=12.sp)
+        if(current.wallMeasurements.isNotEmpty()) Text("Сохранено исходных участков: ${current.wallMeasurements.size}",fontSize=11.sp,color=Color.LightGray)
+      } }
       item { CardBlock { Text("Высота и толщина каждой стены",fontSize=18.sp,fontWeight=FontWeight.Bold)
         Text("Параметры независимы для каждой стены. Высота применяется по всей длине выбранной стены; толщина задаётся в миллиметрах.")
         current.vertices.indices.forEach { i ->
