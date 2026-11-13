@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -147,6 +148,7 @@ class MainActivity:ComponentActivity(){
  var vertexDrafts by remember { mutableStateOf<Map<Long,String>>(emptyMap()) }
  var wallDimensionDrafts by remember { mutableStateOf<Map<String,String>>(emptyMap()) }
  var geometryMessage by remember { mutableStateOf("") }
+ var selectedVertexIndex by remember { mutableIntStateOf(0) }
  var partitionRate by remember { mutableStateOf("0") }
  var demolitionBagPrice by remember { mutableStateOf("0") }
  var view3dAngle by remember { mutableFloatStateOf(35f) }
@@ -210,6 +212,34 @@ class MainActivity:ComponentActivity(){
       item { CardBlock { Text("Геометрия помещения",fontSize=19.sp,fontWeight=FontWeight.Bold); Text("Базовый режим прямоугольного помещения. Длины каждой стены редактируются отдельно; исходные размеры не подгоняются автоматически.") ; Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){ rooms.forEachIndexed{i,r->FilterChip(selected=selected==i,onClick={selected=i},label={Text(r.name)})} } } }
       item { CardBlock {
         Text(current.name,fontWeight=FontWeight.Bold)
+        Text("Редактирование контура перетаскиванием вершин",fontWeight=FontWeight.SemiBold)
+        Text("Потяни круглую точку на плане. После отпускания приложение проверит контур и сохранит корректную геометрию.",fontSize=11.sp,color=Color.LightGray)
+        EditableRoomPlan(
+          room=current,
+          selectedVertex=selectedVertexIndex.coerceIn(0,current.vertices.lastIndex),
+          onSelectedVertex={selectedVertexIndex=it},
+          onCommit={candidate ->
+            if(candidate.size<3 || GeometryEngine.selfIntersects(candidate) || GeometryEngine.area(candidate)<=1e-8) {
+              geometryMessage="Изменение отклонено: контур должен содержать минимум три вершины и не пересекаться сам с собой."
+            } else {
+              val updated=current.copy(
+                width=(candidate.maxOf{it.x}-candidate.minOf{it.x}).coerceAtLeast(0.01),
+                length=(candidate.maxOf{it.y}-candidate.minOf{it.y}).coerceAtLeast(0.01),
+                vertices=candidate,
+                wallMeasurements=emptyList()
+              )
+              val errors=GeometryEngine.validateOpenings(RoomGeometry(updated.name,updated.vertices,updated.wallHeights,updated.wallThicknesses,updated.openingsByWall,updated.wallHeightOverrides),updated.height)
+              if(errors.isNotEmpty()) geometryMessage="Изменение отклонено: "+errors.joinToString("; ")
+              else {
+                rooms=rooms.toMutableList().also{it[selected]=updated}
+                vertexDrafts=vertexDrafts-current.id
+                geometryMessage="Вершина перемещена. Геометрия и расчёты обновлены; исходные векторные обмеры очищены, так как контур изменён вручную."
+              }
+            }
+          },
+          modifier=Modifier.fillMaxWidth().height(250.dp)
+        )
+        Text("Выбрана вершина \${selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)+1}: X \${df.format(current.vertices[selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)].x)} м • Y \${df.format(current.vertices[selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)].y)} м",fontSize=12.sp,color=accent)
         NumberField("Высота помещения, м",roomH){roomH=it}
         Text("Координаты вершин контура (метры)",fontWeight=FontWeight.SemiBold)
         val initialVertexText=current.vertices.joinToString("\n"){ "${String.format(java.util.Locale.US,"%.3f",it.x)};${String.format(java.util.Locale.US,"%.3f",it.y)}" }
@@ -823,6 +853,78 @@ class MainActivity:ComponentActivity(){
   drawPath(floor,Color(0xFF48C7D9),style=Stroke(3f))
  }
 }
+@Composable fun EditableRoomPlan(
+ room:Room,
+ selectedVertex:Int,
+ onSelectedVertex:(Int)->Unit,
+ onCommit:(List<Vec2>)->Unit,
+ modifier:Modifier=Modifier
+){
+ var draft by remember(room.id,room.vertices){ mutableStateOf(room.vertices) }
+ var draggingIndex by remember(room.id,room.vertices){ mutableIntStateOf(-1) }
+ val latestSelected=rememberUpdatedState(onSelectedVertex)
+ val latestCommit=rememberUpdatedState(onCommit)
+ Canvas(
+  modifier.pointerInput(room.id,room.vertices){
+   fun screenPoint(point:Offset):Vec2 {
+    val minX=room.vertices.minOf{it.x};val maxX=room.vertices.maxOf{it.x}
+    val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
+    val bw=(maxX-minX).coerceAtLeast(0.01).toFloat()
+    val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
+    val scale=min(size.width/(bw+1f),size.height/(bh+1f))
+    val left=(size.width-bw*scale)/2f;val top=(size.height-bh*scale)/2f
+    return Vec2(minX+(point.x-left)/scale,minY+(point.y-top)/scale)
+   }
+   fun vertexScreen(point:Vec2):Offset {
+    val minX=room.vertices.minOf{it.x};val maxX=room.vertices.maxOf{it.x}
+    val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
+    val bw=(maxX-minX).coerceAtLeast(0.01).toFloat()
+    val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
+    val scale=min(size.width/(bw+1f),size.height/(bh+1f))
+    val left=(size.width-bw*scale)/2f;val top=(size.height-bh*scale)/2f
+    return Offset(left+(point.x-minX).toFloat()*scale,top+(point.y-minY).toFloat()*scale)
+   }
+   detectDragGestures(
+    onDragStart={position->
+     val nearest=room.vertices.indices.map{index->index to (vertexScreen(room.vertices[index])-position).getDistance()}.minByOrNull{it.second}
+     draggingIndex=if(nearest!=null&&nearest.second<=42f)nearest.first else -1
+     if(draggingIndex>=0)latestSelected.value(draggingIndex)
+    },
+    onDragEnd={
+     if(draggingIndex>=0) latestCommit.value(draft)
+     draggingIndex=-1
+    },
+    onDragCancel={draggingIndex=-1;draft=room.vertices},
+    onDrag={change,_->
+     if(draggingIndex>=0){
+      val point=screenPoint(change.position)
+      draft=draft.toMutableList().also{it[draggingIndex]=point}
+      change.consume()
+     }
+    }
+   )
+  }
+ ){
+  val minX=room.vertices.minOf{it.x};val maxX=room.vertices.maxOf{it.x}
+  val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
+  val bw=(maxX-minX).coerceAtLeast(0.01).toFloat()
+  val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
+  val scale=min(size.width/(bw+1f),size.height/(bh+1f))
+  val left=(size.width-bw*scale)/2f;val top=(size.height-bh*scale)/2f
+  fun map(point:Vec2)=Offset(left+(point.x-minX).toFloat()*scale,top+(point.y-minY).toFloat()*scale)
+  val path=Path()
+  draft.forEachIndexed{index,point->val p=map(point);if(index==0)path.moveTo(p.x,p.y)else path.lineTo(p.x,p.y)}
+  path.close()
+  drawPath(path,Color(0xFF263B50))
+  drawPath(path,Color(0xFF6ED4E5),style=Stroke(4f))
+  draft.forEachIndexed{index,point->
+   val p=map(point)
+   drawCircle(if(index==selectedVertex)Color(0xFFFFB454) else Color(0xFF48C7D9),if(index==selectedVertex)12f else 9f,p)
+   drawCircle(Color.White,2.5f,p)
+  }
+ }
+}
+
 @Composable fun SelectableRoomPlan(room:Room,selectedWall:Int,modifier:Modifier=Modifier,onSelect:(Int)->Unit){
  Canvas(modifier.pointerInput(room.vertices,selectedWall){detectTapGestures { tap ->
   val minX=room.vertices.minOf{it.x};val maxX=room.vertices.maxOf{it.x};val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
