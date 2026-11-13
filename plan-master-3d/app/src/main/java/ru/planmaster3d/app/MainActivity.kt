@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -98,6 +100,7 @@ class MainActivity:ComponentActivity(){
  var roomL by remember { mutableStateOf("5") }
  var roomH by remember { mutableStateOf("2.7") }
  var demolitionWall by remember { mutableStateOf("Стена 1") }
+ var selectedDemolitionWallIndex by remember { mutableIntStateOf(0) }
  var demolitionMaterial by remember { mutableStateOf("Керамическая плитка") }
  var demolitionLength by remember { mutableStateOf("4") }
  var demolitionHeight by remember { mutableStateOf("2.7") }
@@ -110,6 +113,8 @@ class MainActivity:ComponentActivity(){
  var demolitionRate by remember { mutableStateOf("1000") }
  var partitionKind by remember { mutableStateOf("Газобетон") }
  var partitionLength by remember { mutableStateOf("3") }
+ var partitionStart by remember { mutableStateOf<Vec2?>(null) }
+ var partitionEnd by remember { mutableStateOf<Vec2?>(null) }
  var partitionHeight by remember { mutableStateOf("2.7") }
  var partitionThickness by remember { mutableStateOf("100") }
  var partitionOpenings by remember { mutableStateOf("0") }
@@ -186,7 +191,13 @@ class MainActivity:ComponentActivity(){
       item { CardBlock {
         Text("Демонтаж выбранного участка",fontSize=19.sp,fontWeight=FontWeight.Bold)
         Text("Выбери сторону помещения. Длину можно уменьшить, если демонтируется только часть стены.")
-        Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){ listOf("Стена 1","Стена 2","Стена 3","Стена 4").forEach { side -> FilterChip(selected=demolitionWall==side,onClick={demolitionWall=side;demolitionLength=if(side=="Стена 1"||side=="Стена 3") current.width.toString() else current.length.toString();demolitionHeight=current.height.toString()},label={Text(side)}) } }
+        SelectableRoomPlan(current,selectedDemolitionWallIndex,Modifier.fillMaxWidth().height(230.dp)){ index ->
+          selectedDemolitionWallIndex=index
+          demolitionWall="Стена ${index+1}"
+          demolitionLength=if(index%2==0) current.width.toString() else current.length.toString()
+          demolitionHeight=current.height.toString()
+        }
+        Text("Выбран участок: $demolitionWall. Нажми на другую стену, чтобы переключить её. Длину можно уменьшить для частичного демонтажа.",color=accent,fontSize=12.sp)
         varType(demolitionMaterial,{demolitionMaterial=it;demolitionDensity=ConstructionMaterialPresets.demolitionDensities[it]?.toString()?:demolitionDensity;demolitionThickness=when(it){"Керамическая плитка"->"10";"ГКЛ"->"12.5";"Гипсовая штукатурка","Цементная штукатурка"->"20";"Цементная стяжка/бетон"->"50";"Газобетон"->"100";else->"120"}},ConstructionMaterialPresets.demolitionDensities.keys.toList())
         NumberField("Длина демонтируемого участка, м",demolitionLength){demolitionLength=it}
         NumberField("Высота участка, м",demolitionHeight){demolitionHeight=it}
@@ -223,7 +234,15 @@ class MainActivity:ComponentActivity(){
     "Перегородки" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock {
         Text("Новая перегородка",fontSize=19.sp,fontWeight=FontWeight.Bold)
-        Text("Задай длину, высоту и проёмы. Расчёт будет привязан к этому помещению; привязка к интерактивному 2D-чертежу добавляется следующим этапом.")
+        Text("Отметь на плане начало и конец новой перегородки двумя касаниями. Длина рассчитается по координатам; при необходимости её можно поправить вручную.")
+        PartitionPlacementCanvas(current,partitionStart,partitionEnd,Modifier.fillMaxWidth().height(230.dp)){ point ->
+          if(partitionStart==null || partitionEnd!=null){partitionStart=point;partitionEnd=null}
+          else {partitionEnd=point;partitionLength=df.format(partitionStart!!.distanceTo(point)).replace(',','.')}
+        }
+        Row(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically){
+          Text(if(partitionStart==null) "Точка начала не выбрана" else if(partitionEnd==null) "Выбери точку окончания" else "Длина по плану: $partitionLength м",color=accent,modifier=Modifier.weight(1f))
+          TextButton(onClick={partitionStart=null;partitionEnd=null}){Text("Сбросить")}
+        }
         NumberField("Длина перегородки, м",partitionLength){partitionLength=it}
         NumberField("Высота перегородки, м",partitionHeight){partitionHeight=it}
         NumberField("Площадь дверных/прочих проёмов, м²",partitionOpenings){partitionOpenings=it}
@@ -308,5 +327,38 @@ class MainActivity:ComponentActivity(){
 @Composable fun NumberField(label:String,value:String,onChange:(String)->Unit){OutlinedTextField(value,onChange,label={Text(label)},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth(),singleLine=true)}
 @Composable fun varType(value:String,onChange:(String)->Unit,options:List<String>){Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){options.forEach{FilterChip(selected=value==it,onClick={onChange(it)},label={Text(it,fontSize=11.sp)})}}}
 @Composable fun RoomPlan(room:Room,modifier:Modifier=Modifier){Canvas(modifier){val scale=min(size.width/(room.width.toFloat()+1),size.height/(room.length.toFloat()+1));val w=room.width.toFloat()*scale;val h=room.length.toFloat()*scale;val left=(size.width-w)/2;val top=(size.height-h)/2;drawRect(Color(0xFF6ED4E5),Offset(left,top),androidx.compose.ui.geometry.Size(w,h),style=Stroke(5f));drawLine(Color.White,Offset(left,top),Offset(left+w,top),2f);drawLine(Color.White,Offset(left+w,top),Offset(left+w,top+h),2f)}}
+@Composable fun SelectableRoomPlan(room:Room,selectedWall:Int,modifier:Modifier=Modifier,onSelect:(Int)->Unit){
+ Canvas(modifier.pointerInput(room.width,room.length){detectTapGestures { tap ->
+  val scale=min(size.width/(room.width.toFloat()+1),size.height/(room.length.toFloat()+1))
+  val w=room.width.toFloat()*scale;val h=room.length.toFloat()*scale
+  val left=(size.width-w)/2;val top=(size.height-h)/2
+  val a=listOf(Offset(left,top),Offset(left+w,top),Offset(left+w,top+h),Offset(left,top+h))
+  fun distance(p:Offset,s:Offset,e:Offset):Float { val dx=e.x-s.x;val dy=e.y-s.y;val len=dx*dx+dy*dy;val t=if(len==0f)0f else (((p.x-s.x)*dx+(p.y-s.y)*dy)/len).coerceIn(0f,1f);return hypot(p.x-(s.x+t*dx),p.y-(s.y+t*dy)) }
+  val nearest=(0..3).map{it to distance(tap,a[it],a[(it+1)%4])}.minByOrNull{it.second}
+  if(nearest!=null&&nearest.second<48f) onSelect(nearest.first)
+ } }){
+  val scale=min(size.width/(room.width.toFloat()+1),size.height/(room.length.toFloat()+1))
+  val w=room.width.toFloat()*scale;val h=room.length.toFloat()*scale;val left=(size.width-w)/2;val top=(size.height-h)/2
+  val pts=listOf(Offset(left,top),Offset(left+w,top),Offset(left+w,top+h),Offset(left,top+h))
+  for(i in 0..3) drawLine(if(i==selectedWall) Color(0xFFFFB454) else Color(0xFF6ED4E5),pts[i],pts[(i+1)%4],if(i==selectedWall)10f else 5f)
+  drawCircle(Color(0xFFFFB454),7f,pts[selectedWall])
+ }
+}
+@Composable fun PartitionPlacementCanvas(room:Room,start:Vec2?,end:Vec2?,modifier:Modifier=Modifier,onPoint:(Vec2)->Unit){
+ Canvas(modifier.pointerInput(room.width,room.length,start,end){detectTapGestures { tap ->
+  val scale=min(size.width/(room.width.toFloat()+1),size.height/(room.length.toFloat()+1))
+  val w=room.width.toFloat()*scale;val h=room.length.toFloat()*scale;val left=(size.width-w)/2;val top=(size.height-h)/2
+  val x=((tap.x-left)/scale).coerceIn(0f,room.width.toFloat()).toDouble()
+  val y=((tap.y-top)/scale).coerceIn(0f,room.length.toFloat()).toDouble()
+  onPoint(Vec2(x,y))
+ } }){
+  val scale=min(size.width/(room.width.toFloat()+1),size.height/(room.length.toFloat()+1))
+  val w=room.width.toFloat()*scale;val h=room.length.toFloat()*scale;val left=(size.width-w)/2;val top=(size.height-h)/2
+  drawRect(Color(0xFF6ED4E5),Offset(left,top),androidx.compose.ui.geometry.Size(w,h),style=Stroke(4f))
+  fun map(p:Vec2)=Offset(left+p.x.toFloat()*scale,top+p.y.toFloat()*scale)
+  if(start!=null) drawCircle(Color(0xFFFFB454),9f,map(start))
+  if(start!=null&&end!=null){drawLine(Color(0xFFFFB454),map(start),map(end),7f);drawCircle(Color(0xFFFFB454),9f,map(end))}
+ }
+}
 fun shareEstimate(ctx:Context,lines:List<EstimateLine>){val body=buildString{append("PLAN MASTER 3D — СМЕТА\n\n");lines.forEach{append("${it.name}: ${it.qty} ${it.unit} × ${it.price} = ${it.total} ₽\n")};append("\nИТОГО: ${lines.sumOf{it.total}} ₽")};val i=android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT,body);ctx.startActivity(android.content.Intent.createChooser(i,"Отправить смету"))}
 fun shareCsv(ctx:Context,lines:List<EstimateLine>){val body=buildString{append("Раздел;Наименование;Ед.;Количество;Цена;Сумма\n");lines.forEach{append("${it.category};${it.name};${it.unit};${it.qty};${it.price};${it.total}\n")}};val i=android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/csv").putExtra(android.content.Intent.EXTRA_TEXT,body);ctx.startActivity(android.content.Intent.createChooser(i,"Экспорт таблицы"))}
