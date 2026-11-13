@@ -272,8 +272,10 @@ data class MaterialResult(val required:Double,val packages:Int,val packageSize:D
 object MaterialCalculator {
     /** ratePerM2 — расход на м²; layerMm применяется отдельно для материалов с расходом на мм. */
     fun calculate(area:Double,ratePerM2:Double,packageSize:Double,wastePercent:Double=0.0,layerMm:Double=1.0,perMillimetre:Boolean=false):MaterialResult {
+        require(listOf(area,ratePerM2,packageSize,wastePercent,layerMm).all{it.isFinite()})
         require(area>=0&&ratePerM2>=0&&packageSize>0&&wastePercent>=0&&layerMm>=0)
         val amount=area*ratePerM2*(if(perMillimetre)layerMm else 1.0)*(1+wastePercent/100.0)
+        require(amount.isFinite() && amount/packageSize<=Int.MAX_VALUE) { "Расчётное количество упаковок превышает допустимый диапазон" }
         return MaterialResult(amount,ceil(amount/packageSize).toInt(),packageSize)
     }
 }
