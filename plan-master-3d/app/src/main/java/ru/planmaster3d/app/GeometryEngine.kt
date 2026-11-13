@@ -114,6 +114,14 @@ object GeometryEngine {
     fun diagonal(a:Vec2,b:Vec2)=a.distanceTo(b)
     fun wallLengths(points:List<Vec2>)=points.indices.map{points[it].distanceTo(points[(it+1)%points.size])}
 
+    /** Точка на ребре по расстоянию от его начальной вершины. */
+    fun pointOnEdge(points:List<Vec2>,edgeIndex:Int,distanceFromStart:Double):Vec2? {
+        if(points.size<2 || edgeIndex !in points.indices || distanceFromStart<0.0) return null
+        val a=points[edgeIndex];val b=points[(edgeIndex+1)%points.size];val length=a.distanceTo(b)
+        if(length<=EPS || distanceFromStart>length+EPS) return null
+        return a+(b-a)*(distanceFromStart.coerceIn(0.0,length)/length)
+    }
+
     data class PolygonSplit(val first:List<Vec2>,val second:List<Vec2>,val originalArea:Double) {
         val combinedArea get()=area(first)+area(second)
     }
