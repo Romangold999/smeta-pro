@@ -1,0 +1,250 @@
+package ru.ral.masterpro
+
+import android.content.SharedPreferences
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.json.JSONObject
+
+private val bg = Color(0xFF11151B)
+private val panel = Color(0xFF202731)
+private val gold = Color(0xFFFFC247)
+private val muted = Color(0xFF9AA5B3)
+
+data class RalColor(val code: String, val name: String, val hex: Long)
+private val colors = listOf(
+    RalColor("1000","Зелёно-бежевый",0xFFBEBD7F), RalColor("1001","Бежевый",0xFFC2B078),
+    RalColor("1002","Песочно-жёлтый",0xFFC6A664), RalColor("1003","Сигнальный жёлтый",0xFFE5BE01),
+    RalColor("1004","Золотисто-жёлтый",0xFFCDA434), RalColor("1013","Жемчужно-белый",0xFFEAE3D2),
+    RalColor("1015","Светлая слоновая кость",0xFFE6D2B5), RalColor("1021","Рапсово-жёлтый",0xFFEEC200),
+    RalColor("2004","Чистый оранжевый",0xFFE76500), RalColor("3000","Огненно-красный",0xFFAF2B1E),
+    RalColor("3003","Рубиново-красный",0xFF8F1D21), RalColor("3015","Светло-розовый",0xFFE4A0A0),
+    RalColor("3020","Транспортный красный",0xFFCC0605), RalColor("4008","Сигнальный фиолетовый",0xFF8F4082),
+    RalColor("5002","Ультрамариново-синий",0xFF202060), RalColor("5005","Сигнальный синий",0xFF154889),
+    RalColor("5012","Голубой",0xFF2874B2), RalColor("6001","Изумрудно-зелёный",0xFF287233),
+    RalColor("6005","Зелёный мох",0xFF0E4235), RalColor("6018","Жёлто-зелёный",0xFF48A421),
+    RalColor("6027","Светло-зелёный",0xFF81D0D5), RalColor("7001","Серебристо-серый",0xFF8A9597),
+    RalColor("7016","Антрацитово-серый",0xFF383E42), RalColor("7024","Графитовый серый",0xFF474A51),
+    RalColor("7035","Светло-серый",0xFFD7D7D7), RalColor("7040","Оконный серый",0xFF9DA1AA),
+    RalColor("8004","Медно-коричневый",0xFF8E402A), RalColor("8017","Шоколадно-коричневый",0xFF45332E),
+    RalColor("9001","Кремово-белый",0xFFF1EBDB), RalColor("9003","Сигнальный белый",0xFFF4F4F4),
+    RalColor("9005","Чёрный янтарь",0xFF0A0A0A), RalColor("9010","Чисто-белый",0xFFF1F0E8),
+    RalColor("9016","Транспортный белый",0xFFF6F6F6)
+)
+private val materials = listOf("Краска и эмаль","Декоративная штукатурка","Бетон","Микроцемент")
+private val systems = listOf("Водно-дисперсионная","Растворительная","Минеральная / цементная","Универсальная","Своя система")
+private val initialPigments = listOf("Белый","Чёрный","Жёлтый","Охра","Оранжевый","Красный","Оксид красный","Синий","Фталоцианиновый синий","Зелёный","Фталоцианиновый зелёный","Фиолетовый","Коричневый","Умбра","Оксид жёлтый")
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent { RalMasterApp(getSharedPreferences("ral_master", MODE_PRIVATE)) }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RalMasterApp(prefs: SharedPreferences) {
+    var page by remember { mutableIntStateOf(0) }
+    var search by remember { mutableStateOf("") }
+    var selected by remember { mutableStateOf(colors.first { it.code == "7016" }) }
+    var material by remember { mutableStateOf(materials.first()) }
+    var system by remember { mutableStateOf(systems.first()) }
+    var base by remember { mutableStateOf("A") }
+    var volume by remember { mutableStateOf("1") }
+    var pigments by remember { mutableStateOf(prefs.getString("pigments", initialPigments.joinToString("|"))!!.split("|")) }
+    var savedText by remember { mutableStateOf(prefs.getString("formulas", "{}") ?: "{}") }
+    var entries by remember { mutableStateOf(mapOf<String, String>()) }
+    var showAdd by remember { mutableStateOf(false) }
+    var newPigment by remember { mutableStateOf("") }
+    val formulas = remember(savedText) { JSONObject(savedText) }
+    val key = listOf(material, system, base, selected.code).joinToString("|")
+    val formula = formulas.optJSONObject(key)
+    val liters = volume.replace(',', '.').toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
+
+    MaterialTheme(colorScheme = darkColorScheme(primary = gold, background = bg, surface = panel, onPrimary = bg)) {
+        Scaffold(
+            containerColor = bg,
+            topBar = {
+                TopAppBar(
+                    title = { Column {
+                        Text("RAL MASTER PRO", fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+                        Text("COLOR & TINTING WORKSHOP", color = muted, fontSize = 9.sp, letterSpacing = 1.sp)
+                    } },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = bg, titleContentColor = Color.White)
+                )
+            },
+            bottomBar = {
+                NavigationBar(containerColor = panel) {
+                    val labels = listOf("Каталог", "Расчёт", "Пигменты", "Рецепты")
+                    val icons = listOf(Icons.Default.Palette, Icons.Default.Calculate, Icons.Default.Science, Icons.Default.MenuBook)
+                    labels.forEachIndexed { i, label ->
+                        NavigationBarItem(selected = page == i, onClick = { page = i },
+                            icon = { Icon(icons[i], contentDescription = null) }, label = { Text(label) })
+                    }
+                }
+            }
+        ) { padding ->
+            Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                when (page) {
+                    0 -> {
+                        OutlinedTextField(search, { search = it }, Modifier.fillMaxWidth(), singleLine = true,
+                            placeholder = { Text("Поиск: 7016 или антрацит") },
+                            leadingIcon = { Icon(Icons.Default.Search, null) }, colors = fieldColors())
+                        Text("RAL CLASSIC · подборка " + colors.size + " оттенков", color = gold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        LazyVerticalGrid(columns = GridCells.Adaptive(100.dp), modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(colors.filter { it.code.contains(search.trim()) || it.name.contains(search.trim(), true) }) { shade ->
+                                val textColor = if (shade.hex == 0xFF0A0A0A) Color.White else Color.Black
+                                Column(Modifier.height(90.dp).fillMaxWidth().background(Color(shade.hex), RoundedCornerShape(10.dp))
+                                    .border(if (shade == selected) 3.dp else 1.dp, if (shade == selected) gold else Color.White.copy(.3f), RoundedCornerShape(10.dp))
+                                    .clickable { selected = shade; page = 1 }.padding(8.dp), verticalArrangement = Arrangement.Bottom) {
+                                    Text("RAL " + shade.code, color = textColor, fontWeight = FontWeight.Black)
+                                    Text(shade.name, color = textColor, fontSize = 9.sp)
+                                }
+                            }
+                        }
+                        Text("Цвета на экране приблизительные. Эталон — физический образец RAL.", color = muted, fontSize = 10.sp)
+                    }
+                    1 -> {
+                        Card(colors = CardDefaults.cardColors(containerColor = panel)) {
+                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                Text("RAL " + selected.code + " · " + selected.name, color = gold, fontWeight = FontWeight.Bold)
+                                Box(Modifier.fillMaxWidth().height(42.dp).background(Color(selected.hex), RoundedCornerShape(8.dp)))
+                                ChoiceField("Материал", material, materials) { material = it }
+                                ChoiceField("Система", system, systems) { system = it }
+                                ChoiceField("База", base, listOf("A", "C", "Тонируемая", "Прозрачная")) { base = it }
+                                OutlinedTextField(volume, { volume = it }, Modifier.fillMaxWidth(),
+                                    label = { Text("Объём материала, л") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                    singleLine = true, colors = fieldColors())
+                            }
+                        }
+                        if (formula == null || formula.length() == 0) {
+                            Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF3A2B1A))) {
+                                Column(Modifier.padding(12.dp)) {
+                                    Text("Подтверждённой рецептуры нет", color = gold, fontWeight = FontWeight.Bold)
+                                    Text("Для этого сочетания материала, системы, базы и цвета формула не внесена. Приложение не подставляет выдуманные дозировки.",
+                                        color = Color.White, fontSize = 12.sp)
+                                    TextButton(onClick = { page = 3 }) { Text("Добавить свою рецептуру") }
+                                }
+                            }
+                        } else {
+                            Text("СОХРАНЁННАЯ ПОЛЬЗОВАТЕЛЬСКАЯ ФОРМУЛА", color = gold, fontWeight = FontWeight.Bold)
+                            pigments.filter { formula.has(it) }.forEach { pigment ->
+                                Text(pigment + " · " + "%.2f".format(formula.optDouble(pigment) * liters) + " мл")
+                            }
+                            Text("Масштабирование линейное; совместимость и технологию нужно проверить.", color = muted, fontSize = 11.sp)
+                        }
+                    }
+                    2 -> {
+                        Text("БИБЛИОТЕКА ПИГМЕНТОВ", color = gold, fontWeight = FontWeight.Bold)
+                        Text("Типы пигментов. Совместимость зависит от связующего и конкретной системы производителя.",
+                            color = muted, fontSize = 11.sp)
+                        Column(Modifier.weight(1f)) {
+                            pigments.forEach { pigment ->
+                                Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(pigment, Modifier.weight(1f))
+                                    IconButton(onClick = {
+                                        pigments = pigments - pigment
+                                        prefs.edit().putString("pigments", pigments.joinToString("|")).apply()
+                                    }) { Icon(Icons.Default.Delete, null, tint = muted) }
+                                }
+                            }
+                        }
+                        Button(onClick = { showAdd = true }, Modifier.fillMaxWidth()) {
+                            Icon(Icons.Default.Add, null); Text("Добавить пигмент")
+                        }
+                    }
+                    else -> {
+                        Text("РЕДАКТОР СОБСТВЕННЫХ РЕЦЕПТУР", color = gold, fontWeight = FontWeight.Bold)
+                        Text("Введите дозировку в мл на 1 литр материала. Вносите только формулы из техкарты или проверенного подбора.",
+                            color = muted, fontSize = 11.sp)
+                        ChoiceField("Материал", material, materials) { material = it }
+                        ChoiceField("Система", system, systems) { system = it }
+                        ChoiceField("База", base, listOf("A", "C", "Тонируемая", "Прозрачная")) { base = it }
+                        Text("RAL " + selected.code + " · мл/л", color = gold, fontWeight = FontWeight.Bold)
+                        Column(Modifier.weight(1f)) {
+                            pigments.forEach { pigment ->
+                                OutlinedTextField(entries[pigment] ?: formula?.optDouble(pigment)?.takeIf { it > 0 }?.toString().orEmpty(),
+                                    { value -> entries = entries.toMutableMap().apply { put(pigment, value) } },
+                                    Modifier.fillMaxWidth().padding(vertical = 2.dp), label = { Text(pigment) },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                    singleLine = true, colors = fieldColors())
+                            }
+                        }
+                        Button(onClick = {
+                            val obj = JSONObject()
+                            pigments.forEach { pigment ->
+                                val amount = entries[pigment]?.replace(',', '.')?.toDoubleOrNull() ?: 0.0
+                                if (amount > 0) obj.put(pigment, amount)
+                            }
+                            formulas.put(key, obj)
+                            savedText = formulas.toString()
+                            prefs.edit().putString("formulas", savedText).apply()
+                            entries = emptyMap()
+                            page = 1
+                        }, Modifier.fillMaxWidth()) { Icon(Icons.Default.Save, null); Text("Сохранить формулу") }
+                    }
+                }
+            }
+        }
+        if (showAdd) {
+            AlertDialog(onDismissRequest = { showAdd = false }, title = { Text("Новый пигмент / колорант") },
+                text = { OutlinedTextField(newPigment, { newPigment = it }, label = { Text("Название или код производителя") }) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (newPigment.isNotBlank()) {
+                            pigments = pigments + newPigment.trim()
+                            prefs.edit().putString("pigments", pigments.joinToString("|")).apply()
+                        }
+                        newPigment = ""; showAdd = false
+                    }) { Text("Добавить") }
+                },
+                dismissButton = { TextButton(onClick = { showAdd = false }) { Text("Отмена") } })
+        }
+    }
+}
+
+@Composable
+private fun fieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = gold, unfocusedBorderColor = muted.copy(alpha = .5f),
+    focusedLabelColor = gold, cursorColor = gold
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ChoiceField(label: String, value: String, options: List<String>, onSelect: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+        OutlinedTextField(value, {}, Modifier.menuAnchor().fillMaxWidth(), readOnly = true,
+            label = { Text(label) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            colors = fieldColors(), singleLine = true)
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { option ->
+                DropdownMenuItem(text = { Text(option) }, onClick = { onSelect(option); expanded = false })
+            }
+        }
+    }
+}
