@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -150,6 +151,8 @@ class MainActivity:ComponentActivity(){
  var demolitionBagPrice by remember { mutableStateOf("0") }
  var view3dAngle by remember { mutableFloatStateOf(35f) }
  var view3dZoom by remember { mutableFloatStateOf(1f) }
+ var view3dPanX by remember { mutableFloatStateOf(0f) }
+ var view3dPanY by remember { mutableFloatStateOf(0f) }
  var hidden3dWalls by remember { mutableStateOf(setOf<Int>()) }
  var demolitionHaulPrice by remember { mutableStateOf("0") }
  var blockUnitPrice by remember { mutableStateOf("0") }
@@ -376,7 +379,17 @@ class MainActivity:ComponentActivity(){
       item { CardBlock {
         Text("Интерактивная 3D-модель помещения",fontSize=19.sp,fontWeight=FontWeight.Bold)
         Text("${current.name} • ${current.vertices.size} стен • высота и толщина учитываются по каждой стене")
-        RoomModel3D(current,view3dAngle,view3dZoom,hidden3dWalls,Modifier.fillMaxWidth().height(340.dp))
+        RoomModel3D(
+          current,view3dAngle,view3dZoom,hidden3dWalls,Offset(view3dPanX,view3dPanY),
+          onCameraGesture={pan,zoomChange,rotationChange->
+            view3dPanX=(view3dPanX+pan.x).coerceIn(-1200f,1200f)
+            view3dPanY=(view3dPanY+pan.y).coerceIn(-1200f,1200f)
+            view3dZoom=(view3dZoom*zoomChange).coerceIn(0.65f,2.4f)
+            view3dAngle=(view3dAngle+rotationChange+360f)%360f
+          },
+          modifier=Modifier.fillMaxWidth().height(340.dp)
+        )
+        Text("Управление жестами: один палец — перемещение, два пальца — масштаб и поворот.",fontSize=11.sp,color=Color.LightGray)
         Text("Видимость стен",fontWeight=FontWeight.SemiBold)
         Row(horizontalArrangement=Arrangement.spacedBy(6.dp),modifier=Modifier.fillMaxWidth()){
           current.vertices.indices.forEach { wallIndex ->
@@ -391,7 +404,7 @@ class MainActivity:ComponentActivity(){
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
           OutlinedButton(onClick={view3dAngle=(view3dAngle-15f+360f)%360f},modifier=Modifier.weight(1f)){Text("↶ 15°")}
           OutlinedButton(onClick={view3dAngle=(view3dAngle+15f)%360f},modifier=Modifier.weight(1f)){Text("15° ↷")}
-          OutlinedButton(onClick={view3dAngle=35f;view3dZoom=1f},modifier=Modifier.weight(1f)){Text("Сброс")}
+          OutlinedButton(onClick={view3dAngle=35f;view3dZoom=1f;view3dPanX=0f;view3dPanY=0f},modifier=Modifier.weight(1f)){Text("Сброс")}
         }
       } }
       item { CardBlock {
@@ -723,8 +736,20 @@ class MainActivity:ComponentActivity(){
   }
  }
 }}
-@Composable fun RoomModel3D(room:Room,angle:Float,zoom:Float,hiddenWalls:Set<Int>,modifier:Modifier=Modifier){
- Canvas(modifier.background(Color(0xFF111C2B))){
+@Composable fun RoomModel3D(
+ room:Room,
+ angle:Float,
+ zoom:Float,
+ hiddenWalls:Set<Int>,
+ pan:Offset=Offset.Zero,
+ onCameraGesture:(Offset,Float,Float)->Unit={_,_,_->},
+ modifier:Modifier=Modifier
+){
+ Canvas(modifier.background(Color(0xFF111C2B)).pointerInput(angle,zoom){
+  detectTransformGestures { _, gesturePan, gestureZoom, gestureRotation ->
+   onCameraGesture(gesturePan,gestureZoom,gestureRotation)
+  }
+ }){
   if(room.vertices.size<3)return@Canvas
   val radians=Math.toRadians(angle.toDouble())
   val cosA=cos(radians);val sinA=sin(radians)
@@ -744,7 +769,7 @@ class MainActivity:ComponentActivity(){
   fun project(p:Vec2,z:Double=0.0):Offset{
    val x=p.x*cosA-p.y*sinA;val y=p.x*sinA+p.y*cosA
    val px=(x-y)*0.82;val py=(x+y)*0.42-z*0.95
-   return Offset(cx+((px-(minX+maxX)/2)*scale).toFloat(),cy+((py-(minY+maxY)/2)*scale).toFloat())
+   return Offset(cx+pan.x+((px-(minX+maxX)/2)*scale).toFloat(),cy+pan.y+((py-(minY+maxY)/2)*scale).toFloat())
   }
   val floor=Path()
   room.vertices.forEachIndexed{i,p->val q=project(p);if(i==0)floor.moveTo(q.x,q.y)else floor.lineTo(q.x,q.y)}
