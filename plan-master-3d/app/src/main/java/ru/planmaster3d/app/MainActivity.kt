@@ -287,59 +287,75 @@ class MainActivity:ComponentActivity(){
     }
     "Демонтаж" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock {
-        Text("Демонтаж выбранного участка",fontSize=19.sp,fontWeight=FontWeight.Bold)
-        Text("Выбери сторону помещения. Длину можно уменьшить, если демонтируется только часть стены.")
-        SelectableRoomPlan(current,selectedDemolitionWallIndex,Modifier.fillMaxWidth().height(230.dp)){ index ->
-          selectedDemolitionWallIndex=index
-          demolitionWall="Стена ${index+1}"
-          demolitionLength=df.format(current.vertices[index].distanceTo(current.vertices[(index+1)%current.vertices.size])).replace(',','.')
-          demolitionOffset="0"
-          demolitionHeight=current.height.toString()
+        Text("Выбор участка демонтажа",fontSize=19.sp,fontWeight=FontWeight.Bold)
+        varType(demolitionSurface,{demolitionSurface=it;demolitionRegion=emptyList();demolitionRegionMessage="";if(it!="Стена"){demolitionThickness=if(it=="Потолок")"12.5" else "50";demolitionDensity=if(it=="Потолок")"800" else "2200"}},listOf("Стена","Пол","Потолок"))
+        if(demolitionSurface=="Стена"){
+          Text("Выбери стену на плане. Длину и отступ можно задать для частичного демонтажа.")
+          SelectableRoomPlan(current,selectedDemolitionWallIndex,Modifier.fillMaxWidth().height(210.dp)){ index ->
+            selectedDemolitionWallIndex=index;demolitionWall="Стена ${index+1}"
+            demolitionLength=df.format(current.vertices[index].distanceTo(current.vertices[(index+1)%current.vertices.size])).replace(',','.')
+            demolitionOffset="0";demolitionHeight=current.height.toString()
+          }
+          Text("Выбран участок: $demolitionWall",color=accent,fontSize=12.sp)
+          NumberField("Отступ от начала стены, м",demolitionOffset){demolitionOffset=it}
+          NumberField("Длина демонтируемого участка, м",demolitionLength){demolitionLength=it}
+          NumberField("Высота участка, м",demolitionHeight){demolitionHeight=it}
+        }else{
+          Text("Нажимай на план, чтобы отметить вершины зоны демонтажа. Минимум 3 точки; замкни контур автоматически. Все точки должны лежать внутри помещения.")
+          RegionSelectionCanvas(current,demolitionRegion,Modifier.fillMaxWidth().height(230.dp)){ point ->
+            if(demolitionRegion.size<12) demolitionRegion=demolitionRegion+point
+          }
+          val valid=demolitionRegion.size>=3 && !GeometryEngine.selfIntersects(demolitionRegion) && demolitionRegion.all{GeometryEngine.containsPoint(current.vertices,it)}
+          val selectedArea=if(valid)GeometryEngine.area(demolitionRegion) else 0.0
+          Text("Точек: ${demolitionRegion.size} • площадь зоны: ${df.format(selectedArea)} м²",color=accent,fontWeight=FontWeight.SemiBold)
+          Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
+            OutlinedButton(onClick={demolitionRegion=demolitionRegion.dropLast(1) },modifier=Modifier.weight(1f),enabled=demolitionRegion.isNotEmpty()){Text("Убрать точку")}
+            OutlinedButton(onClick={demolitionRegion=emptyList();demolitionRegionMessage=""},modifier=Modifier.weight(1f)){Text("Очистить")}
+          }
+          if(!valid&&demolitionRegion.isNotEmpty())Text("Контур пока не замкнут, пересекается или выходит за границы помещения.",color=Color(0xFFFFB86B),fontSize=12.sp)
+          NumberField("Глубина снимаемого слоя, мм",demolitionThickness){demolitionThickness=it}
         }
-        Text("Выбран участок: $demolitionWall. Нажми на другую стену, чтобы переключить её. Длину можно уменьшить для частичного демонтажа.",color=accent,fontSize=12.sp)
-        varType(demolitionMaterial,{demolitionMaterial=it;demolitionDensity=ConstructionMaterialPresets.demolitionDensities[it]?.toString()?:demolitionDensity;demolitionThickness=when(it){"Керамическая плитка"->"10";"ГКЛ"->"12.5";"Гипсовая штукатурка","Цементная штукатурка"->"20";"Цементная стяжка/бетон"->"50";"Газобетон"->"100";else->"120"}},ConstructionMaterialPresets.demolitionDensities.keys.toList())
-        NumberField("Отступ от начала выбранной стены, м",demolitionOffset){demolitionOffset=it}
-         NumberField("Длина демонтируемого участка, м",demolitionLength){demolitionLength=it}
-         Text("Доступная длина стены: ${df.format(demolitionEdgeLength)} м • к расчёту: ${df.format(demolitionEffectiveLength)} м",color=accent,fontSize=12.sp)
-        NumberField("Высота участка, м",demolitionHeight){demolitionHeight=it}
-        NumberField("Толщина снимаемого слоя/конструкции, мм",demolitionThickness){demolitionThickness=it}
+        varType(demolitionMaterial,{demolitionMaterial=it;demolitionDensity=ConstructionMaterialPresets.demolitionDensities[it]?.toString()?:demolitionDensity;if(demolitionSurface=="Пол"&&it=="Цементная стяжка/бетон")demolitionThickness="50"},ConstructionMaterialPresets.demolitionDensities.keys.toList())
         NumberField("Плотность материала, кг/м³",demolitionDensity){demolitionDensity=it}
-        NumberField("Коэффициент разрыхления (обычно больше 1)",demolitionBulking){demolitionBulking=it}
+        NumberField("Коэффициент разрыхления",demolitionBulking){demolitionBulking=it}
       } }
       item { CardBlock {
-        Text("Мешки и вывоз",fontWeight=FontWeight.Bold)
+        Text("Масса мусора и упаковка",fontWeight=FontWeight.Bold)
         NumberField("Объём мешка, литров",bagLitres){bagLitres=it}
-        NumberField("Допустимая масса одного мешка, кг",bagMaxKg){bagMaxKg=it}
-        NumberField("Коэффициент заполнения мешка (0,1–1)",bagFill){bagFill=it}
+        NumberField("Допустимая масса мешка, кг",bagMaxKg){bagMaxKg=it}
+        NumberField("Коэффициент заполнения мешка",bagFill){bagFill=it}
         NumberField("Цена демонтажа, ₽/м²",demolitionRate){demolitionRate=it}
-        NumberField("Упаковка: цена мешка, ₽/шт",demolitionBagPrice){demolitionBagPrice=it}
-        NumberField("Вывоз: цена за тонну, ₽/т",demolitionHaulPrice){demolitionHaulPrice=it}
-        val result=runCatching { DemolitionCalculator.calculate(DemolitionInput(demolitionEffectiveLength,demolitionHeight.toDouble(),demolitionThickness.toDouble(),demolitionDensity.toDouble(),demolitionBulking.toDouble(),bagLitres.toDouble(),bagMaxKg.toDouble(),bagFill.toDouble())) }.getOrNull()
-        if(result!=null){
-          Text("Площадь: ${df.format(result.areaM2)} м²")
-          Text("Объём до разрыхления: ${df.format(result.solidVolumeM3)} м³")
-          Text("Масса мусора: ${df.format(result.solidMassKg)} кг")
-          Text("Объём после разрыхления: ${df.format(result.looseVolumeM3)} м³")
-          Text("Мешков по объёму: ${result.bagsByVolume} • по весу: ${result.bagsByWeight}")
-          Text("Итого мешков: ${result.bagsRequired} • средняя масса: ${df.format(result.estimatedBagMassKg)} кг/мешок",color=accent,fontWeight=FontWeight.Bold)
-          Text("Оценка зависит от фактической плотности, влажности и состава мусора. Плотность и коэффициенты можно изменить.")
+        NumberField("Цена мешка, ₽/шт",demolitionBagPrice){demolitionBagPrice=it}
+        NumberField("Вывоз, ₽/т",demolitionHaulPrice){demolitionHaulPrice=it}
+        val isWall=demolitionSurface=="Стена"
+        val regionValid=demolitionRegion.size>=3&&!GeometryEngine.selfIntersects(demolitionRegion)&&demolitionRegion.all{GeometryEngine.containsPoint(current.vertices,it)}
+        val area=if(isWall)demolitionEffectiveLength*(demolitionHeight.toDoubleOrNull()?:0.0) else if(regionValid)GeometryEngine.area(demolitionRegion) else 0.0
+        val result=runCatching{DemolitionCalculator.calculate(DemolitionInput(if(isWall)demolitionEffectiveLength else area,if(isWall)(demolitionHeight.toDoubleOrNull()?:0.0) else 1.0,demolitionThickness.toDouble(),demolitionDensity.toDouble(),demolitionBulking.toDouble(),bagLitres.toDouble(),bagMaxKg.toDouble(),bagFill.toDouble()))}.getOrNull()
+        if(result!=null&&area>0){
+          Text("Площадь демонтажа: ${df.format(result.areaM2)} м²")
+          Text("Объём материала: ${df.format(result.solidVolumeM3)} м³ • масса: ${df.format(result.solidMassKg)} кг")
+          Text("После разрыхления: ${df.format(result.looseVolumeM3)} м³")
+          Text("Мешки: ${result.bagsRequired} шт. (по объёму ${result.bagsByVolume}, по весу ${result.bagsByWeight})",color=accent,fontWeight=FontWeight.Bold)
           Button(onClick={
-            val rate=demolitionRate.toDoubleOrNull()?:0.0
-            val workName=if(demolitionMaterial=="Керамическая плитка") "Демонтаж плитки" else if(demolitionMaterial=="Гипсовая штукатурка"||demolitionMaterial=="Цементная штукатурка") "Демонтаж старой штукатурки" else "Демонтаж: $demolitionMaterial"
-            val wallIndex=selectedDemolitionWallIndex
-            val start=GeometryEngine.pointOnEdge(current.vertices,wallIndex,demolitionStartOffset) ?: current.vertices[wallIndex]
-            val end=GeometryEngine.pointOnEdge(current.vertices,wallIndex,demolitionStartOffset+demolitionEffectiveLength) ?: start
+            val surfaceName=when(demolitionSurface){"Пол"->"пола";"Потолок"->"потолка";else->"стены"}
+            val workName=when(demolitionMaterial){"Керамическая плитка"->"Демонтаж плитки";"Гипсовая штукатурка","Цементная штукатурка"->"Демонтаж старой штукатурки";else->"Демонтаж $surfaceName: $demolitionMaterial"}
+            val wallIndex=if(isWall)selectedDemolitionWallIndex else -1
+            val startPoint=if(isWall)GeometryEngine.pointOnEdge(current.vertices,wallIndex,demolitionStartOffset)?:current.vertices[wallIndex] else Vec2(0.0,0.0)
+            val endPoint=if(isWall)GeometryEngine.pointOnEdge(current.vertices,wallIndex,demolitionStartOffset+demolitionEffectiveLength)?:startPoint else Vec2(0.0,0.0)
             constructionRecords=constructionRecords+ConstructionRecord(
-              id=java.util.UUID.randomUUID().toString(),kind="DEMOLITION",roomIndex=selected,
-              material=demolitionMaterial,wallIndex=wallIndex,startX=start.x,startY=start.y,endX=end.x,endY=end.y,
-              lengthM=demolitionEffectiveLength,heightM=demolitionHeight.toDouble(),thicknessMm=demolitionThickness.toDouble(),
-              densityKgM3=demolitionDensity.toDouble(),quantity=result.areaM2
+              id=java.util.UUID.randomUUID().toString(),kind=if(isWall)"DEMOLITION" else if(demolitionSurface=="Пол")"DEMOLITION_FLOOR" else "DEMOLITION_CEILING",
+              roomIndex=selected,material=demolitionMaterial,wallIndex=wallIndex,startX=startPoint.x,startY=startPoint.y,endX=endPoint.x,endY=endPoint.y,
+              lengthM=if(isWall)demolitionEffectiveLength:area,heightM=if(isWall)(demolitionHeight.toDoubleOrNull()?:0.0) else 1.0,
+              thicknessMm=demolitionThickness.toDouble(),densityKgM3=demolitionDensity.toDouble(),quantity=result.areaM2,
+              regionPoints=if(isWall)emptyList() else demolitionRegion
             )
-            lines=lines+EstimateLine(workName,"м²",rate,result.areaM2,"Демонтаж")+EstimateLine("Упаковка мусора ($demolitionMaterial)","меш",demolitionBagPrice.toDoubleOrNull()?:0.0,result.bagsRequired.toDouble(),"Демонтаж")+EstimateLine("Вывоз строительного мусора","т",demolitionHaulPrice.toDoubleOrNull()?:0.0,result.solidMassKg/1000.0,"Вывоз")
-            saveMessage="Демонтажный участок сохранён в проекте. Нажми «Сохранить» для записи."
+            lines=lines+EstimateLine(workName,"м²",demolitionRate.toDoubleOrNull()?:0.0,result.areaM2,"Демонтаж")+
+              EstimateLine("Упаковка мусора ($demolitionMaterial)","меш",demolitionBagPrice.toDoubleOrNull()?:0.0,result.bagsRequired.toDouble(),"Демонтаж")+
+              EstimateLine("Вывоз строительного мусора","т",demolitionHaulPrice.toDoubleOrNull()?:0.0,result.solidMassKg/1000.0,"Вывоз")
+            saveMessage="Зона демонтажа добавлена в проект и смету. Сохрани проект."
             tab="Смета"
-          },modifier=Modifier.fillMaxWidth()){Text("Сохранить демонтаж и добавить в смету")}
-        } else Text("Проверь размеры, плотность и параметры мешка.",color=Color(0xFFFFB86B))
+          },modifier=Modifier.fillMaxWidth()){Text("Добавить демонтаж в смету")}
+        }else Text("Укажи корректную площадь, толщину, плотность и параметры мешков.",color=Color(0xFFFFB86B))
       } }
     }
     "Перегородки" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
@@ -587,6 +603,25 @@ class MainActivity:ComponentActivity(){
   fun map(p:Vec2)=Offset(left+(p.x-minX).toFloat()*scale,top+(p.y-minY).toFloat()*scale)
   if(start!=null) drawCircle(Color(0xFFFFB454),9f,map(start))
   if(start!=null&&end!=null){drawLine(Color(0xFFFFB454),map(start),map(end),7f);drawCircle(Color(0xFFFFB454),9f,map(end))}
+ }
+}
+
+@Composable fun RegionSelectionCanvas(room:Room,points:List<Vec2>,modifier:Modifier=Modifier,onPoint:(Vec2)->Unit){
+ Canvas(modifier.pointerInput(room.vertices,points){detectTapGestures { tap ->
+  val minX=room.vertices.minOf{it.x};val maxX=room.vertices.maxOf{it.x};val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
+  val bw=(maxX-minX).coerceAtLeast(0.01).toFloat();val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
+  val scale=min(size.width/(bw+1f),size.height/(bh+1f));val left=(size.width-bw*scale)/2;val top=(size.height-bh*scale)/2
+  val point=Vec2(minX+(tap.x-left)/scale,minY+(tap.y-top)/scale)
+  if(GeometryEngine.containsPoint(room.vertices,point))onPoint(point)
+ } }){
+  val minX=room.vertices.minOf{it.x};val maxX=room.vertices.maxOf{it.x};val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
+  val bw=(maxX-minX).coerceAtLeast(0.01).toFloat();val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
+  val scale=min(size.width/(bw+1f),size.height/(bh+1f));val left=(size.width-bw*scale)/2;val top=(size.height-bh*scale)/2
+  fun map(p:Vec2)=Offset(left+(p.x-minX).toFloat()*scale,top+(p.y-minY).toFloat()*scale)
+  val boundary=Path();room.vertices.forEachIndexed{i,p->val q=map(p);if(i==0)boundary.moveTo(q.x,q.y)else boundary.lineTo(q.x,q.y)};boundary.close()
+  drawPath(boundary,Color(0xFF6ED4E5),style=Stroke(4f))
+  if(points.isNotEmpty()){val region=Path();points.forEachIndexed{i,p->val q=map(p);if(i==0)region.moveTo(q.x,q.y)else region.lineTo(q.x,q.y)};if(points.size>=3)region.close();drawPath(region,Color(0xFFFFB454),style=Stroke(4f))}
+  points.forEach{drawCircle(Color(0xFFFFB454),7f,map(it))}
  }
 }
 fun shareEstimate(ctx:Context,lines:List<EstimateLine>){val body=buildString{append("PLAN MASTER 3D — СМЕТА\n\n");lines.forEach{append("${it.name}: ${it.qty} ${it.unit} × ${it.price} = ${it.total} ₽\n")};append("\nИТОГО: ${lines.sumOf{it.total}} ₽")};val i=android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT,body);ctx.startActivity(android.content.Intent.createChooser(i,"Отправить смету"))}
