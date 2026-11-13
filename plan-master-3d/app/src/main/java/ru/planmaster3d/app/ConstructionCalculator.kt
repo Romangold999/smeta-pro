@@ -98,7 +98,8 @@ object PartitionCalculator {
             PartitionKind.AAC_BLOCK, PartitionKind.PGP, PartitionKind.BRICK -> {
                 require(input.blockLengthMm > 0 && input.blockHeightMm > 0 && input.blockDensityKgM3 > 0.0)
                 val blockFaceArea = input.blockLengthMm * input.blockHeightMm / 1_000_000.0
-                val blocks = ceil(net / blockFaceArea * factor).toInt()
+                val masonryAcrossFactor = if (input.kind == PartitionKind.BRICK) input.thicknessMm / 120.0 else 1.0
+                val blocks = ceil(net / blockFaceArea * factor * masonryAcrossFactor).toInt()
                 val mass = volume * input.blockDensityKgM3
                 // Preliminary consumption: adjust to the selected adhesive/mortar manufacturer's data.
                 val adhesiveRate = if (input.kind == PartitionKind.BRICK) 45.0 else 5.0
