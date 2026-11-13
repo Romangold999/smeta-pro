@@ -180,6 +180,11 @@ class MainActivity:ComponentActivity(){
   prefs.edit().putString("active_project_id",id).putString("project",project).apply()
   showProjects=false;saveMessage="Открыт проект «${saved.name}»"
  }
+ // Автосохранение проекта: изменения геометрии, сметы и конструктивных записей
+ // фиксируются локально при каждом изменении состояния, а не только по кнопке.
+ LaunchedEffect(activeProjectId, project, rooms, lines, constructionRecords) {
+  save()
+ }
  fun createProject(){
   activeProjectId="project_${System.currentTimeMillis()}"
   project="Новый объект";rooms=listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0));lines=emptyList();constructionRecords=emptyList();selected=0
