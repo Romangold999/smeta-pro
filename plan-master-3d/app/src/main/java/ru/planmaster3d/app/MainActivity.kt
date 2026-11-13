@@ -148,6 +148,8 @@ class MainActivity:ComponentActivity(){
  var geometryMessage by remember { mutableStateOf("") }
  var partitionRate by remember { mutableStateOf("0") }
  var demolitionBagPrice by remember { mutableStateOf("0") }
+ var view3dAngle by remember { mutableFloatStateOf(35f) }
+ var view3dZoom by remember { mutableFloatStateOf(1f) }
  var demolitionHaulPrice by remember { mutableStateOf("0") }
  var blockUnitPrice by remember { mutableStateOf("0") }
  var adhesiveKgPrice by remember { mutableStateOf("0") }
@@ -184,7 +186,7 @@ class MainActivity:ComponentActivity(){
   save();showProjects=false
  }
  Scaffold(containerColor=navy, topBar={ TopAppBar(title={Column { Text("PLAN MASTER 3D",fontWeight=FontWeight.Bold); Text(project,fontSize=12.sp,color=Color.LightGray) }},actions={IconButton(onClick={save()}){Icon(Icons.Default.Save,"Сохранить")}},colors=TopAppBarDefaults.topAppBarColors(containerColor=navy)) },
- bottomBar={NavigationBar(containerColor=panel){ listOf("Объект","Обмеры","Смета","Материалы","Раскладка").forEach { label -> NavigationBarItem(selected=tab==label,onClick={tab=label},icon={Icon(when(label){"Объект"->Icons.Default.Home;"Обмеры"->Icons.Default.SquareFoot;"Смета"->Icons.Default.Receipt;"Материалы"->Icons.Default.Inventory2;else->Icons.Default.GridOn},null)},label={Text(label,fontSize=10.sp)}) } } }) { pad ->
+ bottomBar={NavigationBar(containerColor=panel){ listOf("Объект","Обмеры","3D","Смета","Материалы","Раскладка").forEach { label -> NavigationBarItem(selected=tab==label,onClick={tab=label},icon={Icon(when(label){"Объект"->Icons.Default.Home;"Обмеры"->Icons.Default.SquareFoot;"3D"->Icons.Default.Layers;"Смета"->Icons.Default.Receipt;"Материалы"->Icons.Default.Inventory2;else->Icons.Default.GridOn},null)},label={Text(label,fontSize=10.sp)}) } } }) { pad ->
   Column(Modifier.fillMaxSize().padding(pad).padding(horizontal=14.dp)) {
    when(tab){
     "Объект" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
@@ -313,6 +315,30 @@ class MainActivity:ComponentActivity(){
         }
         Text("Площадь проёмов: ${df.format(current.geometry.openingArea)} м² • откосы: ${df.format(current.geometry.revealArea)} м²",color=accent); Text("Схема 2D",fontWeight=FontWeight.Bold); RoomPlan(current,Modifier.fillMaxWidth().height(220.dp)); Text("Контур помещения отображается по фактическим вершинам.") } }
       item { CardBlock { Text("Автоматические расчёты",fontWeight=FontWeight.Bold); Text("Пол: ${df.format(current.floor)} м²"); Text("Стены (чистая площадь): ${df.format(current.walls)} м²"); Text("Объём стен по заданной толщине: ${df.format(current.geometry.netWallVolumeM3)} м³"); Text("Периметр: ${df.format(current.perimeter)} м"); Text("Потолок: ${df.format(current.floor)} м²") } }
+    }
+    "3D" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
+      item { CardBlock {
+        Text("Интерактивная 3D-модель помещения",fontSize=19.sp,fontWeight=FontWeight.Bold)
+        Text("${current.name} • ${current.vertices.size} стен • высота и толщина учитываются по каждой стене")
+        RoomModel3D(current,view3dAngle,view3dZoom,Modifier.fillMaxWidth().height(340.dp))
+        Text("Поворот модели: ${view3dAngle.toInt()}°")
+        Slider(value=view3dAngle,onValueChange={view3dAngle=it},valueRange=0f..360f)
+        Text("Масштаб: ${(view3dZoom*100).toInt()}%")
+        Slider(value=view3dZoom,onValueChange={view3dZoom=it},valueRange=0.65f..1.8f)
+        Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
+          OutlinedButton(onClick={view3dAngle=(view3dAngle-15f+360f)%360f},modifier=Modifier.weight(1f)){Text("↶ 15°")}
+          OutlinedButton(onClick={view3dAngle=(view3dAngle+15f)%360f},modifier=Modifier.weight(1f)){Text("15° ↷")}
+          OutlinedButton(onClick={view3dAngle=35f;view3dZoom=1f},modifier=Modifier.weight(1f)){Text("Сброс")}
+        }
+      } }
+      item { CardBlock {
+        Text("Параметры модели",fontWeight=FontWeight.Bold)
+        Text("Площадь пола: ${df.format(current.floor)} м²")
+        Text("Чистая площадь стен: ${df.format(current.walls)} м²")
+        Text("Объём стен: ${df.format(current.geometry.netWallVolumeM3)} м³")
+        Text("Проёмы: ${current.openingsByWall.values.sumOf{it.size}} • площадь ${df.format(current.geometry.openingArea)} м²")
+        Text("Это первый геометрический 3D-просмотр: контур и высоты стен отображаются в объёме. Следующий этап — корректные вырезы дверей/окон, ниши, интерактивное выделение элементов и скрытие стен.")
+      } }
     }
     "Смета" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock { Text("Каталог работ Smeta Pro + новые разделы",fontWeight=FontWeight.Bold); OutlinedTextField(priceSearch,{priceSearch=it},label={Text("Поиск работ")},modifier=Modifier.fillMaxWidth()); Text("Выбрано позиций: ${lines.size}  •  Итого: ${df.format(lines.sumOf{it.total})} ₽",color=accent,fontWeight=FontWeight.Bold) } }
@@ -634,6 +660,53 @@ class MainActivity:ComponentActivity(){
   }
  }
 }}
+@Composable fun RoomModel3D(room:Room,angle:Float,zoom:Float,modifier:Modifier=Modifier){
+ Canvas(modifier.background(Color(0xFF111C2B))){
+  if(room.vertices.size<3)return@Canvas
+  val radians=Math.toRadians(angle.toDouble())
+  val cosA=cos(radians);val sinA=sin(radians)
+  val heights=room.vertices.indices.map{i->room.wallHeightOverrides.getOrNull(i)?:room.height}
+  val raw=mutableListOf<Pair<Double,Double>>()
+  room.vertices.forEachIndexed{i,p->
+   val x=p.x*cosA-p.y*sinA;val y=p.x*sinA+p.y*cosA
+   raw.add((x-y)*0.82 to (x+y)*0.42)
+   val h=heights[i]
+   raw.add((x-y)*0.82 to ((x+y)*0.42-h*0.95))
+  }
+  val minX=raw.minOf{it.first};val maxX=raw.maxOf{it.first}
+  val minY=raw.minOf{it.second};val maxY=raw.maxOf{it.second}
+  val spanX=(maxX-minX).coerceAtLeast(0.1);val spanY=(maxY-minY).coerceAtLeast(0.1)
+  val scale=(min(size.width/spanX.toFloat(),size.height/spanY.toFloat())*0.78f*zoom).coerceAtMost(220f)
+  val cx=size.width/2f;val cy=size.height/2f
+  fun project(p:Vec2,z:Double=0.0):Offset{
+   val x=p.x*cosA-p.y*sinA;val y=p.x*sinA+p.y*cosA
+   val px=(x-y)*0.82;val py=(x+y)*0.42-z*0.95
+   return Offset(cx+((px-(minX+maxX)/2)*scale),cy+((py-(minY+maxY)/2)*scale))
+  }
+  val floor=Path()
+  room.vertices.forEachIndexed{i,p->val q=project(p);if(i==0)floor.moveTo(q.x,q.y)else floor.lineTo(q.x,q.y)}
+  floor.close()
+  drawPath(floor,Color(0xFF263B50))
+  // Рисуем дальние стены первыми, затем ближние — по средней глубине.
+  val order=room.vertices.indices.sortedByDescending{i->
+   val a=room.vertices[i];val b=room.vertices[(i+1)%room.vertices.size]
+   val mid=(a+b)*0.5
+   mid.x*sinA+mid.y*cosA
+  }
+  order.forEach{i->
+   val j=(i+1)%room.vertices.size
+   val a=room.vertices[i];val b=room.vertices[j]
+   val h=heights[i]
+   val p1=project(a);val p2=project(b);val p3=project(b,h);val p4=project(a,h)
+   val wall=Path().apply{moveTo(p1.x,p1.y);lineTo(p2.x,p2.y);lineTo(p3.x,p3.y);lineTo(p4.x,p4.y);close()}
+   val tint=if(i%2==0)Color(0xFF6C879C) else Color(0xFF526D84)
+   drawPath(wall,tint)
+   drawPath(wall,Color(0xFFB7D0DE),style=Stroke(2f))
+   drawLine(Color(0xFFB7D0DE),p4,p3,strokeWidth=2f)
+  }
+  drawPath(floor,Color(0xFF48C7D9),style=Stroke(3f))
+ }
+}
 @Composable fun SelectableRoomPlan(room:Room,selectedWall:Int,modifier:Modifier=Modifier,onSelect:(Int)->Unit){
  Canvas(modifier.pointerInput(room.vertices,selectedWall){detectTapGestures { tap ->
   val minX=room.vertices.minOf{it.x};val maxX=room.vertices.maxOf{it.x};val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
