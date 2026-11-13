@@ -21,7 +21,7 @@ data class Opening(
     val offsetFromStart:Double=0.0,
     val kind:String="Проём"
 ) {
-    init { require(width>0 && height>0 && sillHeight>=0 && depth>=0 && offsetFromStart>=0) }
+    init { require(width.isFinite() && height.isFinite() && sillHeight.isFinite() && depth.isFinite() && offsetFromStart.isFinite() && width>0 && height>0 && sillHeight>=0 && depth>=0 && offsetFromStart>=0) }
     val faceArea get()=width*height
     /** Два боковых откоса + верхний; подоконник учитывается отдельно по флагу. */
     fun revealArea():Double = depth*(2*height+width+(if(hasSill) width else 0.0))
@@ -107,11 +107,10 @@ object GeometryEngine {
                 if(opening.sillHeight+opening.height>maxHeight+EPS) errors.add("${opening.name}: высота выходит за пределы стены №${wallIndex+1}")
             }
             val sorted=openings.sortedBy{it.offsetFromStart}
-            for(i in 1 until sorted.size) {
-                val previous=sorted[i-1]
-                val current=sorted[i]
-                if(previous.offsetFromStart+previous.width>current.offsetFromStart+EPS)
-                    errors.add("Проёмы «${previous.name}» и «${current.name}» пересекаются на стене №${wallIndex+1}")
+            for(i in sorted.indices) for(j in i+1 until sorted.size) {
+                val first=sorted[i];val second=sorted[j]
+                if(second.offsetFromStart>=first.offsetFromStart+first.width-EPS) break
+                errors.add("Проёмы «${first.name}» и «${second.name}» пересекаются на стене №${wallIndex+1}")
             }
         }
         return errors
