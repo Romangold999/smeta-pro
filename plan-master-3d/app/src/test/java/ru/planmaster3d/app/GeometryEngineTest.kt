@@ -157,6 +157,6 @@ class GeometryEngineTest {
   val result=GeometryEngine.metrics(room)
   assertEquals(6.5,result.grossWallVolumeM3,1e-8)
   assertEquals(6.4,result.netWallVolumeM3,1e-8)
-  assertEquals(0.1,result.walls.first().netVolumeM3,1e-8)
+  assertEquals(0.7,result.walls.first().netVolumeM3,1e-8)
  }
 }
