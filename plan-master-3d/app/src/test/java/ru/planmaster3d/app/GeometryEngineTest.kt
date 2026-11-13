@@ -30,6 +30,24 @@ class GeometryEngineTest {
   assertEquals(1.89,m.openingArea,1e-8)
   assertEquals(0.765,m.revealArea,1e-8)
  }
+
+ @Test fun validatesOpeningPositionHeightAndOverlap() {
+  val room=RoomGeometry("Test",listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0)),
+   wallHeights=listOf(2.7,2.7,2.7,2.7),
+   openingsByWall=mapOf(0 to listOf(
+    Opening("a","Door A",1.0,2.0,offsetFromStart=0.5),
+    Opening("b","Door B",1.0,2.0,offsetFromStart=1.2),
+    Opening("c","Window",1.0,1.0,sillHeight=1.0,offsetFromStart=3.5)
+   )))
+  val errors=GeometryEngine.validateOpenings(room)
+  assertTrue(errors.any{it.contains("пересекаются")})
+  assertTrue(errors.any{it.contains("выходит за пределы стены")})
+ }
+ @Test fun openingOffsetDefaultsToWallStartForOldProjects() {
+  val opening=Opening("legacy","Legacy",0.9,2.1)
+  assertEquals(0.0,opening.offsetFromStart,1e-8)
+  assertEquals("Проём",opening.kind)
+ }
  @Test fun partitionChordSplitsRectangleAndPreservesArea() {
   val room=listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0))
   val split=GeometryEngine.splitByBoundaryChord(room,Vec2(2.0,0.0),Vec2(2.0,3.0))
