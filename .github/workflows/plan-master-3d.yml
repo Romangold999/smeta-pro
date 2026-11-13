@@ -1,5 +1,5 @@
 name: PLAN MASTER 3D APK
-# CI verifies automatic takeoff, painting and decorative finishes, custom catalog entries, and Android packaging.
+# CI verifies geometry-driven estimates, engineering-point persistence, engineering estimate tests, and Android packaging.
 on:
   push:
     branches: [ plan-master-3d ]
