@@ -113,6 +113,80 @@ object GeometryEngine {
     }
     fun diagonal(a:Vec2,b:Vec2)=a.distanceTo(b)
     fun wallLengths(points:List<Vec2>)=points.indices.map{points[it].distanceTo(points[(it+1)%points.size])}
+
+    data class PolygonSplit(val first:List<Vec2>,val second:List<Vec2>,val originalArea:Double) {
+        val combinedArea get()=area(first)+area(second)
+    }
+
+    /**
+     * Разрезает простой многоугольник хордой, концы которой лежат на его границе.
+     * Никакие координаты/размеры автоматически не подгоняются. Для некорректного
+     * или выходящего за контур разреза возвращается null.
+     */
+    fun splitByBoundaryChord(points:List<Vec2>, start:Vec2, end:Vec2):PolygonSplit? {
+        if(points.size<3 || selfIntersects(points) || start.distanceTo(end)<=EPS) return null
+        val scale=max(1.0, perimeter(points))
+        val tol=1e-7*scale
+        fun edgeParameter(a:Vec2,b:Vec2,p:Vec2):Double? {
+            val d=b-a
+            val len2=d.x*d.x+d.y*d.y
+            if(len2<=EPS) return null
+            val t=((p.x-a.x)*d.x+(p.y-a.y)*d.y)/len2
+            if(t < -tol || t > 1.0+tol) return null
+            val projected=a+d*t.coerceIn(0.0,1.0)
+            return if(projected.distanceTo(p)<=tol) t.coerceIn(0.0,1.0) else null
+        }
+        fun liesOnBoundary(p:Vec2)=points.indices.any { i->edgeParameter(points[i],points[(i+1)%points.size],p)!=null }
+        if(!liesOnBoundary(start)||!liesOnBoundary(end)) return null
+        fun inside(p:Vec2):Boolean {
+            var hit=false
+            for(i in points.indices) {
+                val a=points[i];val b=points[(i+1)%points.size]
+                if((a.y>p.y)!=(b.y>p.y)) {
+                    val x=a.x+(p.y-a.y)*(b.x-a.x)/(b.y-a.y)
+                    if(p.x<x) hit=!hit
+                }
+            }
+            return hit
+        }
+        if(!inside((start+end)*0.5)) return null
+        // The chord may touch the boundary only at its two endpoints.
+        for(i in points.indices) {
+            val a=points[i];val b=points[(i+1)%points.size]
+            val t1=edgeParameter(a,b,start)
+            val t2=edgeParameter(a,b,end)
+            if(t1==null && t2==null && segmentsIntersect(start,end,a,b)) return null
+        }
+        val boundary=mutableListOf<Vec2>()
+        for(i in points.indices) {
+            val a=points[i];val b=points[(i+1)%points.size]
+            boundary.add(a)
+            val inserts=listOfNotNull(edgeParameter(a,b,start)?.let{it to start},edgeParameter(a,b,end)?.let{it to end})
+                .filter{it.first>tol && it.first<1.0-tol}
+                .distinctBy{it.second}
+                .sortedBy{it.first}
+            inserts.forEach{if(boundary.last().distanceTo(it.second)>tol) boundary.add(it.second)}
+        }
+        fun indexOf(p:Vec2)=boundary.indexOfFirst{it.distanceTo(p)<=tol}
+        val si=indexOf(start);val ei=indexOf(end)
+        if(si<0||ei<0||si==ei) return null
+        fun path(from:Int,to:Int):List<Vec2> {
+            val out=mutableListOf<Vec2>();var i=from
+            while(true){out.add(boundary[i]);if(i==to)break;i=(i+1)%boundary.size;if(out.size>boundary.size+1)return emptyList()}
+            return out
+        }
+        val a=path(si,ei);val b=path(ei,si)
+        if(a.size<3||b.size<3) return null
+        val areaA=area(a);val areaB=area(b);val original=area(points)
+        if(areaA<=tol*tol||areaB<=tol*tol||abs(areaA+areaB-original)>max(1e-6,original*1e-6)) return null
+        return PolygonSplit(a,b,original)
+    }
+
+    private fun segmentsIntersect(a:Vec2,b:Vec2,c:Vec2,d:Vec2):Boolean {
+        fun cross(p:Vec2,q:Vec2,r:Vec2)=(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x)
+        val ab1=cross(a,b,c);val ab2=cross(a,b,d);val cd1=cross(c,d,a);val cd2=cross(c,d,b)
+        return ab1*ab2 < -EPS && cd1*cd2 < -EPS
+    }
 }
 data class MaterialResult(val required:Double,val packages:Int,val packageSize:Double)
 object MaterialCalculator {
