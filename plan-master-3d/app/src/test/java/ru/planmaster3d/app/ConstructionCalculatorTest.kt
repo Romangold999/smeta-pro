@@ -76,6 +76,35 @@ class ConstructionCalculatorTest {
         assertEquals(129, fullBrick.blockCount)
     }
 
+    @Test(expected = IllegalArgumentException::class)
+    fun demolitionRejectsInfiniteDensity() {
+        DemolitionCalculator.calculate(
+            DemolitionInput(2.0, 2.5, 10.0, Double.POSITIVE_INFINITY)
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun demolitionRejectsOverflowingBagCount() {
+        DemolitionCalculator.calculate(
+            DemolitionInput(1.0e100, 1.0e100, 10.0, 2300.0)
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun partitionRejectsOpeningsLargerThanWall() {
+        PartitionCalculator.calculate(
+            PartitionInput(PartitionKind.AAC_BLOCK, 2.0, 2.5, 100, openingsAreaM2 = 6.0)
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun partitionRejectsInfiniteReserve() {
+        PartitionCalculator.calculate(
+            PartitionInput(PartitionKind.GYPSUM_BOARD, 2.0, 2.5, 100,
+                reservePercent = Double.POSITIVE_INFINITY)
+        )
+    }
+
     @Test fun drywallPartitionCalculatesBoardsStudsAndInsulation() {
         val result = PartitionCalculator.calculate(
             PartitionInput(
