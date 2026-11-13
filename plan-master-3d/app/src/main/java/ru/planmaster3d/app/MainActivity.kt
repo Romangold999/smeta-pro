@@ -45,10 +45,10 @@ CatalogWork("Установка зеркала",1300.0,"шт","Монтаж"),Ca
 CatalogWork("Распайка ПП трубы (1 точка)",2000.0,"точка","Сантехника"),CatalogWork("Канализация",2000.0,"точка","Сантехника"),CatalogWork("Установка водомера",800.0,"шт","Сантехника"),CatalogWork("Штроба в бетоне 20 мм",1000.0,"м.п.","Электрика"),CatalogWork("Штроба в бетоне 50 мм",1500.0,"м.п.","Электрика"),CatalogWork("Штроба в газоблоке 20 мм",700.0,"м.п.","Электрика"),CatalogWork("Заделка штробы",200.0,"м.п.","Подготовка"),CatalogWork("Отверстие в бетоне для подрозетника",400.0,"шт","Электрика"),CatalogWork("Монтаж подрозетника",100.0,"шт","Электрика"),CatalogWork("Установка розетки",250.0,"шт","Электрика"),CatalogWork("Демонтаж старой штукатурки",450.0,"м²","Демонтаж"),CatalogWork("Демонтаж плитки",1000.0,"м²","Демонтаж"),CatalogWork("Изготовление раковины из керамогранита (до 80 см)",25000.0,"шт","Сантехника"),CatalogWork("Монтаж раковины",7000.0,"шт","Сантехника",true)
 )
 
-data class Room(val id:Long,val name:String,val width:Double,val length:Double,val height:Double,val wall1:Double,val wall2:Double,val wall3:Double,val wall4:Double,val vertices:List<Vec2> = listOf(Vec2(0.0,0.0),Vec2(width,0.0),Vec2(width,length),Vec2(0.0,length)),val wallHeights:List<Double> = emptyList(),val wallThicknesses:List<Double> = emptyList(),val openingsByWall:Map<Int,List<Opening>> = emptyMap()) {
+data class Room(val id:Long,val name:String,val width:Double,val length:Double,val height:Double,val wall1:Double,val wall2:Double,val wall3:Double,val wall4:Double,val vertices:List<Vec2> = listOf(Vec2(0.0,0.0),Vec2(width,0.0),Vec2(width,length),Vec2(0.0,length)),val wallHeights:List<Double> = emptyList(),val wallThicknesses:List<Double> = emptyList(),val openingsByWall:Map<Int,List<Opening>> = emptyMap(),val wallHeightOverrides:List<Double> = emptyList()) {
     val floor get() = GeometryEngine.area(vertices)
     val perimeter get() = GeometryEngine.perimeter(vertices)
-    val geometry get() = GeometryEngine.metrics(RoomGeometry(name,vertices,wallHeights,wallThicknesses,openingsByWall),height)
+    val geometry get() = GeometryEngine.metrics(RoomGeometry(name,vertices,wallHeights,wallThicknesses,openingsByWall,wallHeightOverrides),height)
     val walls get() = geometry.netWallArea
 }
 data class EstimateLine(val name:String,val unit:String,val price:Double,val qty:Double,val category:String,val material:Boolean=false) {
@@ -76,7 +76,7 @@ class MainActivity:ComponentActivity(){
   val w=if(p.size>=2) (p.maxOf{it.x}-p.minOf{it.x}).coerceAtLeast(0.01) else 4.0
   val l=if(p.size>=3) (p.maxOf{it.y}-p.minOf{it.y}).coerceAtLeast(0.01) else 5.0
   val h=g.wallHeights.firstOrNull()?:2.7
-  Room(i+1L,g.name,w,l,h,w,l,w,l,p,g.wallHeights,g.wallThicknesses,g.openingsByWall)
+  Room(i+1L,g.name,w,l,h,w,l,w,l,p,g.wallHeights,g.wallThicknesses,g.openingsByWall,g.wallHeightOverrides)
  }?.takeIf { it.isNotEmpty() } ?: listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0))
  var rooms by remember { mutableStateOf(toRoomModels(initialSaved)) }
  var selected by remember { mutableIntStateOf(0) }
@@ -143,6 +143,7 @@ class MainActivity:ComponentActivity(){
  var openingDepth by remember { mutableStateOf("0.15") }
  var openingMessage by remember { mutableStateOf("") }
  var vertexDrafts by remember { mutableStateOf<Map<Long,String>>(emptyMap()) }
+ var wallDimensionDrafts by remember { mutableStateOf<Map<String,String>>(emptyMap()) }
  var geometryMessage by remember { mutableStateOf("") }
  var partitionRate by remember { mutableStateOf("0") }
  var demolitionBagPrice by remember { mutableStateOf("0") }
@@ -162,7 +163,7 @@ class MainActivity:ComponentActivity(){
  val totalPerimeter=rooms.sumOf{it.perimeter}
  fun save(){
   val geometry=rooms.map { r ->
-   RoomGeometry(r.name,r.vertices,if(r.wallHeights.size==r.vertices.size) r.wallHeights else List(r.vertices.size){r.height},if(r.wallThicknesses.size==r.vertices.size) r.wallThicknesses else List(r.vertices.size){0.0},r.openingsByWall.filterKeys{it in r.vertices.indices})
+   RoomGeometry(r.name,r.vertices,if(r.wallHeights.size==r.vertices.size) r.wallHeights else List(r.vertices.size){r.height},if(r.wallThicknesses.size==r.vertices.size) r.wallThicknesses else List(r.vertices.size){0.0},r.openingsByWall.filterKeys{it in r.vertices.indices},if(r.wallHeightOverrides.size==r.vertices.size) r.wallHeightOverrides else emptyList())
   }
   projectStore.saveProject(SavedProject(activeProjectId,project,geometry,lines,construction=constructionRecords))
   prefs.edit().putString("project",project).putString("active_project_id",activeProjectId).apply()
@@ -223,15 +224,50 @@ class MainActivity:ComponentActivity(){
                 vertices=parsed,
                 wallHeights=List(parsed.size){roomH.toDoubleOrNull()?:current.height},
                 wallThicknesses=if(sameCount&&current.wallThicknesses.size==parsed.size)current.wallThicknesses else List(parsed.size){0.0},
-                openingsByWall=if(sameCount)current.openingsByWall else emptyMap()
+                openingsByWall=if(sameCount)current.openingsByWall else emptyMap(),
+                wallHeightOverrides=if(sameCount&&current.wallHeightOverrides.size==parsed.size)current.wallHeightOverrides else emptyList()
               )
-              val errors=GeometryEngine.validateOpenings(RoomGeometry(updated.name,updated.vertices,updated.wallHeights,updated.wallThicknesses,updated.openingsByWall),updated.height)
+              val errors=GeometryEngine.validateOpenings(RoomGeometry(updated.name,updated.vertices,updated.wallHeights,updated.wallThicknesses,updated.openingsByWall,updated.wallHeightOverrides),updated.height)
               if(errors.isNotEmpty())geometryMessage=errors.joinToString("; ")
               else {rooms=rooms.toMutableList().also{it[selected]=updated};geometryMessage="Контур обновлён без автоматической подгонки. Сохрани проект."}
             }
           } else if(geometryMessage.isBlank()) geometryMessage="Нужно минимум три корректные вершины."
         },modifier=Modifier.fillMaxWidth()){Text("Применить контур")}
         if(geometryMessage.isNotBlank())Text(geometryMessage,color=if(geometryMessage.startsWith("Контур обновлён"))accent else Color(0xFFFFB86B),fontSize=12.sp)
+      } }
+      item { CardBlock { Text("Высота и толщина каждой стены",fontSize=18.sp,fontWeight=FontWeight.Bold)
+        Text("Параметры независимы для каждой стены. Высота применяется по всей длине выбранной стены; толщина задаётся в миллиметрах.")
+        current.vertices.indices.forEach { i ->
+          val next=(i+1)%current.vertices.size
+          val edgeLength=current.vertices[i].distanceTo(current.vertices[next])
+          val baseHeights=if(current.wallHeights.size==current.vertices.size)current.wallHeights else List(current.vertices.size){current.height}
+          val heights=if(current.wallHeightOverrides.size==current.vertices.size)current.wallHeightOverrides else current.vertices.indices.map{j->(baseHeights[j]+baseHeights[(j+1)%baseHeights.size])/2.0}
+          val thicknesses=if(current.wallThicknesses.size==current.vertices.size)current.wallThicknesses else List(current.vertices.size){0.0}
+          val heightKey="${current.id}:wall:${i}:height"
+          val thicknessKey="${current.id}:wall:${i}:thickness"
+          Card(colors=CardDefaults.cardColors(containerColor=navy),shape=RoundedCornerShape(12.dp)) {
+            Column(Modifier.fillMaxWidth().padding(10.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
+              Text("Стена ${i+1} • длина ${df.format(edgeLength)} м",fontWeight=FontWeight.SemiBold)
+              OutlinedTextField(value=wallDimensionDrafts[heightKey]?:df.format(heights[i]).replace(',','.'),onValueChange={value->
+                wallDimensionDrafts=wallDimensionDrafts+(heightKey to value)
+                val parsed=value.replace(',','.').toDoubleOrNull()
+                if(parsed!=null&&parsed.isFinite()&&parsed in 0.1..20.0){
+                  val updatedHeights=heights.toMutableList().also{it[i]=parsed}
+                  rooms=rooms.toMutableList().also{it[selected]=current.copy(wallHeightOverrides=updatedHeights)}
+                }
+              },label={Text("Высота стены, м")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),singleLine=true,modifier=Modifier.fillMaxWidth())
+              OutlinedTextField(value=wallDimensionDrafts[thicknessKey]?:df.format(thicknesses[i]*1000.0).replace(',','.'),onValueChange={value->
+                wallDimensionDrafts=wallDimensionDrafts+(thicknessKey to value)
+                val parsed=value.replace(',','.').toDoubleOrNull()
+                if(parsed!=null&&parsed.isFinite()&&parsed in 0.0..2000.0){
+                  val updatedThicknesses=thicknesses.toMutableList().also{it[i]=parsed/1000.0}
+                  rooms=rooms.toMutableList().also{it[selected]=current.copy(wallThicknesses=updatedThicknesses)}
+                }
+              },label={Text("Толщина стены, мм")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),singleLine=true,modifier=Modifier.fillMaxWidth())
+            }
+          }
+        }
+        Text("Изменения учитываются в площадях стен и проверке высоты проёмов. Нажми «Сохранить», чтобы записать параметры.",fontSize=11.sp,color=Color.LightGray)
       } }
       item { CardBlock { Text("Двери, окна и проёмы",fontSize=18.sp,fontWeight=FontWeight.Bold)
         Text("Добавляй проём на выбранную стену. Позиция измеряется от её начальной вершины; размеры проверяются по геометрии.")
@@ -482,6 +518,11 @@ class MainActivity:ComponentActivity(){
                   val edge=sourceEdge(points[i],points[(i+1)%points.size])
                   if(edge==null) partitionThickness.toDouble()/1000.0 else originalThicknesses[edge]
                 }
+                val originalWallHeights=if(current.wallHeightOverrides.size==original.size) current.wallHeightOverrides else original.indices.map{j->(originalHeights[j]+originalHeights[(j+1)%original.size])/2.0}
+                val heightOverrides=points.indices.map { i ->
+                  val edge=sourceEdge(points[i],points[(i+1)%points.size])
+                  if(edge==null) partitionHeight.toDoubleOrNull()?:current.height else originalWallHeights[edge]
+                }
                 val openings=mutableMapOf<Int,List<Opening>>()
                 points.indices.forEach { newIndex ->
                   val source=sourceEdge(points[newIndex],points[(newIndex+1)%points.size]) ?: return@forEach
@@ -498,7 +539,7 @@ class MainActivity:ComponentActivity(){
                   }
                   if(mapped.isNotEmpty()) openings[newIndex]=mapped
                 }
-                return Room(id,name,w,h,current.height,w,h,w,h,points,heights,thicknesses,openings)
+                return Room(id,name,w,h,current.height,w,h,w,h,points,heights,thicknesses,openings,heightOverrides)
               }
               rooms=rooms.toMutableList().also { list ->
                 list[selected]=roomFromPolygon(current.id,current.name,split.first)

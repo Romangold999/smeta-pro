@@ -46,7 +46,9 @@ data class RoomGeometry(
     val vertices:List<Vec2>,
     val wallHeights:List<Double> = emptyList(),
     val wallThicknesses:List<Double> = emptyList(),
-    val openingsByWall:Map<Int,List<Opening>> = emptyMap()
+    val openingsByWall:Map<Int,List<Opening>> = emptyMap(),
+    /** Optional constant height override per wall. */
+    val wallHeightOverrides:List<Double> = emptyList()
 )
 data class ClosureResult(val dx:Double,val dy:Double,val residual:Double,val closed:Boolean)
 data class RoomMetrics(
@@ -134,7 +136,7 @@ object GeometryEngine {
             val end=room.vertices[(wallIndex+1)%room.vertices.size]
             val length=start.distanceTo(end)
             val next=(wallIndex+1)%room.vertices.size
-            val maxHeight=min(room.wallHeights.getOrElse(wallIndex){defaultHeight},room.wallHeights.getOrElse(next){defaultHeight})
+            val maxHeight=room.wallHeightOverrides.getOrNull(wallIndex) ?: min(room.wallHeights.getOrElse(wallIndex){defaultHeight},room.wallHeights.getOrElse(next){defaultHeight})
             openings.forEach { opening ->
                 if(opening.offsetFromStart+opening.width>length+EPS) errors.add("${opening.name}: ширина выходит за пределы стены №${wallIndex+1}")
                 if(opening.sillHeight+opening.height>maxHeight+EPS) errors.add("${opening.name}: высота выходит за пределы стены №${wallIndex+1}")
@@ -153,11 +155,13 @@ object GeometryEngine {
         require(room.vertices.size>=3){"Для помещения нужны минимум три вершины"}
         require(room.wallHeights.isEmpty()||room.wallHeights.size==room.vertices.size)
         require(room.wallThicknesses.isEmpty()||room.wallThicknesses.size==room.vertices.size)
+        require(room.wallHeightOverrides.isEmpty()||room.wallHeightOverrides.size==room.vertices.size)
+        require(room.wallHeightOverrides.all{it.isFinite()&&it>0.0})
         val walls=room.vertices.indices.map{i->
             val j=(i+1)%room.vertices.size
             WallMeasure(room.vertices[i],room.vertices[j],
-                room.wallHeights.getOrElse(i){defaultHeight},
-                room.wallHeights.getOrElse(j){defaultHeight},
+                room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(i){defaultHeight}},
+                room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(j){defaultHeight}},
                 room.wallThicknesses.getOrElse(i){0.0},
                 room.openingsByWall[i].orEmpty(), "Стена ${i+1}")
         }
