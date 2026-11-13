@@ -3,7 +3,22 @@ package ru.planmaster3d.app
 import org.junit.Assert.*
 import org.junit.Test
 
-class GeometryEngineTest {
+class GeometryEngineTest { 
+ @Test fun roomValidationRejectsConsecutiveDuplicateVertices() {
+  val room=RoomGeometry("Duplicate",listOf(
+   Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0)
+  ))
+  val errors=GeometryEngine.validateRoom(room)
+  assertTrue(errors.any{it.contains("нулевой")})
+  assertThrows(IllegalArgumentException::class.java){GeometryEngine.metrics(room)}
+ }
+ @Test fun roomValidationRejectsNearZeroLengthWalls() {
+  val room=RoomGeometry("Tiny edge",listOf(
+   Vec2(0.0,0.0),Vec2(1e-10,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0)
+  ))
+  assertTrue(GeometryEngine.validateRoom(room).any{it.contains("нулевой")})
+ }
+
  @Test fun roomValidationRejectsNonFiniteCoordinates() {
   val room=RoomGeometry("Bad",listOf(Vec2(0.0,0.0),Vec2(Double.NaN,0.0),Vec2(0.0,2.0)))
   assertTrue(GeometryEngine.validateRoom(room).any{it.contains("Координаты")})
