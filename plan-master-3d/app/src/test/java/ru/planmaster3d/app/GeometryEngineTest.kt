@@ -139,7 +139,7 @@ class GeometryEngineTest {
  @Test fun independentWallHeightOverridesDriveWallArea() {
   val room=RoomGeometry("Высоты",listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0)),wallHeightOverrides=listOf(2.0,3.0,4.0,5.0))
   val result=GeometryEngine.metrics(room)
-  assertEquals(42.0,result.grossWallArea,1e-8)
+  assertEquals(48.0,result.grossWallArea,1e-8)
   assertEquals(listOf(2.0,3.0,4.0,5.0),result.walls.map{it.heightStart})
  }
  @Test fun openingValidationUsesItsOwnWallHeightOverride() {
