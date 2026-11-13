@@ -102,6 +102,9 @@ class MainActivity:ComponentActivity(){
  var roomW by remember { mutableStateOf("4") }
  var roomL by remember { mutableStateOf("5") }
  var roomH by remember { mutableStateOf("2.7") }
+ var demolitionSurface by remember { mutableStateOf("Стена") }
+ var demolitionRegion by remember { mutableStateOf<List<Vec2>>(emptyList()) }
+ var demolitionRegionMessage by remember { mutableStateOf("") }
  var demolitionWall by remember { mutableStateOf("Стена 1") }
  var selectedDemolitionWallIndex by remember { mutableIntStateOf(0) }
  var demolitionMaterial by remember { mutableStateOf("Керамическая плитка") }
@@ -345,7 +348,7 @@ class MainActivity:ComponentActivity(){
             constructionRecords=constructionRecords+ConstructionRecord(
               id=java.util.UUID.randomUUID().toString(),kind=if(isWall)"DEMOLITION" else if(demolitionSurface=="Пол")"DEMOLITION_FLOOR" else "DEMOLITION_CEILING",
               roomIndex=selected,material=demolitionMaterial,wallIndex=wallIndex,startX=startPoint.x,startY=startPoint.y,endX=endPoint.x,endY=endPoint.y,
-              lengthM=if(isWall)demolitionEffectiveLength else area,heightM=if(isWall)(demolitionHeight.toDoubleOrNull()?:0.0) else 1.0,
+              lengthM=(if(isWall) demolitionEffectiveLength else area),heightM=(if(isWall) (demolitionHeight.toDoubleOrNull()?:0.0) else 1.0),
               thicknessMm=demolitionThickness.toDouble(),densityKgM3=demolitionDensity.toDouble(),quantity=result.areaM2,
               regionPoints=if(isWall)emptyList() else demolitionRegion
             )
