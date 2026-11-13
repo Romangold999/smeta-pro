@@ -681,7 +681,7 @@ class MainActivity:ComponentActivity(){
   fun project(p:Vec2,z:Double=0.0):Offset{
    val x=p.x*cosA-p.y*sinA;val y=p.x*sinA+p.y*cosA
    val px=(x-y)*0.82;val py=(x+y)*0.42-z*0.95
-   return Offset(cx+((px-(minX+maxX)/2)*scale),cy+((py-(minY+maxY)/2)*scale))
+   return Offset(cx+((px-(minX+maxX)/2)*scale).toFloat(),cy+((py-(minY+maxY)/2)*scale).toFloat())
   }
   val floor=Path()
   room.vertices.forEachIndexed{i,p->val q=project(p);if(i==0)floor.moveTo(q.x,q.y)else floor.lineTo(q.x,q.y)}
