@@ -84,7 +84,7 @@ class MainActivity:ComponentActivity(){
  var constructionRecords by remember { mutableStateOf(initialSaved?.construction ?: emptyList()) }
  var projectIds by remember { mutableStateOf(projectStore.listProjectIds()) }
  var showProjects by remember { mutableStateOf(false) }
- var saveMessage by remember { mutableStateOf("Изменения сохраняются локально после нажатия «Сохранить»") }
+ var saveMessage by remember { mutableStateOf("Автосохранение включено • изменения сохраняются локально") }
  var priceSearch by remember { mutableStateOf("") }
  var materialMode by remember { mutableStateOf("Штукатурка") }
  var materialArea by remember { mutableStateOf("45") }
@@ -454,7 +454,7 @@ class MainActivity:ComponentActivity(){
             lines=lines+EstimateLine(workName,"м²",demolitionRate.toDoubleOrNull()?:0.0,result.areaM2,"Демонтаж")+
               EstimateLine("Упаковка мусора ($demolitionMaterial)","меш",demolitionBagPrice.toDoubleOrNull()?:0.0,result.bagsRequired.toDouble(),"Демонтаж")+
               EstimateLine("Вывоз строительного мусора","т",demolitionHaulPrice.toDoubleOrNull()?:0.0,result.solidMassKg/1000.0,"Вывоз")
-            saveMessage="Зона демонтажа добавлена в проект и смету. Сохрани проект."
+            saveMessage="Зона демонтажа добавлена в проект и смету. Автосохранение включено."
             tab="Смета"
           },modifier=Modifier.fillMaxWidth()){Text("Добавить демонтаж в смету")}
         }else Text("Укажи корректную площадь, толщину, плотность и параметры мешков.",color=Color(0xFFFFB86B))
