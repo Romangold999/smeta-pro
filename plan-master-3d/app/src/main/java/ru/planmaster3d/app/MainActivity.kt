@@ -92,6 +92,10 @@ class MainActivity:ComponentActivity(){
  var includeWallPrimer by remember { mutableStateOf(true) }
  var includeFloorScreed by remember { mutableStateOf(false) }
  var includeCeilingPrimer by remember { mutableStateOf(false) }
+ var includeWallWaterproofing by remember { mutableStateOf(false) }
+ var includeFloorWaterproofing by remember { mutableStateOf(false) }
+ var includeWallTile by remember { mutableStateOf(false) }
+ var includeFloorTile by remember { mutableStateOf(false) }
  var materialMode by remember { mutableStateOf("Штукатурка") }
  var materialArea by remember { mutableStateOf("45") }
  var materialLayer by remember { mutableStateOf("10") }
@@ -489,21 +493,31 @@ class MainActivity:ComponentActivity(){
         Text("Выбери работы для переноса рассчитанных объёмов в смету:")
         Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeWallPlaster,onCheckedChange={includeWallPlaster=it});Text("Штукатурка стен (${df.format(takeoff.netWallAreaM2)} м²)")}
         Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeWallPrimer,onCheckedChange={includeWallPrimer=it});Text("Грунтование стен (${df.format(takeoff.netWallAreaM2)} м²)")}
+        Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeWallWaterproofing,onCheckedChange={includeWallWaterproofing=it});Text("Гидроизоляция стен, 2 слоя (${df.format(takeoff.netWallAreaM2)} м²)")}
         Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeFloorScreed,onCheckedChange={includeFloorScreed=it});Text("Стяжка пола (${df.format(takeoff.floorAreaM2)} м²)")}
+        Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeFloorWaterproofing,onCheckedChange={includeFloorWaterproofing=it});Text("Гидроизоляция пола, 2 слоя (${df.format(takeoff.floorAreaM2)} м²)")}
+        Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeFloorTile,onCheckedChange={includeFloorTile=it});Text("Укладка керамогранита на пол (${df.format(takeoff.floorAreaM2)} м²)")}
+        Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeWallTile,onCheckedChange={includeWallTile=it});Text("Облицовка стен керамогранитом (${df.format(takeoff.netWallAreaM2)} м²)")}
         Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=includeCeilingPrimer,onCheckedChange={includeCeilingPrimer=it});Text("Грунтование потолка (${df.format(takeoff.ceilingAreaM2)} м²)")}
         Button(onClick={
-          val generated=mutableListOf<EstimateLine>()
-          val plasterRate=originalCatalog.firstOrNull{it.n=="Штукатурка ЦПС до 3 см"}?.p?:0.0
-          val primerRate=originalCatalog.firstOrNull{it.n=="Грунтование"}?.p?:0.0
-          val screedRate=originalCatalog.firstOrNull{it.n=="Стяжка до 3 см"}?.p?:0.0
-          if(includeWallPlaster && takeoff.netWallAreaM2>0.0) generated.add(EstimateLine("Авто · Штукатурка стен по геометрии","м²",plasterRate,takeoff.netWallAreaM2,"Автообъёмы"))
-          if(includeWallPrimer && takeoff.netWallAreaM2>0.0) generated.add(EstimateLine("Авто · Грунтование стен по геометрии","м²",primerRate,takeoff.netWallAreaM2,"Автообъёмы"))
-          if(includeFloorScreed && takeoff.floorAreaM2>0.0) generated.add(EstimateLine("Авто · Стяжка пола по геометрии","м²",screedRate,takeoff.floorAreaM2,"Автообъёмы"))
-          if(includeCeilingPrimer && takeoff.ceilingAreaM2>0.0) generated.add(EstimateLine("Авто · Грунтование потолка по геометрии","м²",primerRate,takeoff.ceilingAreaM2,"Автообъёмы"))
+          val generated=AutomaticEstimateGenerator.generate(
+            takeoff=takeoff,
+            catalog=originalCatalog,
+            options=AutomaticEstimateOptions(
+              wallPlaster=includeWallPlaster,
+              wallPrimer=includeWallPrimer,
+              floorScreed=includeFloorScreed,
+              ceilingPrimer=includeCeilingPrimer,
+              wallWaterproofing=includeWallWaterproofing,
+              floorWaterproofing=includeFloorWaterproofing,
+              wallTile=includeWallTile,
+              floorTile=includeFloorTile
+            )
+          )
           lines=lines.filterNot{it.category=="Автообъёмы"}+generated
           saveMessage=if(generated.isEmpty()) "Автоматические позиции удалены из сметы. Ручные позиции сохранены." else "Автоматические объёмы обновлены в смете. Ручные позиции сохранены."
         },modifier=Modifier.fillMaxWidth()){Text("Обновить выбранные объёмы в смете")}
-        Text("Количество берётся из геометрии помещений с учётом проёмов. При повторном обновлении заменяются только автоматически созданные строки; ручные позиции сохраняются. Цены взяты из стартового каталога.",fontSize=11.sp,color=Color.LightGray)
+        Text("Объёмы берутся из геометрии всех помещений с учётом проёмов. Повторное обновление заменяет только автоматические строки и сохраняет ручные. Цены подставляются из каталога; позиции без найденной цены не создаются.",fontSize=11.sp,color=Color.LightGray)
       } }
       items(originalCatalog.filter{priceSearch.isBlank()||it.n.contains(priceSearch,true)||it.c.contains(priceSearch,true)}) { item -> CardBlock { Row(verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text(item.n,fontWeight=FontWeight.SemiBold);Text("${item.c} • ${item.u} • ${df.format(item.p)} ₽${if(item.from) " от" else ""}",color=Color.LightGray,fontSize=12.sp)}; IconButton(onClick={lines=lines+EstimateLine(item.n,item.u,item.p,1.0,item.c)}){Icon(Icons.Default.Add,tint=accent,contentDescription="Добавить")} } } }
       if(lines.isNotEmpty()) item { CardBlock { Text("Смета",fontWeight=FontWeight.Bold); lines.forEachIndexed{i,line->Text("${line.name}: ${df.format(line.qty)} ${line.unit} × ${df.format(line.price)} ₽ = ${df.format(line.total)} ₽"); Row { TextButton(onClick={lines=lines.toMutableList().also{it[i]=line.copy(qty=(line.qty-1).coerceAtLeast(0.0))}}){Text("−")}; TextButton(onClick={lines=lines.toMutableList().also{it[i]=line.copy(qty=line.qty+1)}}){Text("+")}; TextButton(onClick={lines=lines.toMutableList().also{it.removeAt(i)}}){Text("Удалить")} } }; Text("ИТОГО: ${df.format(lines.sumOf{it.total})} ₽",fontWeight=FontWeight.Bold); Button(onClick={shareEstimate(ctx,lines)},modifier=Modifier.fillMaxWidth()){Text("Поделиться сметой / текст")} ; OutlinedButton(onClick={shareCsv(ctx,lines)},modifier=Modifier.fillMaxWidth()){Text("Экспорт таблицы CSV (Excel)")} } }
