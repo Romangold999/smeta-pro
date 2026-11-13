@@ -40,6 +40,10 @@ data class WallMeasure(
     val openingArea get()=openings.sumOf{it.faceArea}
     val netArea get()=(grossArea-openingArea).coerceAtLeast(0.0)
     val revealArea get()=openings.sumOf{it.revealArea()}
+    /** Объём стены по полной площади с учётом её фактической толщины. */
+    val grossVolumeM3 get()=grossArea*thickness
+    /** Объём материала за вычетом дверей, окон и других проёмов. */
+    val netVolumeM3 get()=netArea*thickness
 }
 data class RoomGeometry(
     val name:String,
@@ -60,7 +64,9 @@ data class RoomMetrics(
     val openingArea:Double,
     val revealArea:Double,
     val walls:List<WallMeasure>,
-    val selfIntersects:Boolean
+    val selfIntersects:Boolean,
+    val grossWallVolumeM3:Double=0.0,
+    val netWallVolumeM3:Double=0.0
 )
 object GeometryEngine {
     private const val EPS=1e-8
@@ -169,7 +175,7 @@ object GeometryEngine {
         val openings=walls.sumOf{it.openingArea}
         return RoomMetrics(area(room.vertices),perimeter(room.vertices),gross,
             walls.sumOf{it.netArea},area(room.vertices),openings,walls.sumOf{it.revealArea},
-            walls,selfIntersects(room.vertices))
+            walls,selfIntersects(room.vertices),walls.sumOf{it.grossVolumeM3},walls.sumOf{it.netVolumeM3})
     }
     /** Невязка исходных измеренных векторов до принудительного замыкания контура. */
     fun closure(vectors:List<Vec2>,tolerance:Double=0.01):ClosureResult {

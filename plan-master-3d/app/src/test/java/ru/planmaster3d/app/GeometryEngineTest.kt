@@ -146,4 +146,17 @@ class GeometryEngineTest {
   val room=RoomGeometry("Проём",listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0)),openingsByWall=mapOf(0 to listOf(Opening("o","Окно",1.0,2.2,sillHeight=0.0,offsetFromStart=1.0))),wallHeightOverrides=listOf(2.0,3.0,4.0,5.0))
   assertTrue(GeometryEngine.validateOpenings(room).any{it.contains("высота выходит")})
  }
+ @Test fun wallVolumeUsesIndividualThicknessAndSubtractsOpenings() {
+  val room=RoomGeometry(
+   "Объём стен",
+   listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0)),
+   openingsByWall=mapOf(0 to listOf(Opening("door","Дверь",1.0,1.0,offsetFromStart=1.0))),
+   wallThicknesses=listOf(0.1,0.2,0.15,0.1),
+   wallHeightOverrides=listOf(2.0,3.0,4.0,5.0)
+  )
+  val result=GeometryEngine.metrics(room)
+  assertEquals(6.5,result.grossWallVolumeM3,1e-8)
+  assertEquals(6.4,result.netWallVolumeM3,1e-8)
+  assertEquals(0.1,result.walls.first().netVolumeM3,1e-8)
+ }
 }
