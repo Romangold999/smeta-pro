@@ -19,7 +19,7 @@ class GeometryEngineTest {
  }
  @Test fun closureResidualIsNotSilentlyAdjusted() {
   val result=GeometryEngine.closure(listOf(Vec2(4.0,0.0),Vec2(0.0,3.0),Vec2(-3.0,0.0)))
-  assertEquals(1.0,result.residual,1e-8)
+  assertEquals(kotlin.math.sqrt(10.0),result.residual,1e-8)
   assertFalse(result.closed)
  }
  @Test fun openingAndRevealsAreCalculatedSeparately() {
@@ -37,8 +37,8 @@ class GeometryEngineTest {
  }
  @Test fun layoutCountsRowsAndColumns() {
   val r=LayoutCalculator.grid(4000.0,5000.0,600.0,600.0,10.0)
-  assertEquals(7,r.rows)
-  assertEquals(9,r.columns)
+  assertEquals(9,r.rows)
+  assertEquals(7,r.columns)
   assertEquals(63,r.pieces)
  }
 }
