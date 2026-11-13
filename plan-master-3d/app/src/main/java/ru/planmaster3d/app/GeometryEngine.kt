@@ -386,7 +386,7 @@ object LayoutCalculator {
             "Размеры помещения и элемента должны быть больше нуля, запас — неотрицательным"
         }
         fun count(value:Double,label:String):Int {
-            require(value.isFinite()&&value>=1.0&&value<=Int.MAX_VALUE.toDouble()) { "$label превышает допустимый диапазон" }
+            require(value.isFinite()&&value>0.0&&value<=Int.MAX_VALUE.toDouble()) { "$label превышает допустимый диапазон" }
             return ceil(value).toInt()
         }
         val columns=count(roomWidthMm/itemWidthMm,"Количество колонок")
