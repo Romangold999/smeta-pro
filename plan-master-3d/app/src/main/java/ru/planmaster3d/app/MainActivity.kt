@@ -139,6 +139,8 @@ class MainActivity:ComponentActivity(){
  var openingSill by remember { mutableStateOf("0") }
  var openingDepth by remember { mutableStateOf("0.15") }
  var openingMessage by remember { mutableStateOf("") }
+ var vertexDrafts by remember { mutableStateOf<Map<Long,String>>(emptyMap()) }
+ var geometryMessage by remember { mutableStateOf("") }
  var partitionRate by remember { mutableStateOf("0") }
  var demolitionBagPrice by remember { mutableStateOf("0") }
  var demolitionHaulPrice by remember { mutableStateOf("0") }
@@ -190,7 +192,44 @@ class MainActivity:ComponentActivity(){
     }
     "Обмеры" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock { Text("Геометрия помещения",fontSize=19.sp,fontWeight=FontWeight.Bold); Text("Базовый режим прямоугольного помещения. Длины каждой стены редактируются отдельно; исходные размеры не подгоняются автоматически.") ; Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){ rooms.forEachIndexed{i,r->FilterChip(selected=selected==i,onClick={selected=i},label={Text(r.name)})} } } }
-      item { CardBlock { Text(current.name,fontWeight=FontWeight.Bold); NumberField("Ширина комнаты, м",roomW){roomW=it}; NumberField("Длина комнаты, м",roomL){roomL=it}; NumberField("Высота стен, м",roomH){roomH=it}; Button(onClick={ rooms=rooms.toMutableList().also{it[selected]=current.copy(width=roomW.toDoubleOrNull()?:current.width,length=roomL.toDoubleOrNull()?:current.length,height=roomH.toDoubleOrNull()?:current.height,wall1=roomW.toDoubleOrNull()?:current.wall1,wall3=roomW.toDoubleOrNull()?:current.wall3,wall2=roomL.toDoubleOrNull()?:current.wall2,wall4=roomL.toDoubleOrNull()?:current.wall4)} },modifier=Modifier.fillMaxWidth()){Text("Применить размеры")} } }
+      item { CardBlock {
+        Text(current.name,fontWeight=FontWeight.Bold)
+        NumberField("Высота помещения, м",roomH){roomH=it}
+        Text("Координаты вершин контура (метры)",fontWeight=FontWeight.SemiBold)
+        val initialVertexText=current.vertices.joinToString("\n"){ "${String.format(java.util.Locale.US,"%.3f",it.x)};${String.format(java.util.Locale.US,"%.3f",it.y)}" }
+        val draft=vertexDrafts[current.id]?:initialVertexText
+        OutlinedTextField(value=draft,onValueChange={vertexDrafts=vertexDrafts+(current.id to it)},modifier=Modifier.fillMaxWidth(),minLines=4,label={Text("X;Y — одна вершина на строку")})
+        Text("Пример: 0;0  •  4;0  •  4;3  •  0;3. Вершины задаются по порядку обхода контура.",fontSize=11.sp,color=Color.LightGray)
+        Button(onClick={
+          val parsed=runCatching {
+            draft.lines().filter{it.isNotBlank()}.map { line ->
+              val pair=line.trim().split(";")
+              require(pair.size==2){"В каждой строке укажи X;Y через точку с запятой"}
+              Vec2(pair[0].trim().replace(',','.').toDouble(),pair[1].trim().replace(',','.').toDouble())
+            }
+          }.getOrElse { geometryMessage=it.message?: "Ошибка координат";emptyList() }
+          if(parsed.size>=3) {
+            val sameCount=parsed.size==current.vertices.size
+            if(!sameCount&&current.openingsByWall.isNotEmpty()) geometryMessage="Нельзя менять число вершин, пока у помещения есть проёмы. Сначала перенеси или удали проёмы."
+            else if(GeometryEngine.selfIntersects(parsed)||GeometryEngine.area(parsed)<=1e-8) geometryMessage="Контур пересекается сам с собой или имеет нулевую площадь."
+            else {
+              val updated=current.copy(
+                width=(parsed.maxOf{it.x}-parsed.minOf{it.x}).coerceAtLeast(0.01),
+                length=(parsed.maxOf{it.y}-parsed.minOf{it.y}).coerceAtLeast(0.01),
+                height=roomH.toDoubleOrNull()?:current.height,
+                vertices=parsed,
+                wallHeights=if(sameCount&&current.wallHeights.size==parsed.size)current.wallHeights else List(parsed.size){roomH.toDoubleOrNull()?:current.height},
+                wallThicknesses=if(sameCount&&current.wallThicknesses.size==parsed.size)current.wallThicknesses else List(parsed.size){0.0},
+                openingsByWall=if(sameCount)current.openingsByWall else emptyMap()
+              )
+              val errors=GeometryEngine.validateOpenings(RoomGeometry(updated.name,updated.vertices,updated.wallHeights,updated.wallThicknesses,updated.openingsByWall),updated.height)
+              if(errors.isNotEmpty())geometryMessage=errors.joinToString("; ")
+              else {rooms=rooms.toMutableList().also{it[selected]=updated};geometryMessage="Контур обновлён без автоматической подгонки. Сохрани проект."}
+            }
+          } else if(geometryMessage.isBlank()) geometryMessage="Нужно минимум три корректные вершины."
+        },modifier=Modifier.fillMaxWidth()){Text("Применить контур")}
+        if(geometryMessage.isNotBlank())Text(geometryMessage,color=if(geometryMessage.startsWith("Контур обновлён"))accent else Color(0xFFFFB86B),fontSize=12.sp)
+      } }
       item { CardBlock { Text("Двери, окна и проёмы",fontSize=18.sp,fontWeight=FontWeight.Bold)
         Text("Добавляй проём на выбранную стену. Позиция измеряется от её начальной вершины; размеры проверяются по геометрии.")
         Row(horizontalArrangement=Arrangement.spacedBy(6.dp),verticalAlignment=Alignment.CenterVertically) {
