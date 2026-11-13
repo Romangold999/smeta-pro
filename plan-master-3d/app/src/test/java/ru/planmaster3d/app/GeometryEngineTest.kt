@@ -168,6 +168,13 @@ class GeometryEngineTest {
   assertThrows(IllegalArgumentException::class.java){LayoutCalculator.grid(4000.0,5000.0,600.0,600.0,Double.MAX_VALUE)}
  }
 
+ @Test fun layoutAllowsSingleElementLargerThanRoom() {
+  val result=LayoutCalculator.grid(400.0,500.0,600.0,600.0,0.0)
+  assertEquals(1,result.rows)
+  assertEquals(1,result.columns)
+  assertEquals(1,result.pieces)
+ }
+
  @Test fun layoutCountsRowsAndColumns() {
   val r=LayoutCalculator.grid(4000.0,5000.0,600.0,600.0,10.0)
   assertEquals(9,r.rows)
