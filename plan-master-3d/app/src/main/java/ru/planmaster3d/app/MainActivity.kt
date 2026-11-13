@@ -239,7 +239,7 @@ class MainActivity:ComponentActivity(){
           },
           modifier=Modifier.fillMaxWidth().height(250.dp)
         )
-        Text("Выбрана вершина \${selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)+1}: X \${df.format(current.vertices[selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)].x)} м • Y \${df.format(current.vertices[selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)].y)} м",fontSize=12.sp,color=accent)
+        Text("Выбрана вершина ${selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)+1}: X ${df.format(current.vertices[selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)].x)} м • Y ${df.format(current.vertices[selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)].y)} м",fontSize=12.sp,color=accent)
         NumberField("Высота помещения, м",roomH){roomH=it}
         Text("Координаты вершин контура (метры)",fontWeight=FontWeight.SemiBold)
         val initialVertexText=current.vertices.joinToString("\n"){ "${String.format(java.util.Locale.US,"%.3f",it.x)};${String.format(java.util.Locale.US,"%.3f",it.y)}" }
