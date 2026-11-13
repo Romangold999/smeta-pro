@@ -1,5 +1,5 @@
 name: PLAN MASTER 3D APK
-# CI verifies geometry-driven estimates, tap-to-place engineering points, project persistence, engineering estimate tests, and Android packaging.
+# CI verifies geometry-driven estimates, expanded electrical and plumbing points, plan placement, persistence, estimate tests, and Android packaging.
 on:
   push:
     branches: [ plan-master-3d ]
