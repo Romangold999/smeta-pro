@@ -148,7 +148,9 @@ object PartitionCalculator {
                 require(input.insulationDensityKgM3 > 0.0 || !input.insulation)
                 val sheetArea = input.boardWidthMm.toDouble() * input.boardHeightMm / 1_000_000.0
                 val sheets = safeCount(net * input.boardLayersPerSide * input.boardSides / sheetArea * factor, "Количество листов")
-                val studs = safeCount(input.lengthM * 1000.0 / input.studSpacingMm, "Количество стоек") + 1
+                val intermediateStuds = safeCount(input.lengthM * 1000.0 / input.studSpacingMm, "Количество стоек")
+                require(intermediateStuds < Int.MAX_VALUE) { "Количество стоек превышает допустимый диапазон" }
+                val studs = intermediateStuds + 1
                 require(studs > 0) { "Количество стоек превышает допустимый диапазон" }
                 val trackLength = input.lengthM * 2.0
                 val trackPieces = safeCount(trackLength / input.profileStockLengthM * factor, "Количество направляющих")
