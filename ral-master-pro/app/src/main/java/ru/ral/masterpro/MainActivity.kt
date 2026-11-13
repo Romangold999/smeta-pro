@@ -68,6 +68,13 @@ private fun RalMasterApp(prefs: SharedPreferences) {
     var designLightness by remember { mutableStateOf("50") }
     var designChroma by remember { mutableStateOf("40") }
     var dataMessage by remember { mutableStateOf("") }
+    var manufacturer by remember { mutableStateOf("") }
+    var series by remember { mutableStateOf("") }
+    var formulaSource by remember { mutableStateOf("") }
+    var formulaNotes by remember { mutableStateOf("") }
+    var validation by remember { mutableStateOf("Пользовательская") }
+    var formulaBaseVolume by remember { mutableStateOf("1") }
+    var formulaUnit by remember { mutableStateOf("мл") }
     val exportFormulas = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
             runCatching {
@@ -180,9 +187,14 @@ private fun RalMasterApp(prefs: SharedPreferences) {
                             }
                         } else {
                             Text("СОХРАНЁННАЯ ПОЛЬЗОВАТЕЛЬСКАЯ ФОРМУЛА", color = gold, fontWeight = FontWeight.Bold)
-                            pigments.filter { formula.has(it) }.forEach { pigment ->
-                                Text(pigment + " · " + "%.2f".format(formula.optDouble(pigment) * liters) + " мл")
+                            val amounts = formula.optJSONObject("amounts") ?: formula
+                            val referenceLiters = formula.optDouble("baseVolumeLiters", 1.0).coerceAtLeast(0.0001)
+                            val unit = formula.optString("unit", "мл")
+                            pigments.filter { amounts.has(it) }.forEach { pigment ->
+                                Text(pigment + " · " + "%.2f".format(amounts.optDouble(pigment) * liters / referenceLiters) + " " + unit)
                             }
+                            Text("Источник: " + formula.optString("source", "не указан") + " · статус: " + formula.optString("validation", "не указан"), color = muted, fontSize = 10.sp)
+                            Text("Изготовитель: " + formula.optString("manufacturer", "не указан") + " · серия: " + formula.optString("series", "не указана"), color = muted, fontSize = 10.sp)
                             Text("Масштабирование линейное; совместимость и технологию нужно проверить.", color = muted, fontSize = 11.sp)
                         }
                     }
@@ -246,12 +258,18 @@ private fun RalMasterApp(prefs: SharedPreferences) {
                             }
                         }
                         if (dataMessage.isNotBlank()) Text(dataMessage, color = gold, fontSize = 11.sp)
-                        Text("Введите дозировку в мл на 1 литр материала. Вносите только формулы из техкарты или проверенного подбора.",
-                            color = muted, fontSize = 11.sp)
+                        Text("Карточка рецептуры: укажите изготовителя, базу, исходный объём, колоранты и источник данных.", color = muted, fontSize = 11.sp)
+                        OutlinedTextField(manufacturer, { manufacturer = it }, Modifier.fillMaxWidth(), label = { Text("Производитель") }, singleLine = true, colors = fieldColors())
+                        OutlinedTextField(series, { series = it }, Modifier.fillMaxWidth(), label = { Text("Серия / линейка материала") }, singleLine = true, colors = fieldColors())
+                        ChoiceField("Статус достоверности", validation, listOf("Подтверждена производителем", "Проверенный источник", "Пользовательская", "Экспериментальная", "Не проверена")) { validation = it }
+                        OutlinedTextField(formulaSource, { formulaSource = it }, Modifier.fillMaxWidth(), label = { Text("Источник / номер техкарты / ссылка") }, singleLine = true, colors = fieldColors())
+                        OutlinedTextField(formulaBaseVolume, { formulaBaseVolume = it }, Modifier.fillMaxWidth(), label = { Text("Исходный объём материала (л)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true, colors = fieldColors())
+                        ChoiceField("Единица дозировки", formulaUnit, listOf("мл", "г")) { formulaUnit = it }
+                        OutlinedTextField(formulaNotes, { formulaNotes = it }, Modifier.fillMaxWidth(), label = { Text("Примечания / ограничения совместимости") }, colors = fieldColors())
                         ChoiceField("Материал", material, materials) { material = it }
                         ChoiceField("Система", system, systems) { system = it }
                         ChoiceField("База", base, listOf("A", "C", "Тонируемая", "Прозрачная")) { base = it }
-                        Text("RAL " + selected.code + " · мл/л", color = gold, fontWeight = FontWeight.Bold)
+                        Text("RAL " + selected.code + " · дозировка на " + formulaBaseVolume + " л", color = gold, fontWeight = FontWeight.Bold)
                         Column(Modifier.weight(1f)) {
                             pigments.forEach { pigment ->
                                 OutlinedTextField(entries[pigment] ?: formula?.optDouble(pigment)?.takeIf { it > 0 }?.toString().orEmpty(),
@@ -262,10 +280,29 @@ private fun RalMasterApp(prefs: SharedPreferences) {
                             }
                         }
                         Button(onClick = {
-                            val obj = JSONObject()
+                            val referenceVolume = formulaBaseVolume.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0.0 }
+                            if (referenceVolume == null) {
+                                dataMessage = "Укажите корректный исходный объём больше нуля"
+                                return@Button
+                            }
+                            val amounts = JSONObject()
                             pigments.forEach { pigment ->
                                 val amount = entries[pigment]?.replace(',', '.')?.toDoubleOrNull() ?: 0.0
-                                if (amount > 0) obj.put(pigment, amount)
+                                if (amount > 0) amounts.put(pigment, amount)
+                            }
+                            val obj = JSONObject().apply {
+                                put("schemaVersion", 2)
+                                put("manufacturer", manufacturer.trim())
+                                put("series", series.trim())
+                                put("material", material)
+                                put("system", system)
+                                put("base", base)
+                                put("baseVolumeLiters", referenceVolume)
+                                put("unit", formulaUnit)
+                                put("validation", validation)
+                                put("source", formulaSource.trim())
+                                put("notes", formulaNotes.trim())
+                                put("amounts", amounts)
                             }
                             formulas.put(key, obj)
                             savedText = formulas.toString()
