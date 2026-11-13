@@ -7,6 +7,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -70,7 +72,24 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  if(project.lines.isEmpty())Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text("Смета пуста — добавьте работу из прайса",color=muted)}
  else LazyColumn(verticalArrangement=Arrangement.spacedBy(8.dp),contentPadding=PaddingValues(bottom=20.dp)){items(project.lines){l->Card(colors=CardDefaults.cardColors(containerColor=panel),shape=RoundedCornerShape(14.dp)){Column(Modifier.padding(13.dp)){Row(verticalAlignment=Alignment.CenterVertically){Text(l.n,Modifier.weight(1f),fontWeight=FontWeight.SemiBold);IconButton(onClick={edit=l}){Icon(Icons.Default.Edit,null,tint=blue)};IconButton(onClick={project.lines.remove(l);save()}){Icon(Icons.Default.Delete,null,tint=Color.Red)}};Row{Text(rub(l.p)+" / "+l.u+" × "+l.q,color=muted,Modifier.weight(1f));Text(rub(l.sum),color=blue,fontWeight=FontWeight.Bold)}}}}}
  }
- "Прайс"->{OutlinedTextField(query,{query=it},Modifier.fillMaxWidth(),placeholder={Text("Поиск работы")},singleLine=true);Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){listOf("Все","Плитка","Сантехника","Электрика","Подготовка","ГКЛ","Демонтаж","Монтаж").forEach{FilterChip(filter==it,{filter=it},{Text(it,fontSize=10.sp)})}};LazyColumn(verticalArrangement=Arrangement.spacedBy(7.dp)){items(catalog.filter{(filter=="Все"||it.c==filter)&&it.n.contains(query,true)}){w->Card(Modifier.fillMaxWidth().clickable{project.lines.add(Line(w.n,w.p,1.0,w.u,w.from));save();page="Смета"},colors=CardDefaults.cardColors(containerColor=panel)){Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text(w.n,fontWeight=FontWeight.Medium);Text(w.c,color=muted,fontSize=11.sp)};Column(horizontalAlignment=Alignment.End){Text(rub(w.p)+(if(w.from)" от" else ""),color=blue,fontWeight=FontWeight.Bold);Text("за "+w.u,color=muted,fontSize=11.sp)}}}}}}
+ "Прайс"->{
+ val categories=listOf("Все","Плитка","Сантехника","Электрика","Подготовка","ГКЛ","Демонтаж","Монтаж")
+ val tabIndex=categories.indexOf(filter).coerceAtLeast(0)
+ OutlinedTextField(query,{query=it},Modifier.fillMaxWidth(),placeholder={Text("Поиск работы")},singleLine=true)
+ ScrollableTabRow(selectedTabIndex=tabIndex,edgePadding=0.dp,containerColor=bg,contentColor=blue) {
+  categories.forEachIndexed{index,name->Tab(selected=tabIndex==index,onClick={filter=name},text={Text(name,maxLines=1)})}
+ }
+ val filtered=catalog.filter{(filter=="Все"||it.c==filter)&&it.n.contains(query,true)}
+ Text("${filtered.size} работ",color=muted,fontSize=11.sp,modifier=Modifier.padding(vertical=5.dp))
+ LazyColumn(verticalArrangement=Arrangement.spacedBy(7.dp),contentPadding=PaddingValues(bottom=16.dp)){
+  items(filtered){w->Card(Modifier.fillMaxWidth().clickable{project.lines.add(Line(w.n,w.p,1.0,w.u,w.from));save();page="Смета"},colors=CardDefaults.cardColors(containerColor=panel),shape=RoundedCornerShape(14.dp)){
+   Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){
+    Column(Modifier.weight(1f)){Text(w.n,fontWeight=FontWeight.Medium);Text(w.c,color=muted,fontSize=11.sp)}
+    Column(horizontalAlignment=Alignment.End){Text(rub(w.p)+(if(w.from)" от" else ""),color=blue,fontWeight=FontWeight.Bold);Text("за "+w.u,color=muted,fontSize=11.sp)}
+   }
+  }}
+ }
+ }
  else->{Button(onClick={showAdd=true},Modifier.fillMaxWidth()){Text("＋ Создать смету")};LazyColumn{items(projects){p->Card(Modifier.fillMaxWidth().padding(vertical=5.dp).clickable{currentId=p.id;page="Смета"},colors=CardDefaults.cardColors(containerColor=panel)){Row(Modifier.padding(16.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text(p.name,fontWeight=FontWeight.Bold);Text(p.lines.size.toString()+" позиций",color=muted)};Text(rub(p.total),color=blue,fontWeight=FontWeight.Bold)}}}}}
  }
  }
