@@ -25,6 +25,7 @@ data class ConstructionRecord(
     val insulation:Boolean=false,
     val densityKgM3:Double=0.0,
     val quantity:Double=0.0,
+    val regionPoints:List<Vec2> = emptyList(),
     val createdAt:Long=System.currentTimeMillis()
 )
 data class SavedProject(
@@ -75,7 +76,7 @@ class ProjectStore(context:Context) {
                 .put("reservePercent",e.reservePercent).put("layersPerSide",e.layersPerSide)
                 .put("sides",e.sides).put("studSpacingMm",e.studSpacingMm)
                 .put("insulation",e.insulation).put("densityKgM3",e.densityKgM3)
-                .put("quantity",e.quantity).put("createdAt",e.createdAt))
+                .put("quantity",e.quantity).put("regionPoints",JSONArray().also{arr->e.regionPoints.forEach{arr.put(JSONObject().put("x",it.x).put("y",it.y))}}).put("createdAt",e.createdAt))
         }
         root.put("construction",construction)
         prefs.edit().putString("project_${project.id}",root.toString()).apply()
@@ -117,7 +118,7 @@ class ProjectStore(context:Context) {
                     reservePercent=e.optDouble("reservePercent",0.0),layersPerSide=e.optInt("layersPerSide",1),
                     sides=e.optInt("sides",2),studSpacingMm=e.optInt("studSpacingMm",600),
                     insulation=e.optBoolean("insulation",false),densityKgM3=e.optDouble("densityKgM3",0.0),
-                    quantity=e.optDouble("quantity",0.0),createdAt=e.optLong("createdAt",0L)
+                    quantity=e.optDouble("quantity",0.0),regionPoints=e.optJSONArray("regionPoints")?.let{arr->buildList{for(k in 0 until arr.length()){val point=arr.getJSONObject(k);add(Vec2(point.getDouble("x"),point.getDouble("y")))}}}.orEmpty(),createdAt=e.optLong("createdAt",0L)
                 ))
             }
         }
