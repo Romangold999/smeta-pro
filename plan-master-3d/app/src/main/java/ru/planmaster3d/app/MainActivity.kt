@@ -247,12 +247,12 @@ class MainActivity:ComponentActivity(){
         NumberField("Высота перегородки, м",partitionHeight){partitionHeight=it}
         NumberField("Площадь дверных/прочих проёмов, м²",partitionOpenings){partitionOpenings=it}
         NumberField("Запас материала, %",partitionReserve){partitionReserve=it}
-        varType(partitionKind,{partitionKind=it},listOf("Газобетон","ГКЛ"))
+        varType(partitionKind,{partitionKind=it;when(it){"Газобетон"->{partitionThickness="100";blockLength="600";blockHeight="250";blockDensity="600"};"ПГП"->{partitionThickness="80";blockLength="667";blockHeight="500";blockDensity="1100"};"Кирпич"->{partitionThickness="120";blockLength="250";blockHeight="65";blockDensity="1800"};else->partitionThickness="100"}},listOf("Газобетон","ПГП","Кирпич","ГКЛ"))
       } }
       item { CardBlock {
-        if(partitionKind=="Газобетон"){
-          Text("Кладка из газобетона",fontWeight=FontWeight.Bold)
-          varType(partitionThickness,{partitionThickness=it},listOf("75","100","150","200"))
+        if(partitionKind!="ГКЛ"){
+          Text(if(partitionKind=="Газобетон") "Кладка из газобетона" else if(partitionKind=="ПГП") "Перегородка из пазогребневых плит" else "Кирпичная кладка",fontWeight=FontWeight.Bold)
+          varType(partitionThickness,{partitionThickness=it},when(partitionKind){"Газобетон"->listOf("75","100","150","200");"ПГП"->listOf("80","100");else->listOf("120","250")})
           Text("Толщина блока: $partitionThickness мм")
           NumberField("Длина блока, мм",blockLength){blockLength=it}
           NumberField("Высота блока, мм",blockHeight){blockHeight=it}
@@ -279,7 +279,7 @@ class MainActivity:ComponentActivity(){
       } }
       item { CardBlock {
         val result=runCatching {
-          if(partitionKind=="Газобетон") PartitionCalculator.calculate(PartitionInput(PartitionKind.AAC_BLOCK,partitionLength.toDouble(),partitionHeight.toDouble(),partitionThickness.toInt(),partitionOpenings.toDouble(),partitionReserve.toDouble(),blockLength.toInt(),blockHeight.toInt(),blockDensity.toDouble()))
+          if(partitionKind!="ГКЛ") PartitionCalculator.calculate(PartitionInput(when(partitionKind){"Газобетон"->PartitionKind.AAC_BLOCK;"ПГП"->PartitionKind.PGP;else->PartitionKind.BRICK},partitionLength.toDouble(),partitionHeight.toDouble(),partitionThickness.toInt(),partitionOpenings.toDouble(),partitionReserve.toDouble(),blockLength.toInt(),blockHeight.toInt(),blockDensity.toDouble()))
           else PartitionCalculator.calculate(PartitionInput(PartitionKind.GYPSUM_BOARD,partitionLength.toDouble(),partitionHeight.toDouble(),partitionThickness.toInt(),partitionOpenings.toDouble(),partitionReserve.toDouble(),boardLayersPerSide=boardLayers.toInt(),boardSides=boardSides.toInt(),studSpacingMm=studSpacing.toInt(),insulation=insulation))
         }.getOrNull()
         Text("Расчёт материалов и работ",fontWeight=FontWeight.Bold)
@@ -288,7 +288,7 @@ class MainActivity:ComponentActivity(){
           Text("Чистая площадь: ${df.format(result.netAreaM2)} м²")
           if(partitionKind=="Газобетон"){
             Text("Объём кладки: ${df.format(result.wallVolumeM3)} м³")
-            Text("Блоков с запасом: ${result.blockCount} шт")
+            Text("${if(partitionKind=="Газобетон") "Блоков" else if(partitionKind=="ПГП") "Пазогребневых плит" else "Кирпичей"} с запасом: ${result.blockCount} шт")
             Text("Ориентировочная масса блоков: ${df.format(result.blockMassKg)} кг")
             Text("Клей для кладки: ${df.format(result.adhesiveKg)} кг")
           } else {
@@ -301,10 +301,11 @@ class MainActivity:ComponentActivity(){
           Button(onClick={
             val rate=partitionRate.toDoubleOrNull()?:0.0
             val rows=mutableListOf<EstimateLine>()
-            rows.add(EstimateLine(if(partitionKind=="Газобетон") "Монтаж перегородки из газобетона $partitionThickness мм" else "Монтаж каркасной перегородки ГКЛ $partitionThickness мм","м²",rate,result.netAreaM2,"Перегородки"))
-            if(partitionKind=="Газобетон"){
-              rows.add(EstimateLine("Газобетонные блоки $partitionThickness мм","шт",blockUnitPrice.toDoubleOrNull()?:0.0,result.blockCount.toDouble(),"Материалы",true))
-              rows.add(EstimateLine("Клей для газобетона","кг",adhesiveKgPrice.toDoubleOrNull()?:0.0,result.adhesiveKg,"Материалы",true))
+            rows.add(EstimateLine(if(partitionKind=="ГКЛ") "Монтаж каркасной перегородки ГКЛ $partitionThickness мм" else "Монтаж перегородки: $partitionKind $partitionThickness мм","м²",rate,result.netAreaM2,"Перегородки"))
+            if(partitionKind!="ГКЛ"){
+              val materialName=when(partitionKind){"Газобетон"->"Газобетонные блоки";"ПГП"->"Пазогребневые плиты";else->"Кирпич"}
+              rows.add(EstimateLine("$materialName $partitionThickness мм","шт",blockUnitPrice.toDoubleOrNull()?:0.0,result.blockCount.toDouble(),"Материалы",true))
+              rows.add(EstimateLine(if(partitionKind=="Кирпич") "Кладочный раствор" else "Клей для $partitionKind","кг",adhesiveKgPrice.toDoubleOrNull()?:0.0,result.adhesiveKg,"Материалы",true))
             } else {
               rows.add(EstimateLine("ГКЛ ($boardLayers слоя, $boardSides сторон)","лист",boardSheetPrice.toDoubleOrNull()?:0.0,result.boardSheets.toDouble(),"Материалы",true))
               rows.add(EstimateLine("Профиль каркаса, стойки + направляющие","м.п.",profileMeterPrice.toDoubleOrNull()?:0.0,result.profileTotalLengthM,"Материалы",true))
