@@ -69,6 +69,17 @@ class GeometryEngineTest {
   assertEquals(0.15,result.solidVolumeM3,1e-8)
   assertEquals(330.0,result.solidMassKg,1e-8)
  }
+ @Test fun demolitionPolygonCannotBridgeOutsideNotchOfConcaveRoom() {
+  val room=listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,1.0),Vec2(1.0,1.0),Vec2(1.0,4.0),Vec2(0.0,4.0))
+  val zone=listOf(Vec2(0.5,0.5),Vec2(3.5,0.5),Vec2(0.5,3.5))
+  assertTrue(zone.all{GeometryEngine.containsPoint(room,it)})
+  assertFalse(GeometryEngine.polygonContainedBy(room,zone))
+ }
+ @Test fun demolitionPolygonInsideRoomIsAccepted() {
+  val room=listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0))
+  val zone=listOf(Vec2(0.5,0.5),Vec2(2.5,0.5),Vec2(2.5,2.0),Vec2(0.5,2.0))
+  assertTrue(GeometryEngine.polygonContainedBy(room,zone))
+ }
  @Test fun openingOffsetDefaultsToWallStartForOldProjects() {
   val opening=Opening("legacy","Legacy",0.9,2.1)
   assertEquals(0.0,opening.offsetFromStart,1e-8)
