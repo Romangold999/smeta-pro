@@ -165,8 +165,11 @@ class GeometryEngineTest {
   assertNull(GeometryEngine.pointOnEdge(p,0,edgeLength+1.0))
  }
  @Test fun materialPackagesRoundUp() {
-  val r=MaterialCalculator.calculate(20.0,1.2,25.0,10.0,10.0,true)
-  assertEquals(264.0,r.required,1e-8)
+  val r=MaterialCalculator.calculate(MaterialCalculationInput(
+   areaM2=20.0, layerMm=10.0, coveragePerM2=1.2,
+   packageSize=25.0, reservePercent=10.0, multiplyByLayer=true
+  ))
+  assertEquals(264.0,r.amountWithReserve,1e-8)
   assertEquals(11,r.packages)
  }
  @Test fun layoutRejectsNonFiniteDimensions() {
