@@ -82,6 +82,31 @@ class MainActivity:ComponentActivity(){
  var roomW by remember { mutableStateOf("4") }
  var roomL by remember { mutableStateOf("5") }
  var roomH by remember { mutableStateOf("2.7") }
+ var demolitionWall by remember { mutableStateOf("Стена 1") }
+ var demolitionMaterial by remember { mutableStateOf("Керамическая плитка") }
+ var demolitionLength by remember { mutableStateOf("4") }
+ var demolitionHeight by remember { mutableStateOf("2.7") }
+ var demolitionThickness by remember { mutableStateOf("10") }
+ var demolitionDensity by remember { mutableStateOf("2300") }
+ var demolitionBulking by remember { mutableStateOf("1.35") }
+ var bagLitres by remember { mutableStateOf("60") }
+ var bagMaxKg by remember { mutableStateOf("25") }
+ var bagFill by remember { mutableStateOf("0.85") }
+ var demolitionRate by remember { mutableStateOf("1000") }
+ var partitionKind by remember { mutableStateOf("Газобетон") }
+ var partitionLength by remember { mutableStateOf("3") }
+ var partitionHeight by remember { mutableStateOf("2.7") }
+ var partitionThickness by remember { mutableStateOf("100") }
+ var partitionOpenings by remember { mutableStateOf("0") }
+ var partitionReserve by remember { mutableStateOf("7") }
+ var blockLength by remember { mutableStateOf("600") }
+ var blockHeight by remember { mutableStateOf("250") }
+ var blockDensity by remember { mutableStateOf("600") }
+ var boardLayers by remember { mutableStateOf("1") }
+ var boardSides by remember { mutableStateOf("2") }
+ var studSpacing by remember { mutableStateOf("600") }
+ var insulation by remember { mutableStateOf(false) }
+ var partitionRate by remember { mutableStateOf("0") }
  val current=rooms.getOrNull(selected) ?: rooms.first()
  val totalFloor=rooms.sumOf{it.floor}
  val totalWalls=rooms.sumOf{it.walls}
@@ -96,6 +121,7 @@ class MainActivity:ComponentActivity(){
       item { Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){ Metric("Пол",totalFloor,"м²",Modifier.weight(1f)); Metric("Стены",totalWalls,"м²",Modifier.weight(1f)); Metric("Периметр",totalPerimeter,"м",Modifier.weight(1f)) } }
       item { CardBlock { Text("Помещения",fontWeight=FontWeight.Bold); rooms.forEachIndexed { i,r -> Row(Modifier.fillMaxWidth().clickable{selected=i;tab="Обмеры"}.padding(vertical=8.dp),horizontalArrangement=Arrangement.SpaceBetween){ Text("${r.name}  •  ${df.format(r.floor)} м²"); Text("Изменить ›",color=accent) } } ; Button(onClick={showAddRoom=true},modifier=Modifier.fillMaxWidth()){Text("Добавить помещение")} } }
       item { CardBlock { Text("Быстрые ведомости",fontWeight=FontWeight.Bold); Text("Площадь пола: ${df.format(totalFloor)} м²"); Text("Площадь стен без вычета проёмов: ${df.format(totalWalls)} м²"); Text("Периметр: ${df.format(totalPerimeter)} м") } }
+      item { CardBlock { Text("Строительные операции",fontWeight=FontWeight.Bold); Button(onClick={tab="Демонтаж"},modifier=Modifier.fillMaxWidth()){Text("Демонтаж и строительный мусор")}; OutlinedButton(onClick={tab="Перегородки"},modifier=Modifier.fillMaxWidth()){Text("Новые перегородки и материалы")} } }
     }
     "Обмеры" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock { Text("Геометрия помещения",fontSize=19.sp,fontWeight=FontWeight.Bold); Text("Базовый режим прямоугольного помещения. Длины каждой стены редактируются отдельно; исходные размеры не подгоняются автоматически.") ; Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){ rooms.forEachIndexed{i,r->FilterChip(selected=selected==i,onClick={selected=i},label={Text(r.name)})} } } }
@@ -113,6 +139,115 @@ class MainActivity:ComponentActivity(){
     }
     "Раскладка" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock { Text("Калькулятор раскладки",fontSize=19.sp,fontWeight=FontWeight.Bold); varType(layoutType,{layoutType=it},listOf("Плитка","Ламинат","Панели")); NumberField("Размер элемента A, мм",layoutA){layoutA=it}; NumberField("Размер элемента B, мм",layoutB){layoutB=it}; NumberField("Размер помещения A, мм",layoutRoomA){layoutRoomA=it}; NumberField("Размер помещения B, мм",layoutRoomB){layoutRoomB=it}; Slider(waste,{waste=it},valueRange=0f..25f); Text("Запас: ${waste.toInt()}%"); val a=(layoutA.toDoubleOrNull()?:1.0).coerceAtLeast(1.0); val b=(layoutB.toDoubleOrNull()?:1.0).coerceAtLeast(1.0); val ra=(layoutRoomA.toDoubleOrNull()?:0.0); val rb=(layoutRoomB.toDoubleOrNull()?:0.0); val count=ceil(ra/a)*ceil(rb/b); val area=(ra*rb)/1_000_000.0; Text("Площадь: ${df.format(area)} м² • элементов без запаса: ${count.toInt()} • с запасом: ${ceil(count*(1+waste/100)).toInt()}",color=accent,fontWeight=FontWeight.Bold); Text("Предварительная сетка без оптимизации раскроя по рисунку, швам и повторному использованию обрезков.") } }
+    }
+    "Демонтаж" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
+      item { CardBlock {
+        Text("Демонтаж выбранного участка",fontSize=19.sp,fontWeight=FontWeight.Bold)
+        Text("Выбери сторону помещения. Длину можно уменьшить, если демонтируется только часть стены.")
+        Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){ listOf("Стена 1","Стена 2","Стена 3","Стена 4").forEach { side -> FilterChip(selected=demolitionWall==side,onClick={demolitionWall=side;demolitionLength=if(side=="Стена 1"||side=="Стена 3") current.width.toString() else current.length.toString();demolitionHeight=current.height.toString()},label={Text(side)}) } }
+        varType(demolitionMaterial,{demolitionMaterial=it;demolitionDensity=ConstructionMaterialPresets.demolitionDensities[it]?.toString()?:demolitionDensity;demolitionThickness=when(it){"Керамическая плитка"->"10";"ГКЛ"->"12.5";"Гипсовая штукатурка","Цементная штукатурка"->"20";"Цементная стяжка/бетон"->"50";"Газобетон"->"100";else->"120"}},ConstructionMaterialPresets.demolitionDensities.keys.toList())
+        NumberField("Длина демонтируемого участка, м",demolitionLength){demolitionLength=it}
+        NumberField("Высота участка, м",demolitionHeight){demolitionHeight=it}
+        NumberField("Толщина снимаемого слоя/конструкции, мм",demolitionThickness){demolitionThickness=it}
+        NumberField("Плотность материала, кг/м³",demolitionDensity){demolitionDensity=it}
+        NumberField("Коэффициент разрыхления (обычно больше 1)",demolitionBulking){demolitionBulking=it}
+      } }
+      item { CardBlock {
+        Text("Мешки и вывоз",fontWeight=FontWeight.Bold)
+        NumberField("Объём мешка, литров",bagLitres){bagLitres=it}
+        NumberField("Допустимая масса одного мешка, кг",bagMaxKg){bagMaxKg=it}
+        NumberField("Коэффициент заполнения мешка (0,1–1)",bagFill){bagFill=it}
+        NumberField("Цена демонтажа, ₽/м²",demolitionRate){demolitionRate=it}
+        val result=runCatching { DemolitionCalculator.calculate(DemolitionInput(demolitionLength.toDouble(),demolitionHeight.toDouble(),demolitionThickness.toDouble(),demolitionDensity.toDouble(),demolitionBulking.toDouble(),bagLitres.toDouble(),bagMaxKg.toDouble(),bagFill.toDouble())) }.getOrNull()
+        if(result!=null){
+          Text("Площадь: ${df.format(result.areaM2)} м²")
+          Text("Объём до разрыхления: ${df.format(result.solidVolumeM3)} м³")
+          Text("Масса мусора: ${df.format(result.solidMassKg)} кг")
+          Text("Объём после разрыхления: ${df.format(result.looseVolumeM3)} м³")
+          Text("Мешков по объёму: ${result.bagsByVolume} • по весу: ${result.bagsByWeight}")
+          Text("Итого мешков: ${result.bagsRequired} • средняя масса: ${df.format(result.estimatedBagMassKg)} кг/мешок",color=accent,fontWeight=FontWeight.Bold)
+          Text("Оценка зависит от фактической плотности, влажности и состава мусора. Плотность и коэффициенты можно изменить.")
+          Button(onClick={
+            val rate=demolitionRate.toDoubleOrNull()?:0.0
+            val workName=if(demolitionMaterial=="Керамическая плитка") "Демонтаж плитки" else if(demolitionMaterial=="Гипсовая штукатурка"||demolitionMaterial=="Цементная штукатурка") "Демонтаж старой штукатурки" else "Демонтаж: $demolitionMaterial"
+            lines=lines+EstimateLine(workName,"м²",rate,result.areaM2,"Демонтаж")+EstimateLine("Упаковка мусора ($demolitionMaterial)","меш",0.0,result.bagsRequired.toDouble(),"Демонтаж")+EstimateLine("Масса строительного мусора","т",0.0,result.solidMassKg/1000.0,"Вывоз")
+            tab="Смета"
+          },modifier=Modifier.fillMaxWidth()){Text("Добавить демонтаж и отходы в смету")}
+        } else Text("Проверь размеры, плотность и параметры мешка.",color=Color(0xFFFFB86B))
+      } }
+    }
+    "Перегородки" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
+      item { CardBlock {
+        Text("Новая перегородка",fontSize=19.sp,fontWeight=FontWeight.Bold)
+        Text("Задай длину, высоту и проёмы. Расчёт будет привязан к этому помещению; привязка к интерактивному 2D-чертежу добавляется следующим этапом.")
+        NumberField("Длина перегородки, м",partitionLength){partitionLength=it}
+        NumberField("Высота перегородки, м",partitionHeight){partitionHeight=it}
+        NumberField("Площадь дверных/прочих проёмов, м²",partitionOpenings){partitionOpenings=it}
+        NumberField("Запас материала, %",partitionReserve){partitionReserve=it}
+        varType(partitionKind,{partitionKind=it},listOf("Газобетон","ГКЛ"))
+      } }
+      item { CardBlock {
+        if(partitionKind=="Газобетон"){
+          Text("Кладка из газобетона",fontWeight=FontWeight.Bold)
+          varType(partitionThickness,{partitionThickness=it},listOf("75","100","150","200"))
+          Text("Толщина блока: $partitionThickness мм")
+          NumberField("Длина блока, мм",blockLength){blockLength=it}
+          NumberField("Высота блока, мм",blockHeight){blockHeight=it}
+          NumberField("Плотность блока, кг/м³",blockDensity){blockDensity=it}
+          Text("В расчёт входят блоки, масса кладки и ориентировочный расход клея. Армирование и перемычки будут отдельными опциями.")
+        } else {
+          Text("Каркасная перегородка ГКЛ",fontWeight=FontWeight.Bold)
+          varType(partitionThickness,{partitionThickness=it},listOf("50","75","100","150"))
+          Text("Толщина каркаса: $partitionThickness мм")
+          varType(boardLayers,{boardLayers=it},listOf("1","2"))
+          Text("Слоёв ГКЛ на каждой стороне: $boardLayers")
+          varType(boardSides,{boardSides=it},listOf("1","2"))
+          Text("Обшиваемых сторон: $boardSides")
+          varType(studSpacing,{studSpacing=it},listOf("400","600"))
+          Text("Шаг стоек: $studSpacing мм")
+          Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=insulation,onCheckedChange={insulation=it});Text("Шумоизоляция внутри каркаса")}
+        }
+        NumberField("Цена монтажа, ₽/м² (задай свою)",partitionRate){partitionRate=it}
+      } }
+      item { CardBlock {
+        val result=runCatching {
+          if(partitionKind=="Газобетон") PartitionCalculator.calculate(PartitionInput(PartitionKind.AAC_BLOCK,partitionLength.toDouble(),partitionHeight.toDouble(),partitionThickness.toInt(),partitionOpenings.toDouble(),partitionReserve.toDouble(),blockLength.toInt(),blockHeight.toInt(),blockDensity.toDouble()))
+          else PartitionCalculator.calculate(PartitionInput(PartitionKind.GYPSUM_BOARD,partitionLength.toDouble(),partitionHeight.toDouble(),partitionThickness.toInt(),partitionOpenings.toDouble(),partitionReserve.toDouble(),boardLayersPerSide=boardLayers.toInt(),boardSides=boardSides.toInt(),studSpacingMm=studSpacing.toInt(),insulation=insulation))
+        }.getOrNull()
+        Text("Расчёт материалов и работ",fontWeight=FontWeight.Bold)
+        if(result!=null){
+          Text("Площадь до вычета проёмов: ${df.format(result.grossAreaM2)} м²")
+          Text("Чистая площадь: ${df.format(result.netAreaM2)} м²")
+          if(partitionKind=="Газобетон"){
+            Text("Объём кладки: ${df.format(result.wallVolumeM3)} м³")
+            Text("Блоков с запасом: ${result.blockCount} шт")
+            Text("Ориентировочная масса блоков: ${df.format(result.blockMassKg)} кг")
+            Text("Клей для кладки: ${df.format(result.adhesiveKg)} кг")
+          } else {
+            Text("Листов ГКЛ с запасом: ${result.boardSheets} шт")
+            Text("Стойки: ${result.studs} шт • шаг $studSpacing мм")
+            Text("Направляющие: ${df.format(result.trackLengthM)} м.п. • хлыстов по 3 м: ${result.trackPieces}")
+            Text("Общая длина профиля (стойки + направляющие): ${df.format(result.profileTotalLengthM)} м")
+            if(insulation) Text("Шумоизоляция: ${df.format(result.insulationVolumeM3)} м³ • масса ${df.format(result.insulationMassKg)} кг")
+          }
+          Button(onClick={
+            val rate=partitionRate.toDoubleOrNull()?:0.0
+            val rows=mutableListOf<EstimateLine>()
+            rows.add(EstimateLine(if(partitionKind=="Газобетон") "Монтаж перегородки из газобетона $partitionThickness мм" else "Монтаж каркасной перегородки ГКЛ $partitionThickness мм","м²",rate,result.netAreaM2,"Перегородки"))
+            if(partitionKind=="Газобетон"){
+              rows.add(EstimateLine("Газобетонные блоки $partitionThickness мм","шт",0.0,result.blockCount.toDouble(),"Материалы",true))
+              rows.add(EstimateLine("Клей для газобетона","кг",0.0,result.adhesiveKg,"Материалы",true))
+            } else {
+              rows.add(EstimateLine("ГКЛ ($boardLayers слоя, $boardSides сторон)","лист",0.0,result.boardSheets.toDouble(),"Материалы",true))
+              rows.add(EstimateLine("Профиль каркаса, стойки + направляющие","м.п.",0.0,result.profileTotalLengthM,"Материалы",true))
+              if(insulation) rows.add(EstimateLine("Шумоизоляционное заполнение","м³",0.0,result.insulationVolumeM3,"Материалы",true))
+            }
+            lines=lines+rows
+            tab="Смета"
+          },modifier=Modifier.fillMaxWidth()){Text("Добавить перегородку и материалы в смету")}
+          Text("Расчётные количества ориентировочные: проёмы, раскладка листов, усиления и правила производителя могут изменить фактический расход.")
+        } else Text("Проверь введённые размеры и параметры конструкции.",color=Color(0xFFFFB86B))
+      } }
     }
   }
  }
