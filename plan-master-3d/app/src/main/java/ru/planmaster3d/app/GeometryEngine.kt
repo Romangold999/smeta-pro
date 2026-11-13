@@ -69,6 +69,20 @@ object GeometryEngine {
         return sum/2.0
     }
     fun area(points:List<Vec2>)=abs(signedArea(points))
+    fun containsPoint(polygon:List<Vec2>,point:Vec2):Boolean {
+        if(polygon.size<3 || selfIntersects(polygon)) return false
+        var inside=false
+        for(i in polygon.indices) {
+            val a=polygon[i];val b=polygon[(i+1)%polygon.size]
+            val cross=(b.x-a.x)*(point.y-a.y)-(b.y-a.y)*(point.x-a.x)
+            if(abs(cross)<=EPS && onSegment(a,b,point)) return true
+            if((a.y>point.y)!=(b.y>point.y)) {
+                val x=a.x+(point.y-a.y)*(b.x-a.x)/(b.y-a.y)
+                if(point.x<x) inside=!inside
+            }
+        }
+        return inside
+    }
     fun perimeter(points:List<Vec2>):Double {
         if(points.size<2) return 0.0
         return points.indices.sumOf{points[it].distanceTo(points[(it+1)%points.size])}
