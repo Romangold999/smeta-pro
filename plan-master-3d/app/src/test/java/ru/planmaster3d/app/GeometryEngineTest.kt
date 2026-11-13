@@ -56,6 +56,19 @@ class GeometryEngineTest {
  @Test fun openingRejectsNonFiniteDimensions() {
   assertThrows(IllegalArgumentException::class.java) { Opening("bad","Bad",Double.NaN,2.0) }
  }
+ @Test fun floorDemolitionRegionMustBeInsideRoom() {
+  val room=listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0))
+  val region=listOf(Vec2(0.5,0.5),Vec2(2.5,0.5),Vec2(2.5,2.0),Vec2(0.5,2.0))
+  assertTrue(region.all{GeometryEngine.containsPoint(room,it)})
+  assertFalse(GeometryEngine.containsPoint(room,Vec2(5.0,1.0)))
+  assertEquals(3.0,GeometryEngine.area(region),1e-8)
+ }
+ @Test fun floorDemolitionCalculatesMassAndBagsFromSelectedArea() {
+  val result=DemolitionCalculator.calculate(DemolitionInput(3.0,1.0,50.0,2200.0))
+  assertEquals(3.0,result.areaM2,1e-8)
+  assertEquals(0.15,result.solidVolumeM3,1e-8)
+  assertEquals(330.0,result.solidMassKg,1e-8)
+ }
  @Test fun openingOffsetDefaultsToWallStartForOldProjects() {
   val opening=Opening("legacy","Legacy",0.9,2.1)
   assertEquals(0.0,opening.offsetFromStart,1e-8)
