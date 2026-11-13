@@ -88,6 +88,12 @@ class MainActivity:ComponentActivity(){
  var showProjects by remember { mutableStateOf(false) }
  var saveMessage by remember { mutableStateOf("Автосохранение включено • изменения сохраняются локально") }
  var priceSearch by remember { mutableStateOf("") }
+ val initialPriceBook=remember{projectStore.loadPriceBook()}
+ var priceBook by remember { mutableStateOf(initialPriceBook ?: PriceBook("",emptyList())) }
+ val initialCatalog=initialPriceBook?.versions?.firstOrNull{it.id==initialPriceBook.activeVersionId}?.items
+ var catalogItems by remember { mutableStateOf(initialCatalog ?: originalCatalog) }
+ var catalogPriceDrafts by remember { mutableStateOf<Map<String,String>>(emptyMap()) }
+ var priceBookName by remember { mutableStateOf(initialPriceBook?.versions?.firstOrNull{it.id==initialPriceBook.activeVersionId}?.name ?: "Мой прайс-лист") }
  var includeWallPlaster by remember { mutableStateOf(true) }
  var includeWallPrimer by remember { mutableStateOf(true) }
  var includeFloorScreed by remember { mutableStateOf(false) }
@@ -502,7 +508,7 @@ class MainActivity:ComponentActivity(){
         Button(onClick={
           val generated=AutomaticEstimateGenerator.generate(
             takeoff=takeoff,
-            catalog=originalCatalog,
+            catalog=catalogItems,
             options=AutomaticEstimateOptions(
               wallPlaster=includeWallPlaster,
               wallPrimer=includeWallPrimer,
@@ -519,7 +525,73 @@ class MainActivity:ComponentActivity(){
         },modifier=Modifier.fillMaxWidth()){Text("Обновить выбранные объёмы в смете")}
         Text("Объёмы берутся из геометрии всех помещений с учётом проёмов. Повторное обновление заменяет только автоматические строки и сохраняет ручные. Цены подставляются из каталога; позиции без найденной цены не создаются.",fontSize=11.sp,color=Color.LightGray)
       } }
-      items(originalCatalog.filter{priceSearch.isBlank()||it.n.contains(priceSearch,true)||it.c.contains(priceSearch,true)}) { item -> CardBlock { Row(verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text(item.n,fontWeight=FontWeight.SemiBold);Text("${item.c} • ${item.u} • ${df.format(item.p)} ₽${if(item.from) " от" else ""}",color=Color.LightGray,fontSize=12.sp)}; IconButton(onClick={lines=lines+EstimateLine(item.n,item.u,item.p,1.0,item.c)}){Icon(Icons.Default.Add,tint=accent,contentDescription="Добавить")} } } }
+      item { CardBlock {
+        Text("Управление прайс-листом",fontWeight=FontWeight.Bold)
+        OutlinedTextField(value=priceBookName,onValueChange={priceBookName=it},label={Text("Название новой версии")},modifier=Modifier.fillMaxWidth(),singleLine=true)
+        if(priceBook.versions.isNotEmpty()) {
+          Text("Сохранённые версии",fontSize=12.sp,color=Color.LightGray)
+          Column(verticalArrangement=Arrangement.spacedBy(4.dp)) {
+            priceBook.versions.asReversed().forEach { version ->
+              Row(verticalAlignment=Alignment.CenterVertically) {
+                FilterChip(
+                  selected=priceBook.activeVersionId==version.id,
+                  onClick={
+                    val next=priceBook.copy(activeVersionId=version.id)
+                    priceBook=next
+                    catalogItems=version.items
+                    catalogPriceDrafts=emptyMap()
+                    priceBookName=version.name
+                    projectStore.savePriceBook(next)
+                    saveMessage="Активирован прайс-лист «${version.name}»"
+                  },
+                  label={Text(version.name)}
+                )
+                TextButton(onClick={priceBookName=version.name}){Text("Название")}
+              }
+            }
+          }
+        }
+        Button(onClick={
+          var valid=true
+          val edited=catalogItems.map { item ->
+            val raw= catalogPriceDrafts[item.n]?.trim()?.replace(',','.')
+            if(raw.isNullOrEmpty()) item else {
+              val value=raw.toDoubleOrNull()
+              if(value==null || !value.isFinite() || value<0.0) { valid=false; item }
+              else item.copy(p=value)
+            }
+          }
+          if(!valid || priceBookName.isBlank()) {
+            saveMessage="Проверь цены: нужны конечные числа не меньше нуля и название версии."
+          } else {
+            val version=PriceBookVersion(java.util.UUID.randomUUID().toString(),priceBookName.trim(),System.currentTimeMillis(),edited)
+            val next=PriceBook(version.id,priceBook.versions+version)
+            projectStore.savePriceBook(next)
+            priceBook=next
+            catalogItems=edited
+            catalogPriceDrafts=emptyMap()
+            saveMessage="Прайс-лист «${version.name}» сохранён. Версий: ${next.versions.size}."
+          }
+        },modifier=Modifier.fillMaxWidth()){Text("Сохранить цены новой версией")}
+        Text("Цены сохраняются отдельно от проектов. Можно хранить несколько прайс-листов и переключаться между ними. Новые цены используются при добавлении работ и обновлении автоматической сметы.",fontSize=11.sp,color=Color.LightGray)
+      } }
+      items(catalogItems.filter{priceSearch.isBlank()||it.n.contains(priceSearch,true)||it.c.contains(priceSearch,true)}) { item -> CardBlock {
+        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+          Column(Modifier.weight(1f)) {
+            Text(item.n,fontWeight=FontWeight.SemiBold)
+            Text("${item.c} • ${item.u}${if(item.from) " • стартовая цена" else ""}",color=Color.LightGray,fontSize=12.sp)
+          }
+          OutlinedTextField(
+            value=catalogPriceDrafts[item.n] ?: df.format(item.p).replace(',','.'),
+            onValueChange={catalogPriceDrafts=catalogPriceDrafts+(item.n to it)},
+            modifier=Modifier.width(112.dp),
+            label={Text("Цена ₽")},
+            singleLine=true,
+            keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal)
+          )
+          IconButton(onClick={lines=lines+EstimateLine(item.n,item.u,item.p,1.0,item.c)}){Icon(Icons.Default.Add,tint=accent,contentDescription="Добавить")}
+        }
+      } }
       if(lines.isNotEmpty()) item { CardBlock { Text("Смета",fontWeight=FontWeight.Bold); lines.forEachIndexed{i,line->Text("${line.name}: ${df.format(line.qty)} ${line.unit} × ${df.format(line.price)} ₽ = ${df.format(line.total)} ₽"); Row { TextButton(onClick={lines=lines.toMutableList().also{it[i]=line.copy(qty=(line.qty-1).coerceAtLeast(0.0))}}){Text("−")}; TextButton(onClick={lines=lines.toMutableList().also{it[i]=line.copy(qty=line.qty+1)}}){Text("+")}; TextButton(onClick={lines=lines.toMutableList().also{it.removeAt(i)}}){Text("Удалить")} } }; Text("ИТОГО: ${df.format(lines.sumOf{it.total})} ₽",fontWeight=FontWeight.Bold); Button(onClick={shareEstimate(ctx,lines)},modifier=Modifier.fillMaxWidth()){Text("Поделиться сметой / текст")} ; OutlinedButton(onClick={shareCsv(ctx,lines)},modifier=Modifier.fillMaxWidth()){Text("Экспорт таблицы CSV (Excel)")} } }
     }
     "Материалы" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
