@@ -182,8 +182,15 @@ object GeometryEngine {
             val polygonPerimeter=perimeter(room.vertices)
             if(!polygonArea.isFinite()||!polygonPerimeter.isFinite())
                 errors.add("Размеры контура приводят к переполнению площади или периметра")
-            else if(selfIntersects(room.vertices)||polygonArea<=EPS)
-                errors.add("Контур пересекается сам с собой или имеет нулевую площадь")
+            else {
+                if(selfIntersects(room.vertices)||polygonArea<=EPS)
+                    errors.add("Контур пересекается сам с собой или имеет нулевую площадь")
+                val zeroLengthWalls=room.vertices.indices.filter { i ->
+                    room.vertices[i].distanceTo(room.vertices[(i+1)%room.vertices.size])<=EPS
+                }
+                if(zeroLengthWalls.isNotEmpty())
+                    errors.add("Обнаружены стены нулевой или практически нулевой длины: "+zeroLengthWalls.joinToString { "№${it+1}" })
+            }
         }
         if(room.vertices.all{it.x.isFinite()&&it.y.isFinite()} && room.wallHeights.size in 0..room.vertices.size &&
             room.wallHeightOverrides.size in 0..room.vertices.size && room.wallThicknesses.size in 0..room.vertices.size) {
