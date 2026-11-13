@@ -61,6 +61,15 @@ class GeometryEngineTest {
   assertEquals(20.0,first.perimeter+second.perimeter,1e-8)
   assertEquals(54.0,(first.grossWallArea+second.grossWallArea),1e-8)
  }
+ @Test fun pointOnSlantedPolygonEdgeUsesActualGeometry() {
+  val p=listOf(Vec2(1.0,2.0),Vec2(5.0,5.0),Vec2(4.0,8.0))
+  val edgeLength=p[0].distanceTo(p[1])
+  val midpoint=GeometryEngine.pointOnEdge(p,0,edgeLength/2.0)
+  assertNotNull(midpoint)
+  assertEquals(3.0,midpoint!!.x,1e-8)
+  assertEquals(3.5,midpoint.y,1e-8)
+  assertNull(GeometryEngine.pointOnEdge(p,0,edgeLength+1.0))
+ }
  @Test fun materialPackagesRoundUp() {
   val r=MaterialCalculator.calculate(20.0,1.2,25.0,10.0,10.0,true)
   assertEquals(264.0,r.required,1e-8)
