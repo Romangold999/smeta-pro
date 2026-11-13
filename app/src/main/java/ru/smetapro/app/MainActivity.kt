@@ -38,7 +38,7 @@ import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-private val bg=Color(0xFF101827); private val panel=Color(0xFF1B2638); private val blue=Color(0xFF55B8FF); private val muted=Color(0xFF9AAAC0)
+private val bg=Color(0xFF0B1220); private val panel=Color(0xFF172338); private val blue=Color(0xFF64D7FF); private val muted=Color(0xFF9AAAC0); private val tileBlue=Color(0xFF183D5B); private val tileGreen=Color(0xFF17483F); private val tileOrange=Color(0xFF53351F); private val tilePurple=Color(0xFF382B5A)
 data class Work(val n:String,val p:Double,val u:String,val c:String,val from:Boolean=false)
 data class Line(val n:String,var p:Double,var q:Double,val u:String,val from:Boolean=false){val sum get()=p*q}
 data class Project(val id:Long,var name:String,val lines:MutableList<Line> = mutableListOf()){val total get()=lines.sumOf{it.sum}}
@@ -64,7 +64,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  if(projects.isEmpty())projects.add(Project(System.currentTimeMillis(),"Новая смета"))
  var currentId by remember{mutableLongStateOf(projects.first().id)}
  val project=projects.firstOrNull{it.id==currentId}?:projects.first()
- var page by remember{mutableStateOf("Смета")};var filter by remember{mutableStateOf("Все")};var query by remember{mutableStateOf("")}
+ var page by remember{mutableStateOf("Главная")};var filter by remember{mutableStateOf("Все")};var query by remember{mutableStateOf("")}
  val priceVersions=remember{mutableStateListOf<PriceVersion>().apply{addAll(readPriceVersions(prefs));if(isEmpty())add(PriceVersion(System.currentTimeMillis(),"Базовый прайс",System.currentTimeMillis(),catalog))}}
  var activePriceId by remember{mutableLongStateOf(prefs.getLong("active_price_id",priceVersions.first().id).let{id->if(priceVersions.any{it.id==id})id else priceVersions.first().id})}
  val activePrice=priceVersions.firstOrNull{it.id==activePriceId}?:priceVersions.first()
@@ -77,10 +77,26 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var edit by remember{mutableStateOf<Line?>(null)}
  fun save(){writeProjects(prefs,projects)}
  MaterialTheme(colorScheme=darkColorScheme(primary=blue,background=bg,surface=panel,onSurface=Color.White)){
- Scaffold(containerColor=bg,bottomBar={NavigationBar(containerColor=panel){listOf("Смета","Прайс","Проекты","Настройки").forEach{p->NavigationBarItem(selected=page==p,onClick={page=p},icon={Text(if(p=="Смета")"₽" else if(p=="Прайс")"▤" else "▣")},label={Text(p)})}}}){pad->
+ Scaffold(containerColor=bg,bottomBar={NavigationBar(containerColor=Color(0xFF111C2D),contentColor=blue){listOf("Главная","Смета","Прайс","Проекты","Настройки").forEach{p->NavigationBarItem(selected=page==p,onClick={page=p},icon={Text(when(p){"Главная"->"⌂";"Смета"->"₽";"Прайс"->"▤";"Проекты"->"▣";else->"⚙"})},label={Text(p,fontSize=10.sp)},colors=NavigationBarItemDefaults.colors(selectedIconColor=blue,selectedTextColor=blue,indicatorColor=tileBlue,unselectedIconColor=muted,unselectedTextColor=muted))}}}){pad->
  Column(Modifier.fillMaxSize().padding(pad).padding(horizontal=16.dp)){
- Row(Modifier.fillMaxWidth().padding(vertical=18.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text("СМЕТА PRO",color=blue,fontSize=12.sp,fontWeight=FontWeight.Bold,letterSpacing=2.sp);Text(if(page=="Смета")project.name else if(page=="Прайс")"Каталог работ" else if(page=="Проекты")"Мои проекты" else "Настройки",fontSize=24.sp,fontWeight=FontWeight.Bold)};if(page=="Смета")IconButton(onClick={showAdd=true}){Icon(Icons.Default.Add,null,tint=blue)}}
+ Row(Modifier.fillMaxWidth().padding(vertical=18.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text("СМЕТА PRO",color=blue,fontSize=12.sp,fontWeight=FontWeight.Bold,letterSpacing=2.sp);Text(when(page){"Главная"->"Работаем удобно";"Смета"->project.name;"Прайс"->"Каталог работ";"Проекты"->"Мои проекты";else->"Настройки"},fontSize=24.sp,fontWeight=FontWeight.Bold)};if(page=="Смета"||page=="Главная")IconButton(onClick={showAdd=true}){Icon(Icons.Default.Add,null,tint=blue)}}
  when(page){
+ "Главная"->{
+  Text("БЫСТРЫЙ ДОСТУП",color=muted,fontSize=11.sp,fontWeight=FontWeight.Bold,letterSpacing=1.5.sp,modifier=Modifier.padding(bottom=10.dp))
+  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)){
+   Card(Modifier.weight(1f).height(142.dp).clickable{page="Смета"},shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=tileBlue)){Column(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.SpaceBetween){Text("₽",fontSize=30.sp,color=blue,fontWeight=FontWeight.Bold);Column{Text("Моя смета",fontSize=18.sp,fontWeight=FontWeight.Bold);Text(rub(project.total),color=blue,fontSize=14.sp)}}}
+   Card(Modifier.weight(1f).height(142.dp).clickable{page="Прайс"},shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=tileGreen)){Column(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.SpaceBetween){Text("▤",fontSize=30.sp,color=Color(0xFF75E0B1),fontWeight=FontWeight.Bold);Column{Text("Прайс работ",fontSize=18.sp,fontWeight=FontWeight.Bold);Text("${activePrice.items.size} позиций",color=muted,fontSize=13.sp)}}}
+  }
+  Spacer(Modifier.height(10.dp))
+  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)){
+   Card(Modifier.weight(1f).height(118.dp).clickable{page="Проекты"},shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=tileOrange)){Column(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.SpaceBetween){Text("▣",fontSize=26.sp,color=Color(0xFFFFC078));Text("Проекты",fontSize=17.sp,fontWeight=FontWeight.Bold);Text("${projects.size} сохранено",color=muted,fontSize=12.sp)}}
+   Card(Modifier.weight(1f).height(118.dp).clickable{page="Настройки"},shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=tilePurple)){Column(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.SpaceBetween){Text("⚙",fontSize=26.sp,color=Color(0xFFC5AEFF));Text("Настройки",fontSize=17.sp,fontWeight=FontWeight.Bold);Text("Цены и версии прайса",color=muted,fontSize=12.sp)}}
+  }
+  Spacer(Modifier.height(16.dp))
+  Text("ТЕКУЩИЙ ПРОЕКТ",color=muted,fontSize=11.sp,fontWeight=FontWeight.Bold,letterSpacing=1.5.sp)
+  Card(Modifier.fillMaxWidth().padding(top=8.dp).clickable{page="Смета"},shape=RoundedCornerShape(18.dp),colors=CardDefaults.cardColors(containerColor=panel)){Column(Modifier.padding(16.dp)){Text(project.name,fontSize=18.sp,fontWeight=FontWeight.Bold);Spacer(Modifier.height(8.dp));Row(verticalAlignment=Alignment.CenterVertically){Text("${project.lines.size} позиций",color=muted,modifier=Modifier.weight(1f));Text(rub(project.total),fontSize=22.sp,color=blue,fontWeight=FontWeight.ExtraBold)}}}
+  Button(onClick={showAdd=true},modifier=Modifier.fillMaxWidth().padding(top=12.dp),shape=RoundedCornerShape(16.dp)){Icon(Icons.Default.Add,null);Text(" Новая смета / работа")}
+ }
  "Смета"->{
  Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){Card(Modifier.weight(1f),colors=CardDefaults.cardColors(containerColor=panel)){Column(Modifier.padding(14.dp)){Text("ПОЗИЦИЙ",color=muted,fontSize=10.sp);Text(project.lines.size.toString(),fontSize=23.sp,fontWeight=FontWeight.Bold)}};Card(Modifier.weight(1.4f),colors=CardDefaults.cardColors(containerColor=panel)){Column(Modifier.padding(14.dp)){Text("ИТОГО",color=muted,fontSize=10.sp);Text(rub(project.total),fontSize=23.sp,color=blue,fontWeight=FontWeight.ExtraBold)}}}
  Spacer(Modifier.height(10.dp));Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){OutlinedButton(onClick={pdf(ctx,project)},Modifier.weight(1f)){Icon(Icons.Default.PictureAsPdf,null);Text("PDF")};OutlinedButton(onClick={pendingExcel=createXlsx(ctx,project);excelSaveLauncher.launch("Smeta-${project.id}.xlsx")},Modifier.weight(1f)){Text("Excel")};OutlinedButton(onClick={share(ctx,project)},Modifier.weight(1f)){Icon(Icons.Default.Share,null);Text("Текст")}}
@@ -120,7 +136,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    items(activePrice.items){w->Card(colors=CardDefaults.cardColors(containerColor=panel),modifier=Modifier.fillMaxWidth().clickable{openPriceEditor(w)}){Row(Modifier.padding(9.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text(w.n,fontSize=13.sp,fontWeight=FontWeight.Medium);Text(w.c+" · "+w.u,color=muted,fontSize=10.sp)};Column(horizontalAlignment=Alignment.End){Text(rub(w.p)+(if(w.from)" от" else ""),color=blue,fontWeight=FontWeight.Bold);Text("Изменить",color=muted,fontSize=10.sp)}}}}
   }
  }
- else->{Button(onClick={showAdd=true},Modifier.fillMaxWidth()){Text("＋ Создать смету")};LazyColumn{items(projects){p->Card(Modifier.fillMaxWidth().padding(vertical=5.dp).clickable{currentId=p.id;page="Смета"},colors=CardDefaults.cardColors(containerColor=panel)){Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text(p.name,fontWeight=FontWeight.Bold);Text(p.lines.size.toString()+" позиций",color=muted)};Column(horizontalAlignment=Alignment.End){Text(rub(p.total),color=blue,fontWeight=FontWeight.Bold);IconButton(onClick={deleteTarget=p}){Icon(Icons.Default.Delete,null,tint=Color.Red)}}}}}}}
+ "Проекты"->{Button(onClick={showAdd=true},Modifier.fillMaxWidth()){Text("＋ Создать смету")};LazyColumn{items(projects){p->Card(Modifier.fillMaxWidth().padding(vertical=5.dp).clickable{currentId=p.id;page="Смета"},colors=CardDefaults.cardColors(containerColor=panel)){Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text(p.name,fontWeight=FontWeight.Bold);Text(p.lines.size.toString()+" позиций",color=muted)};Column(horizontalAlignment=Alignment.End){Text(rub(p.total),color=blue,fontWeight=FontWeight.Bold);IconButton(onClick={deleteTarget=p}){Icon(Icons.Default.Delete,null,tint=Color.Red)}}}}}}}
  }
  }
  }}
