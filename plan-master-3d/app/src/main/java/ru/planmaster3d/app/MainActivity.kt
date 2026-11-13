@@ -308,7 +308,7 @@ class MainActivity:ComponentActivity(){
           RegionSelectionCanvas(current,demolitionRegion,Modifier.fillMaxWidth().height(230.dp)){ point ->
             if(demolitionRegion.size<12) demolitionRegion=demolitionRegion+point
           }
-          val valid=demolitionRegion.size>=3 && !GeometryEngine.selfIntersects(demolitionRegion) && demolitionRegion.all{GeometryEngine.containsPoint(current.vertices,it)}
+          val valid=GeometryEngine.polygonContainedBy(current.vertices,demolitionRegion)
           val selectedArea=if(valid)GeometryEngine.area(demolitionRegion) else 0.0
           Text("Точек: ${demolitionRegion.size} • площадь зоны: ${df.format(selectedArea)} м²",color=accent,fontWeight=FontWeight.SemiBold)
           Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
@@ -331,7 +331,7 @@ class MainActivity:ComponentActivity(){
         NumberField("Цена мешка, ₽/шт",demolitionBagPrice){demolitionBagPrice=it}
         NumberField("Вывоз, ₽/т",demolitionHaulPrice){demolitionHaulPrice=it}
         val isWall=demolitionSurface=="Стена"
-        val regionValid=demolitionRegion.size>=3&&!GeometryEngine.selfIntersects(demolitionRegion)&&demolitionRegion.all{GeometryEngine.containsPoint(current.vertices,it)}
+        val regionValid=GeometryEngine.polygonContainedBy(current.vertices,demolitionRegion)
         val area=if(isWall)demolitionEffectiveLength*(demolitionHeight.toDoubleOrNull()?:0.0) else if(regionValid)GeometryEngine.area(demolitionRegion) else 0.0
         val result=runCatching{DemolitionCalculator.calculate(DemolitionInput(if(isWall)demolitionEffectiveLength else area,if(isWall)(demolitionHeight.toDoubleOrNull()?:0.0) else 1.0,demolitionThickness.toDouble(),demolitionDensity.toDouble(),demolitionBulking.toDouble(),bagLitres.toDouble(),bagMaxKg.toDouble(),bagFill.toDouble()))}.getOrNull()
         if(result!=null&&area>0){
