@@ -54,7 +54,7 @@ class ProjectStore(context:Context) {
             val openings=JSONObject()
             room.openingsByWall.forEach{(index,list)->
                 val arr=JSONArray()
-                list.forEach{o->arr.put(JSONObject().put("id",o.id).put("name",o.name).put("width",o.width).put("height",o.height).put("sillHeight",o.sillHeight).put("depth",o.depth).put("hasSill",o.hasSill))}
+                list.forEach{o->arr.put(JSONObject().put("id",o.id).put("name",o.name).put("width",o.width).put("height",o.height).put("sillHeight",o.sillHeight).put("depth",o.depth).put("hasSill",o.hasSill).put("offsetFromStart",o.offsetFromStart).put("kind",o.kind))}
                 openings.put(index.toString(),arr)
             }
             r.put("openings",openings);rooms.put(r)
@@ -94,7 +94,7 @@ class ProjectStore(context:Context) {
                 val objectOpenings=r.optJSONObject("openings") ?: JSONObject()
                 objectOpenings.keys().forEach{key->
                     val oa=objectOpenings.getJSONArray(key)
-                    openings[key.toInt()]=buildList{for(k in 0 until oa.length()){val o=oa.getJSONObject(k);add(Opening(o.getString("id"),o.getString("name"),o.getDouble("width"),o.getDouble("height"),o.optDouble("sillHeight",0.0),o.optDouble("depth",0.0),o.optBoolean("hasSill",false)))}}
+                    openings[key.toInt()]=buildList{for(k in 0 until oa.length()){val o=oa.getJSONObject(k);add(Opening(o.getString("id"),o.getString("name"),o.getDouble("width"),o.getDouble("height"),o.optDouble("sillHeight",0.0),o.optDouble("depth",0.0),o.optBoolean("hasSill",false),o.optDouble("offsetFromStart",0.0),o.optString("kind","Проём")))}}
                 }
                 add(RoomGeometry(r.getString("name"),points,heights,thicknesses,openings))
             }
