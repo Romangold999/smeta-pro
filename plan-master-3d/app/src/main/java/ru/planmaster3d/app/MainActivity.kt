@@ -219,8 +219,10 @@ class MainActivity:ComponentActivity(){
           selectedVertex=selectedVertexIndex.coerceIn(0,current.vertices.lastIndex),
           onSelectedVertex={selectedVertexIndex=it},
           onCommit={candidate ->
-            if(candidate.size<3 || GeometryEngine.selfIntersects(candidate) || GeometryEngine.area(candidate)<=1e-8) {
-              geometryMessage="Изменение отклонено: контур должен содержать минимум три вершины и не пересекаться сам с собой."
+            val candidateRoom=RoomGeometry(current.name,candidate,current.wallHeights,current.wallThicknesses,current.openingsByWall,current.wallHeightOverrides)
+            val errors=GeometryEngine.validateRoom(candidateRoom,current.height)
+            if(errors.isNotEmpty()) {
+              geometryMessage="Изменение отклонено: "+errors.joinToString("; ")
             } else {
               val updated=current.copy(
                 width=(candidate.maxOf{it.x}-candidate.minOf{it.x}).coerceAtLeast(0.01),
@@ -228,18 +230,44 @@ class MainActivity:ComponentActivity(){
                 vertices=candidate,
                 wallMeasurements=emptyList()
               )
-              val errors=GeometryEngine.validateOpenings(RoomGeometry(updated.name,updated.vertices,updated.wallHeights,updated.wallThicknesses,updated.openingsByWall,updated.wallHeightOverrides),updated.height)
-              if(errors.isNotEmpty()) geometryMessage="Изменение отклонено: "+errors.joinToString("; ")
-              else {
-                rooms=rooms.toMutableList().also{it[selected]=updated}
-                vertexDrafts=vertexDrafts-current.id
-                geometryMessage="Вершина перемещена. Геометрия и расчёты обновлены; исходные векторные обмеры очищены, так как контур изменён вручную."
-              }
+              rooms=rooms.toMutableList().also{it[selected]=updated}
+              vertexDrafts=vertexDrafts-current.id
+              geometryMessage="Вершина перемещена. Геометрия и расчёты обновлены; исходные векторные обмеры очищены, так как контур изменён вручную."
+            }
             }
           },
           modifier=Modifier.fillMaxWidth().height(250.dp)
         )
         Text("Выбрана вершина ${selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)+1}: X ${df.format(current.vertices[selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)].x)} м • Y ${df.format(current.vertices[selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)].y)} м",fontSize=12.sp,color=accent)
+         val activeVertexIndex=selectedVertexIndex.coerceIn(0,current.vertices.lastIndex)
+         val activeVertex=current.vertices[activeVertexIndex]
+         var vertexXDraft by remember(current.id,activeVertexIndex) { mutableStateOf(String.format(java.util.Locale.US,"%.3f",activeVertex.x)) }
+         var vertexYDraft by remember(current.id,activeVertexIndex) { mutableStateOf(String.format(java.util.Locale.US,"%.3f",activeVertex.y)) }
+         Row(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically) {
+           OutlinedTextField(value=vertexXDraft,onValueChange={vertexXDraft=it},modifier=Modifier.weight(1f),label={Text("X, м")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal))
+           OutlinedTextField(value=vertexYDraft,onValueChange={vertexYDraft=it},modifier=Modifier.weight(1f),label={Text("Y, м")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal))
+         }
+         Button(onClick={
+           val x=vertexXDraft.trim().replace(',','.').toDoubleOrNull()
+           val y=vertexYDraft.trim().replace(',','.').toDoubleOrNull()
+           if(x==null||y==null||!x.isFinite()||!y.isFinite()) {
+             geometryMessage="Координаты должны быть корректными конечными числами."
+           } else {
+             val candidate=current.vertices.toMutableList().also{it[activeVertexIndex]=Vec2(x,y)}
+             val candidateRoom=RoomGeometry(current.name,candidate,current.wallHeights,current.wallThicknesses,current.openingsByWall,current.wallHeightOverrides)
+             val errors=GeometryEngine.validateRoom(candidateRoom,current.height)
+             if(errors.isNotEmpty()) geometryMessage="Координаты не применены: "+errors.joinToString("; ")
+             else {
+               rooms=rooms.toMutableList().also{it[selected]=current.copy(
+                 width=(candidate.maxOf{it.x}-candidate.minOf{it.x}).coerceAtLeast(0.01),
+                 length=(candidate.maxOf{it.y}-candidate.minOf{it.y}).coerceAtLeast(0.01),
+                 vertices=candidate,wallMeasurements=emptyList()
+               )}
+               vertexDrafts=vertexDrafts-current.id
+               geometryMessage="Координаты вершины применены. Площади и объёмы пересчитаны."
+             }
+           }
+         },modifier=Modifier.fillMaxWidth()){Text("Применить координаты вершины")}
         NumberField("Высота помещения, м",roomH){roomH=it}
         Text("Координаты вершин контура (метры)",fontWeight=FontWeight.SemiBold)
         val initialVertexText=current.vertices.joinToString("\n"){ "${String.format(java.util.Locale.US,"%.3f",it.x)};${String.format(java.util.Locale.US,"%.3f",it.y)}" }
@@ -269,7 +297,7 @@ class MainActivity:ComponentActivity(){
                 openingsByWall=if(sameCount)current.openingsByWall else emptyMap(),
                 wallHeightOverrides=if(sameCount&&current.wallHeightOverrides.size==parsed.size)current.wallHeightOverrides else emptyList()
               )
-              val errors=GeometryEngine.validateOpenings(RoomGeometry(updated.name,updated.vertices,updated.wallHeights,updated.wallThicknesses,updated.openingsByWall,updated.wallHeightOverrides),updated.height)
+              val errors=GeometryEngine.validateRoom(RoomGeometry(updated.name,updated.vertices,updated.wallHeights,updated.wallThicknesses,updated.openingsByWall,updated.wallHeightOverrides),updated.height)
               if(errors.isNotEmpty())geometryMessage=errors.joinToString("; ")
               else {rooms=rooms.toMutableList().also{it[selected]=updated};geometryMessage="Контур обновлён без автоматической подгонки. Сохрани проект."}
             }
