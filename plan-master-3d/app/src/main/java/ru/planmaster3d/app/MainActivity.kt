@@ -72,8 +72,8 @@ class MainActivity:ComponentActivity(){
  var project by remember { mutableStateOf(initialSaved?.name ?: prefs.getString("project","Новый объект") ?: "Новый объект") }
  fun toRoomModels(saved:SavedProject?):List<Room> = saved?.rooms?.mapIndexed { i,g ->
   val p=g.vertices
-  val w=if(p.size>=2) p[0].distanceTo(p[1]) else 4.0
-  val l=if(p.size>=3) p[1].distanceTo(p[2]) else 5.0
+  val w=if(p.size>=2) (p.maxOf{it.x}-p.minOf{it.x}).coerceAtLeast(0.01) else 4.0
+  val l=if(p.size>=3) (p.maxOf{it.y}-p.minOf{it.y}).coerceAtLeast(0.01) else 5.0
   val h=g.wallHeights.firstOrNull()?:2.7
   Room(i+1L,g.name,w,l,h,w,l,w,l,p)
  }?.takeIf { it.isNotEmpty() } ?: listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0))
@@ -320,6 +320,7 @@ class MainActivity:ComponentActivity(){
             val rate=partitionRate.toDoubleOrNull()?:0.0
             val p1=partitionStart
             val p2=partitionEnd
+            val partitionRoomIndex=selected
             val split=if(p1!=null && p2!=null) GeometryEngine.splitByBoundaryChord(current.vertices,p1,p2) else null
             if(p1!=null && p2!=null && split!=null){
               fun roomFromPolygon(id:Long,name:String,points:List<Vec2>):Room {
@@ -333,7 +334,7 @@ class MainActivity:ComponentActivity(){
               }
               selected=selected+1
               constructionRecords=constructionRecords+ConstructionRecord(
-                id=java.util.UUID.randomUUID().toString(),kind="PARTITION",roomIndex=selected,
+                id=java.util.UUID.randomUUID().toString(),kind="PARTITION",roomIndex=partitionRoomIndex,
                 material=partitionKind,wallIndex=-1,startX=p1.x,startY=p1.y,endX=p2.x,endY=p2.y,
                 lengthM=partitionLength.toDouble(),heightM=partitionHeight.toDouble(),thicknessMm=partitionThickness.toDouble(),
                 openingsAreaM2=partitionOpenings.toDouble(),reservePercent=partitionReserve.toDouble(),
