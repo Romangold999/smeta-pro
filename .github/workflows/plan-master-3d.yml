@@ -1,4 +1,5 @@
 name: PLAN MASTER 3D APK
+# CI verifies the application and automatic estimate tests on every branch update.
 on:
   push:
     branches: [ plan-master-3d ]
