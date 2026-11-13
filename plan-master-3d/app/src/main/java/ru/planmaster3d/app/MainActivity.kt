@@ -61,10 +61,25 @@ class MainActivity:ComponentActivity(){
 @Composable fun PlanApp(ctx:Context) {
  val prefs=remember{ctx.getSharedPreferences("plan_master_3d",0)}
  var tab by remember { mutableStateOf("Объект") }
- var project by remember { mutableStateOf(prefs.getString("project","Новый объект") ?: "Новый объект") }
- var rooms by remember { mutableStateOf(listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0))) }
+ val projectStore=remember{ProjectStore(ctx)}
+ var activeProjectId by remember {
+  mutableStateOf(prefs.getString("active_project_id",null) ?: "project_${System.currentTimeMillis()}".also { prefs.edit().putString("active_project_id",it).apply() })
+ }
+ val initialSaved=remember{projectStore.loadProject(activeProjectId)}
+ var project by remember { mutableStateOf(initialSaved?.name ?: prefs.getString("project","Новый объект") ?: "Новый объект") }
+ fun toRoomModels(saved:SavedProject?):List<Room> = saved?.rooms?.mapIndexed { i,g ->
+  val p=g.vertices
+  val w=if(p.size>=2) p[0].distanceTo(p[1]) else 4.0
+  val l=if(p.size>=3) p[1].distanceTo(p[2]) else 5.0
+  val h=g.wallHeights.firstOrNull()?:2.7
+  Room(i+1L,g.name,w,l,h,w,l,w,l)
+ }?.ifEmpty { null } ?: listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0))
+ var rooms by remember { mutableStateOf(toRoomModels(initialSaved)) }
  var selected by remember { mutableIntStateOf(0) }
- var lines by remember { mutableStateOf(listOf<EstimateLine>()) }
+ var lines by remember { mutableStateOf(initialSaved?.estimate ?: emptyList()) }
+ var projectIds by remember { mutableStateOf(projectStore.listProjectIds()) }
+ var showProjects by remember { mutableStateOf(false) }
+ var saveMessage by remember { mutableStateOf("Изменения сохраняются локально после нажатия «Сохранить»") }
  var priceSearch by remember { mutableStateOf("") }
  var materialMode by remember { mutableStateOf("Штукатурка") }
  var materialArea by remember { mutableStateOf("45") }
@@ -118,13 +133,33 @@ class MainActivity:ComponentActivity(){
  val totalFloor=rooms.sumOf{it.floor}
  val totalWalls=rooms.sumOf{it.walls}
  val totalPerimeter=rooms.sumOf{it.perimeter}
- fun save(){ prefs.edit().putString("project",project).apply() }
+ fun save(){
+  val geometry=rooms.map { r ->
+   RoomGeometry(r.name,listOf(Vec2(0.0,0.0),Vec2(r.width,0.0),Vec2(r.width,r.length),Vec2(0.0,r.length)),List(4){r.height},List(4){0.0})
+  }
+  projectStore.saveProject(SavedProject(activeProjectId,project,geometry,lines))
+  prefs.edit().putString("project",project).putString("active_project_id",activeProjectId).apply()
+  projectIds=projectStore.listProjectIds()
+  saveMessage="Сохранено: ${java.text.SimpleDateFormat("HH:mm:ss",java.util.Locale.getDefault()).format(java.util.Date())}"
+ }
+ fun openProject(id:String){
+  val saved=projectStore.loadProject(id) ?: return
+  activeProjectId=id;project=saved.name;rooms=toRoomModels(saved);lines=saved.estimate;selected=0
+  prefs.edit().putString("active_project_id",id).putString("project",project).apply()
+  showProjects=false;saveMessage="Открыт проект «${saved.name}»"
+ }
+ fun createProject(){
+  activeProjectId="project_${System.currentTimeMillis()}"
+  project="Новый объект";rooms=listOf(Room(1,"Комната 1",4.0,5.0,2.7,4.0,5.0,4.0,5.0));lines=emptyList();selected=0
+  prefs.edit().putString("active_project_id",activeProjectId).putString("project",project).apply()
+  save();showProjects=false
+ }
  Scaffold(containerColor=navy, topBar={ TopAppBar(title={Column { Text("PLAN MASTER 3D",fontWeight=FontWeight.Bold); Text(project,fontSize=12.sp,color=Color.LightGray) }},actions={IconButton(onClick={save()}){Icon(Icons.Default.Save,"Сохранить")}},colors=TopAppBarDefaults.topAppBarColors(containerColor=navy)) },
  bottomBar={NavigationBar(containerColor=panel){ listOf("Объект","Обмеры","Смета","Материалы","Раскладка").forEach { label -> NavigationBarItem(selected=tab==label,onClick={tab=label},icon={Icon(when(label){"Объект"->Icons.Default.Home;"Обмеры"->Icons.Default.SquareFoot;"Смета"->Icons.Default.Receipt;"Материалы"->Icons.Default.Inventory2;else->Icons.Default.GridOn},null)},label={Text(label,fontSize=10.sp)}) } } }) { pad ->
   Column(Modifier.fillMaxSize().padding(pad).padding(horizontal=14.dp)) {
    when(tab){
     "Объект" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
-      item { CardBlock { Text("Панель объекта",fontSize=20.sp,fontWeight=FontWeight.Bold); OutlinedTextField(project,{project=it},label={Text("Название объекта")},modifier=Modifier.fillMaxWidth()); Text("Помещений: ${rooms.size}  •  Площадь пола: ${df.format(totalFloor)} м²"); Text("Периметр: ${df.format(totalPerimeter)} м  •  Стены: ${df.format(totalWalls)} м²") } }
+      item { CardBlock { Text("Панель объекта",fontSize=20.sp,fontWeight=FontWeight.Bold); OutlinedTextField(project,{project=it},label={Text("Название объекта")},modifier=Modifier.fillMaxWidth()); Text("Помещений: ${rooms.size}  •  Площадь пола: ${df.format(totalFloor)} м²"); Text("Периметр: ${df.format(totalPerimeter)} м  •  Стены: ${df.format(totalWalls)} м²"); Text(saveMessage,fontSize=11.sp,color=Color.LightGray); Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){Button(onClick={save()},modifier=Modifier.weight(1f)){Text("Сохранить")};OutlinedButton(onClick={showProjects=true},modifier=Modifier.weight(1f)){Text("Мои проекты")}}; OutlinedButton(onClick={createProject},modifier=Modifier.fillMaxWidth()){Text("Создать новый проект")} } }
       item { Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){ Metric("Пол",totalFloor,"м²",Modifier.weight(1f)); Metric("Стены",totalWalls,"м²",Modifier.weight(1f)); Metric("Периметр",totalPerimeter,"м",Modifier.weight(1f)) } }
       item { CardBlock { Text("Помещения",fontWeight=FontWeight.Bold); rooms.forEachIndexed { i,r -> Row(Modifier.fillMaxWidth().clickable{selected=i;tab="Обмеры"}.padding(vertical=8.dp),horizontalArrangement=Arrangement.SpaceBetween){ Text("${r.name}  •  ${df.format(r.floor)} м²"); Text("Изменить ›",color=accent) } } ; Button(onClick={showAddRoom=true},modifier=Modifier.fillMaxWidth()){Text("Добавить помещение")} } }
       item { CardBlock { Text("Быстрые ведомости",fontWeight=FontWeight.Bold); Text("Площадь пола: ${df.format(totalFloor)} м²"); Text("Площадь стен без вычета проёмов: ${df.format(totalWalls)} м²"); Text("Периметр: ${df.format(totalPerimeter)} м") } }
@@ -249,11 +284,11 @@ class MainActivity:ComponentActivity(){
             val rows=mutableListOf<EstimateLine>()
             rows.add(EstimateLine(if(partitionKind=="Газобетон") "Монтаж перегородки из газобетона $partitionThickness мм" else "Монтаж каркасной перегородки ГКЛ $partitionThickness мм","м²",rate,result.netAreaM2,"Перегородки"))
             if(partitionKind=="Газобетон"){
-              rows.add(EstimateLine("Газобетонные блоки $partitionThickness мм","шт",0.0,result.blockCount.toDouble(),"Материалы",true))
-              rows.add(EstimateLine("Клей для газобетона","кг",0.0,result.adhesiveKg,"Материалы",true))
+              rows.add(EstimateLine("Газобетонные блоки $partitionThickness мм","шт",blockUnitPrice.toDoubleOrNull()?:0.0,result.blockCount.toDouble(),"Материалы",true))
+              rows.add(EstimateLine("Клей для газобетона","кг",adhesiveKgPrice.toDoubleOrNull()?:0.0,result.adhesiveKg,"Материалы",true))
             } else {
-              rows.add(EstimateLine("ГКЛ ($boardLayers слоя, $boardSides сторон)","лист",0.0,result.boardSheets.toDouble(),"Материалы",true))
-              rows.add(EstimateLine("Профиль каркаса, стойки + направляющие","м.п.",0.0,result.profileTotalLengthM,"Материалы",true))
+              rows.add(EstimateLine("ГКЛ ($boardLayers слоя, $boardSides сторон)","лист",boardSheetPrice.toDoubleOrNull()?:0.0,result.boardSheets.toDouble(),"Материалы",true))
+              rows.add(EstimateLine("Профиль каркаса, стойки + направляющие","м.п.",profileMeterPrice.toDoubleOrNull()?:0.0,result.profileTotalLengthM,"Материалы",true))
               if(insulation) rows.add(EstimateLine("Шумоизоляционное заполнение","м³",insulationM3Price.toDoubleOrNull()?:0.0,result.insulationVolumeM3,"Материалы",true))
             }
             lines=lines+rows
@@ -266,6 +301,7 @@ class MainActivity:ComponentActivity(){
   }
  }
  if(showAddRoom) AlertDialog(onDismissRequest={showAddRoom=false},title={Text("Новое помещение")},text={Column { OutlinedTextField(roomName,{roomName=it},label={Text("Название")}); OutlinedTextField(roomW,{roomW=it},label={Text("Ширина, м")}); OutlinedTextField(roomL,{roomL=it},label={Text("Длина, м")}); OutlinedTextField(roomH,{roomH=it},label={Text("Высота, м")}) }},confirmButton={TextButton(onClick={val w=roomW.toDoubleOrNull()?:4.0;val l=roomL.toDoubleOrNull()?:5.0;rooms=rooms+Room(System.currentTimeMillis(),roomName,w,l,roomH.toDoubleOrNull()?:2.7,w,l,w,l);selected=rooms.lastIndex;showAddRoom=false}){Text("Добавить")}},dismissButton={TextButton(onClick={showAddRoom=false}){Text("Отмена")}})
+ if(showProjects) AlertDialog(onDismissRequest={showProjects=false},title={Text("Сохранённые проекты")},text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){if(projectIds.isEmpty()) Text("Пока нет сохранённых проектов");projectIds.forEach { id -> val item=projectStore.loadProject(id);if(item!=null) TextButton(onClick={openProject(id)}){Text("${item.name} • ${item.rooms.size} помещений")}}}},confirmButton={TextButton(onClick={showProjects=false}){Text("Закрыть")}})
 }
 @Composable fun CardBlock(content:@Composable ColumnScope.()->Unit){Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=panel),shape=RoundedCornerShape(18.dp)){Column(Modifier.padding(14.dp),verticalArrangement=Arrangement.spacedBy(8.dp),content=content)}}
 @Composable fun Metric(name:String,value:Double,unit:String,modifier:Modifier=Modifier){Card(modifier,colors=CardDefaults.cardColors(containerColor=panel)){Column(Modifier.padding(10.dp)){Text(name,fontSize=11.sp,color=Color.LightGray);Text(df.format(value),fontWeight=FontWeight.Bold,fontSize=17.sp);Text(unit,fontSize=11.sp,color=Color.LightGray)}}}
