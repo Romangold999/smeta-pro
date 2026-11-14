@@ -3,6 +3,8 @@ package ru.planmaster3d.app
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -68,6 +70,14 @@ class MainActivity:ComponentActivity(){
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun PlanApp(ctx:Context) {
  val prefs=remember{ctx.getSharedPreferences("plan_master_3d",0)}
+ var showPdfOptions by remember { mutableStateOf(false) }
+ var pendingPdfBytes by remember { mutableStateOf<ByteArray?>(null) }
+ val pdfSaveLauncher=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
+  if(uri!=null) runCatching { ctx.contentResolver.openOutputStream(uri)?.use { it.write(pendingPdfBytes ?: byteArrayOf()) } }
+   .onSuccess { android.widget.Toast.makeText(ctx,"PDF сохранён",android.widget.Toast.LENGTH_SHORT).show() }
+   .onFailure { android.widget.Toast.makeText(ctx,"Ошибка сохранения PDF: " + (it.message ?: "ошибка"),android.widget.Toast.LENGTH_LONG).show() }
+  pendingPdfBytes=null
+ }
  var tab by remember { mutableStateOf("Объект") }
  val projectStore=remember{ProjectStore(ctx)}
  var activeProjectId by remember {
@@ -652,6 +662,11 @@ class MainActivity:ComponentActivity(){
           IconButton(onClick={lines=lines+EstimateLine(item.n,item.u,item.p,1.0,item.c)}){Icon(Icons.Default.Add,tint=accent,contentDescription="Добавить")}
         }
       } }
+      if(lines.isNotEmpty()) item { CardBlock {
+        Text("Экспорт проекта",fontWeight=FontWeight.Bold)
+        Text("PDF: титульная страница, планы помещений, ведомости и смета.",fontSize=12.sp,color=Color.LightGray)
+        Button(onClick={showPdfOptions=true},modifier=Modifier.fillMaxWidth()){Icon(Icons.Default.PictureAsPdf,null);Text(" Сформировать PDF-отчёт")}
+      } }
       if(lines.isNotEmpty()) item { CardBlock { Text("Смета",fontWeight=FontWeight.Bold); lines.forEachIndexed{i,line->Text("${line.name}: ${df.format(line.qty)} ${line.unit} × ${df.format(line.price)} ₽ = ${df.format(line.total)} ₽"); Row { TextButton(onClick={lines=lines.toMutableList().also{it[i]=line.copy(qty=(line.qty-1).coerceAtLeast(0.0))}}){Text("−")}; TextButton(onClick={lines=lines.toMutableList().also{it[i]=line.copy(qty=line.qty+1)}}){Text("+")}; TextButton(onClick={lines=lines.toMutableList().also{it.removeAt(i)}}){Text("Удалить")} } }; Text("ИТОГО: ${df.format(lines.sumOf{it.total})} ₽",fontWeight=FontWeight.Bold); Button(onClick={shareEstimate(ctx,lines)},modifier=Modifier.fillMaxWidth()){Text("Поделиться сметой / текст")} ; OutlinedButton(onClick={shareCsv(ctx,lines)},modifier=Modifier.fillMaxWidth()){Text("Экспорт таблицы CSV (Excel)")} } }
     }
     "Материалы" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
@@ -1000,6 +1015,22 @@ class MainActivity:ComponentActivity(){
     }
   }
  }
+ if(showPdfOptions) AlertDialog(
+  onDismissRequest={showPdfOptions=false},
+  title={Text("Экспорт PDF")},
+  text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){
+   Text("Выбери формат документа. Используются сохранённые данные текущего проекта.")
+   OutlinedButton(onClick={
+    val data=PdfReportData(project,rooms,lines,constructionRecords,engineeringPoints)
+    runCatching{PdfReportRenderer.render(data,PdfReportMode.TECHNICAL)}.onSuccess{pendingPdfBytes=it;showPdfOptions=false;pdfSaveLauncher.launch("PLAN-MASTER-3D-Технический-отчёт.pdf")}.onFailure{android.widget.Toast.makeText(ctx,"Ошибка PDF: " + (it.message ?: "ошибка"),android.widget.Toast.LENGTH_LONG).show()}
+   },modifier=Modifier.fillMaxWidth()){Text("Технический отчёт")}
+   OutlinedButton(onClick={
+    val data=PdfReportData(project,rooms,lines,constructionRecords,engineeringPoints)
+    runCatching{PdfReportRenderer.render(data,PdfReportMode.PROPOSAL)}.onSuccess{pendingPdfBytes=it;showPdfOptions=false;pdfSaveLauncher.launch("PLAN-MASTER-3D-Коммерческое-предложение.pdf")}.onFailure{android.widget.Toast.makeText(ctx,"Ошибка PDF: " + (it.message ?: "ошибка"),android.widget.Toast.LENGTH_LONG).show()}
+   },modifier=Modifier.fillMaxWidth()){Text("Коммерческое предложение")}
+  }},
+  confirmButton={TextButton(onClick={showPdfOptions=false}){Text("Закрыть")}}
+ )
  if(showAddRoom) AlertDialog(onDismissRequest={showAddRoom=false},title={Text("Новое помещение")},text={Column { OutlinedTextField(roomName,{roomName=it},label={Text("Название")}); OutlinedTextField(roomW,{roomW=it},label={Text("Ширина, м")}); OutlinedTextField(roomL,{roomL=it},label={Text("Длина, м")}); OutlinedTextField(roomH,{roomH=it},label={Text("Высота, м")}) }},confirmButton={TextButton(onClick={val w=roomW.toDoubleOrNull()?:4.0;val l=roomL.toDoubleOrNull()?:5.0;rooms=rooms+Room(System.currentTimeMillis(),roomName,w,l,roomH.toDoubleOrNull()?:2.7,w,l,w,l);selected=rooms.lastIndex;showAddRoom=false}){Text("Добавить")}},dismissButton={TextButton(onClick={showAddRoom=false}){Text("Отмена")}})
  if(showProjects) AlertDialog(onDismissRequest={showProjects=false},title={Text("Сохранённые проекты")},text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){if(projectIds.isEmpty()) Text("Пока нет сохранённых проектов");projectIds.forEach { id -> val item=projectStore.loadProject(id);if(item!=null) TextButton(onClick={openProject(id)}){Text("${item.name} • ${item.rooms.size} помещений")}}}},confirmButton={TextButton(onClick={showProjects=false}){Text("Закрыть")}})
 }
