@@ -133,10 +133,34 @@ object PdfReportRenderer {
         }
         return yy
     }
+    private fun fitText(value:String,width:Float,size:Float,bold:Boolean=false):String {
+        val paint=p(INK,size,bold)
+        if(paint.measureText(value)<=width) return value
+        val suffix="…"
+        var end=value.length
+        while(end>0 && paint.measureText(value.substring(0,end)+suffix)>width) end--
+        return value.substring(0,end).trimEnd()+suffix
+    }
+    private fun drawWrappedLimited(c:Canvas,value:String,x:Float,y:Float,width:Float,size:Float,color:Int,bold:Boolean=false,maxLines:Int=2):Float {
+        val paint=p(color,size,bold)
+        val lines=mutableListOf<String>()
+        value.split("\\s+".toRegex()).forEach { word ->
+            if(word.isBlank()) return@forEach
+            val candidate=if(lines.isEmpty()) word else lines.last()+" "+word
+            if(paint.measureText(candidate)<=width) {
+                if(lines.isEmpty()) lines.add(candidate) else lines[lines.lastIndex]=candidate
+            } else if(lines.size<maxLines) lines.add(word) else {
+                val last=lines.last()
+                lines[lines.lastIndex]=fitText(last+" "+word,width,size,bold)
+            }
+        }
+        lines.take(maxLines).forEachIndexed { i,line -> c.drawText(line,x,y+i*(size+4f),paint) }
+        return y+lines.size*(size+4f)
+    }
     private fun header(c:Canvas,title:String,subtitle:String) {
         c.drawColor(WHITE);c.drawRect(0f,0f,W.toFloat(),8f,p(TEAL,1f))
         t(c,"PLAN MASTER 3D",L,34f,9f,TEAL,true);t(c,title,L,66f,21f,INK,true)
-        if(subtitle.isNotBlank())t(c,subtitle,L,86f,10f,MUTED)
+        if(subtitle.isNotBlank())t(c,fitText(subtitle,500f,10f),L,86f,10f,MUTED)
         line(c,103f)
     }
     private fun footer(c:Canvas,n:Int) {
@@ -149,7 +173,7 @@ object PdfReportRenderer {
         t(c,"PLAN MASTER 3D",L,66f,13f,0xFF78D5DC.toInt(),true)
         t(c,if(mode==PdfReportMode.PROPOSAL)"КОММЕРЧЕСКОЕ" else "ТЕХНИЧЕСКИЙ",L,146f,27f,WHITE,true)
         t(c,if(mode==PdfReportMode.PROPOSAL)"ПРЕДЛОЖЕНИЕ" else "ОТЧЁТ",L,181f,27f,WHITE,true)
-        wrap(c,d.projectName,L,232f,500f,19f,WHITE,true)
+        drawWrappedLimited(c,d.projectName,L,232f,500f,19f,WHITE,true,2)
         t(c,SimpleDateFormat("d MMMM yyyy",Locale("ru")).format(Date(d.createdAt)),L,292f,10f,0xFFB7C6D8.toInt())
         var metaY=350f
         if(d.customerName.isNotBlank()){t(c,"Заказчик: "+d.customerName,L,metaY,8.5f,MUTED);metaY+=15f}
@@ -190,7 +214,7 @@ object PdfReportRenderer {
         for(i in from until to) {
             val room=d.rooms[i]
             t(c,(i+1).toString(),L,y+15f,9f,TEAL,true)
-            t(c,room.name.take(52),L+34f,y+15f,9f,INK,true)
+            t(c,fitText(room.name,290f,9f,true),L+34f,y+15f,9f,INK,true)
             t(c,fmt(room.floor)+" м²",R-150f,y+15f,8f,INK)
             t(c,"Стены "+fmt(room.walls)+" м² • H "+fmt(room.height)+" м",L+34f,y+31f,8f,MUTED)
             y+=44f
@@ -268,8 +292,8 @@ object PdfReportRenderer {
         for(index in from until to) {
             val item=d.construction[index]
             val room=d.rooms.getOrNull(item.roomIndex)?.name ?: "Помещение "+(item.roomIndex+1)
-            t(c,item.kind.take(22),L,y+14f,8f,INK,true)
-            wrap(c,room+" • "+item.material+" • L "+fmt(item.lengthM)+" м • H "+fmt(item.heightM)+" м • t "+fmt(item.thicknessMm)+" мм",L+140f,y+14f,240f,8f,MUTED)
+             t(c,fitText(item.kind,92f,8f,true),L,y+14f,8f,INK,true)
+            drawWrappedLimited(c,room+" • "+item.material+" • L "+fmt(item.lengthM)+" м • H "+fmt(item.heightM)+" м • t "+fmt(item.thicknessMm)+" мм",L+140f,y+11f,240f,7.5f,MUTED,false,2)
             t(c,fmt(item.quantity),R-65f,y+14f,9f,INK,true);y+=38f;line(c,y)
         }
         wrap(c,"Параметры и количества перенесены из конструктивных записей проекта. Перед закупкой материалов проверьте фактические условия объекта.",L,min(y+22f,760f),500f,8f,MUTED)
@@ -283,11 +307,11 @@ object PdfReportRenderer {
         y+=16f;line(c,y)
         for(i in from until to) {
             val item=items[i]
-            wrap(c,item.name,L+4f,y+14f,245f,8f,INK)
-            t(c,fmt(item.qty)+" "+item.unit,365f,y+14f,8f)
-            t(c,money(item.price),438f,y+14f,8f)
-            t(c,money(item.total),505f,y+14f,8f,INK,true)
-            y+=28f;line(c,y,SOFT);y+=4f
+            drawWrappedLimited(c,item.name,L+4f,y+10f,245f,7.5f,INK,false,2)
+            t(c,fitText(fmt(item.qty)+" "+item.unit,64f,8f),365f,y+14f,8f)
+            t(c,fitText(money(item.price),60f,8f),438f,y+14f,8f)
+            t(c,fitText(money(item.total),45f,8f),505f,y+14f,8f,INK,true)
+            y+=34f;line(c,y,SOFT);y+=2f
         }
         wrap(c,"Ведомость сформирована из строк сметы, отмеченных как материалы. Расходы, не добавленные в смету, здесь не отображаются.",L,770f,500f,7.5f,MUTED)
     }
@@ -295,9 +319,9 @@ object PdfReportRenderer {
         var y=132f;t(c,"Точка",L,y,8f,MUTED,true);t(c,"Помещение",L+155f,y,8f,MUTED,true);t(c,"Координаты",R-115f,y,8f,MUTED,true);y+=16f;line(c,y)
         for(index in from until to) {
             val point=d.engineeringPoints[index]
-            t(c,point.kind,L,y+14f,9f,INK,true);t(c,d.rooms.getOrNull(point.roomIndex)?.name ?: "—",L+155f,y+14f,9f)
-            t(c,"X "+fmt(point.x)+" / Y "+fmt(point.y)+" м",R-115f,y+14f,8f,MUTED)
-            if(point.note.isNotBlank())t(c,point.note.take(65),L+155f,y+28f,7f,MUTED)
+            t(c,fitText(point.kind,140f,8f,true),L,y+14f,8f,INK,true);t(c,fitText(d.rooms.getOrNull(point.roomIndex)?.name ?: "—",145f,8f),L+155f,y+14f,8f)
+            t(c,fitText("X "+fmt(point.x)+" / Y "+fmt(point.y)+" м",105f,7f),R-115f,y+14f,7f,MUTED)
+            if(point.note.isNotBlank())t(c,fitText(point.note,355f,7f),L+155f,y+28f,7f,MUTED)
             y+=if(point.note.isBlank())28f else 40f;line(c,y)
         }
     }
@@ -307,9 +331,9 @@ object PdfReportRenderer {
         t(c,"Наименование",L+7f,y+1f,8f,INK,true);t(c,"Кол-во",qtyX,y+1f,8f,INK,true);t(c,"Цена",priceX,y+1f,8f,INK,true);t(c,"Сумма",sumX,y+1f,8f,INK,true);y+=25f
         for(i in from until to){
             val item=d.estimate[i]
-            wrap(c,(i+1).toString()+". "+item.name,L+4f,y,235f,7.5f,INK)
-            t(c,fmt(item.qty)+" "+item.unit,qtyX,y,7.5f);t(c,money(item.price),priceX,y,7.5f);t(c,money(item.total),sumX,y,7.5f,INK,true)
-            y+=28f;line(c,y,SOFT);y+=4f
+            drawWrappedLimited(c,(i+1).toString()+". "+item.name,L+4f,y-4f,235f,7.2f,INK,false,2)
+            t(c,fitText(fmt(item.qty)+" "+item.unit,65f,7.2f),qtyX,y,7.2f);t(c,fitText(money(item.price),60f,7.2f),priceX,y,7.2f);t(c,fitText(money(item.total),45f,7.2f),sumX,y,7.2f,INK,true)
+            y+=34f;line(c,y,SOFT);y+=2f
         }
         if(last){y+=12f;c.drawRoundRect(L,y,R,y+62f,8f,8f,p(PALE,1f));t(c,"ИТОГО ПО СМЕТЕ",L+14f,y+24f,9f,MUTED,true);t(c,money(d.total),R-170f,y+43f,19f,TEAL,true)}
         wrap(c,"Цены и единицы измерения перенесены из текущей сметы проекта.",L,770f,500f,7.5f,MUTED)
