@@ -46,10 +46,10 @@ object PdfReportRenderer {
         require(data.rooms.all { it.vertices.size>=3 && it.floor.isFinite() }) { "Проверь геометрию помещений" }
         val doc=PdfDocument()
         var number=0
-        fun addPage(title:String,subtitle:String="",cover:Boolean=false,draw:(Canvas)->Unit={}) {
+        fun addPage(title:String,subtitle:String="",isCover:Boolean=false,draw:(Canvas)->Unit={}) {
             number++
             val page=doc.startPage(PdfDocument.PageInfo.Builder(W,H,number).create())
-            if(cover) cover(page.canvas,data,mode) else {
+            if(isCover) cover(page.canvas,data,mode) else {
                 header(page.canvas,title,subtitle)
                 draw(page.canvas)
                 footer(page.canvas,number)
@@ -60,6 +60,7 @@ object PdfReportRenderer {
         addPage("Сводка проекта","Площади и состав объекта") { summary(it,data,mode) }
         data.rooms.forEachIndexed { i,room ->
             addPage("План помещения",room.name) { plan(it,room,i,data.engineeringPoints.filter { p->p.roomIndex==i }) }
+            addPage("Объёмная схема помещения",room.name) { axonometric(it,room) }
         }
         if(data.construction.isNotEmpty()) addPage("Конструктивные работы","Демонтаж и новые перегородки") { construction(it,data) }
         if(data.engineeringPoints.isNotEmpty()) addPage("Инженерные точки","Размещение по помещениям и координатам") { engineering(it,data) }
@@ -170,6 +171,46 @@ object PdfReportRenderer {
         t(c,"Высота: "+fmt(room.height)+" м",L,688f,10f);t(c,"Проёмов: "+room.openingsByWall.values.sumOf{it.size}+" • "+fmt(room.geometry.openingArea)+" м²",L+190f,688f,10f)
         wrap(c,"План построен по сохранённому контуру. Размеры указаны в метрах; проёмы выделены цветом. Это 2D-план, не снимок 3D-сцены.",L,724f,500f,8f,MUTED)
     }
+    private fun axonometric(c:Canvas,room:Room) {
+        val v=room.vertices
+        val minX=v.minOf{it.x};val maxX=v.maxOf{it.x};val minY=v.minOf{it.y};val maxY=v.maxOf{it.y}
+        val span=max(0.1,(maxX-minX)+(maxY-minY))
+        val height=room.height.coerceAtLeast(0.1)
+        val scale=min(360f/span.toFloat(),260f/(0.56f*span.toFloat()+0.8f*height.toFloat()))
+        fun raw(point:Vec2,z:Double):android.graphics.PointF {
+            val x=(point.x-minX)-(point.y-minY)
+            val y=(point.x-minX)+(point.y-minY)
+            return android.graphics.PointF(x.toFloat()*scale*0.65f,(y.toFloat()*scale*0.28f)-(z.toFloat()*scale*0.8f))
+        }
+        val projected=v.flatMap { listOf(raw(it,0.0),raw(it,height)) }
+        val minPX=projected.minOf{it.x};val maxPX=projected.maxOf{it.x}
+        val minPY=projected.minOf{it.y};val maxPY=projected.maxOf{it.y}
+        val dx=W/2f-(minPX+maxPX)/2f
+        val dy=430f-(minPY+maxPY)/2f
+        fun point(a:Vec2,z:Double):android.graphics.PointF=raw(a,z).let{android.graphics.PointF(it.x+dx,it.y+dy)}
+        val shades=listOf(0xFFDCE8ED.toInt(),0xFFE8EFF2.toInt(),0xFFCFDDE3.toInt(),0xFFE1EAEE.toInt())
+        v.indices.forEach { i->
+            val j=(i+1)%v.size
+            val a=point(v[i],0.0);val b=point(v[j],0.0);val cTop=point(v[j],height);val dTop=point(v[i],height)
+            val face=Path().apply{moveTo(a.x,a.y);lineTo(b.x,b.y);lineTo(cTop.x,cTop.y);lineTo(dTop.x,dTop.y);close()}
+            c.drawPath(face,p(shades[i%shades.size],1f).apply{style=Paint.Style.FILL})
+            c.drawPath(face,p(INK,1.4f).apply{style=Paint.Style.STROKE})
+        }
+        val roof=Path()
+        v.forEachIndexed{i,a->val q=point(a,height);if(i==0)roof.moveTo(q.x,q.y)else roof.lineTo(q.x,q.y)}
+        roof.close();c.drawPath(roof,p(PALE,1f).apply{style=Paint.Style.FILL})
+        c.drawPath(roof,p(INK,1.6f).apply{style=Paint.Style.STROKE})
+        v.indices.forEach { i->
+            val a=point(v[i],0.0);val b=point(v[i],height)
+            c.drawLine(a.x,a.y,b.x,b.y,p(INK,1.2f))
+        }
+        line(c,690f)
+        t(c,"ОБЪЁМНЫЕ ПАРАМЕТРЫ",L,714f,9f,TEAL,true)
+        t(c,"Высота стен: "+fmt(room.height)+" м",L,738f,10f)
+        t(c,"Периметр: "+fmt(room.perimeter)+" м",L+190f,738f,10f)
+        wrap(c,"Объёмная схема построена по фактическому контуру и высоте помещения. Она показывает геометрию объёма; дверные и оконные вырезы не прорисованы на этой схеме и отдельно обозначены на 2D-плане.",L,765f,500f,8f,MUTED)
+    }
+
     private fun construction(c:Canvas,d:PdfReportData) {
         var y=132f;t(c,"Тип",L,y,8f,MUTED,true);t(c,"Материал и параметры",L+140f,y,8f,MUTED,true);t(c,"Кол-во",R-70f,y,8f,MUTED,true);y+=16f;line(c,y)
         d.construction.forEach { item->
