@@ -2,11 +2,12 @@ package ru.planmaster3d.app
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class LayoutCalculatorTest {
     @Test fun calculatesGridAndReserve() {
-        val result = LayoutCalculator.calculate(LayoutCalculationInput(
+        val result = JointLayoutCalculator.calculate(LayoutCalculationInput(
             600.0, 600.0, 4000.0, 5000.0, reservePercent = 10.0
         ))
         assertEquals(7, result.columns)
@@ -17,7 +18,7 @@ class LayoutCalculatorTest {
     }
 
     @Test fun choosesBetterOrientation() {
-        val result = LayoutCalculator.calculate(LayoutCalculationInput(
+        val result = JointLayoutCalculator.calculate(LayoutCalculationInput(
             1200.0, 200.0, 200.0, 1200.0, jointMm = 0.0, reservePercent = 0.0
         ))
         assertTrue(result.rotated)
@@ -25,11 +26,11 @@ class LayoutCalculatorTest {
     }
 
     @Test fun rejectsInvalidDimensionsAndReserve() {
-        org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
-            LayoutCalculator.calculate(LayoutCalculationInput(0.0, 100.0, 1000.0, 1000.0))
+        assertThrows(IllegalArgumentException::class.java) {
+            JointLayoutCalculator.calculate(LayoutCalculationInput(0.0, 100.0, 1000.0, 1000.0))
         }
-        org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
-            LayoutCalculator.calculate(LayoutCalculationInput(100.0, 100.0, 1000.0, 1000.0, reservePercent = 101.0))
+        assertThrows(IllegalArgumentException::class.java) {
+            JointLayoutCalculator.calculate(LayoutCalculationInput(100.0, 100.0, 1000.0, 1000.0, reservePercent = 101.0))
         }
     }
 }
