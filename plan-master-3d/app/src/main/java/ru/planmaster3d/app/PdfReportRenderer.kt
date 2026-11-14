@@ -97,7 +97,7 @@ object PdfReportRenderer {
             val to=min(data.engineeringPoints.size,from+engineeringPageSize)
             if(data.engineeringPoints.isNotEmpty()) addPage("Инженерные точки","Лист "+(pageIndex+1)+" из "+engineeringPages) { engineering(it,data,from,to) }
         }
-        val perPage=16
+        val perPage=14
         val pages=max(1,(data.estimate.size+perPage-1)/perPage)
         repeat(pages) { index ->
             val from=index*perPage
