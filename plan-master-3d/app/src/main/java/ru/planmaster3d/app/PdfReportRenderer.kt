@@ -61,7 +61,14 @@ object PdfReportRenderer {
             doc.finishPage(page)
         }
         addPage(if(mode==PdfReportMode.PROPOSAL) "Коммерческое предложение" else "Технический отчёт",isCover=true)
-        addPage("Сводка проекта","Площади и состав объекта") { summary(it,data,mode) }
+        addPage("Сводка проекта","Площади и основные показатели объекта") { summary(it,data,mode) }
+        val roomPageSize=14
+        val roomPages=(data.rooms.size+roomPageSize-1)/roomPageSize
+        repeat(roomPages) { pageIndex ->
+            val from=pageIndex*roomPageSize
+            val to=min(data.rooms.size,from+roomPageSize)
+            addPage("Состав проекта","Помещения • лист ${pageIndex+1} из ${roomPages}") { roomSchedule(it,data,from,to) }
+        }
         data.rooms.forEachIndexed { i,room ->
             addPage("План помещения",room.name) { plan(it,room,i,data.engineeringPoints.filter { p->p.roomIndex==i }) }
             addPage("Объёмная схема помещения",room.name) { axonometric(it,room) }
@@ -168,14 +175,28 @@ object PdfReportRenderer {
             c.drawRoundRect(L,y,R,y+38f,6f,6f,p(SOFT,1f))
             t(c,row.first,L+12f,y+24f,10f,MUTED);t(c,row.second,R-135f,y+24f,11f,INK,true);y+=46f
         }
-        y+=12f;t(c,"СОСТАВ ПРОЕКТА",L,y,10f,TEAL,true);y+=24f
-        d.rooms.forEachIndexed { i,room ->
-            t(c,(i+1).toString()+". "+room.name,L,y,10f,INK,true)
-            t(c,"Пол "+fmt(room.floor)+" м² • Стены "+fmt(room.walls)+" м² • Высота "+fmt(room.height)+" м",L+18f,y+16f,9f,MUTED);y+=42f
-        }
-        y+=8f;t(c,if(mode==PdfReportMode.PROPOSAL)"СТОИМОСТЬ ПРЕДЛОЖЕНИЯ" else "ИТОГО ПО ТЕКУЩЕЙ СМЕТЕ",L,y,10f,MUTED,true)
+        y+=12f;t(c,if(mode==PdfReportMode.PROPOSAL)"СТОИМОСТЬ ПРЕДЛОЖЕНИЯ" else "ИТОГО ПО ТЕКУЩЕЙ СМЕТЕ",L,y,10f,MUTED,true)
         t(c,money(d.total),L,y+34f,22f,TEAL,true)
-        wrap(c,"Расценки и суммы перенесены из сметных строк проекта без подстановки отсутствующих цен.",L,y+62f,500f,9f,MUTED)
+        wrap(c,"Состав помещений, расценки и суммы приведены на отдельных страницах отчёта и перенесены из сохранённых данных проекта.",L,y+62f,500f,9f,MUTED)
+    }
+
+    private fun roomSchedule(c:Canvas,d:PdfReportData,from:Int,to:Int) {
+        var y=132f
+        t(c,"№",L,y,8f,MUTED,true)
+        t(c,"Помещение",L+34f,y,8f,MUTED,true)
+        t(c,"Площадь и высота",R-150f,y,8f,MUTED,true)
+        y+=16f
+        line(c,y)
+        for(i in from until to) {
+            val room=d.rooms[i]
+            t(c,(i+1).toString(),L,y+15f,9f,TEAL,true)
+            t(c,room.name.take(52),L+34f,y+15f,9f,INK,true)
+            t(c,fmt(room.floor)+" м²",R-150f,y+15f,8f,INK)
+            t(c,"Стены "+fmt(room.walls)+" м² • H "+fmt(room.height)+" м",L+34f,y+31f,8f,MUTED)
+            y+=44f
+            line(c,y)
+        }
+        wrap(c,"Показатели рассчитаны по сохранённой геометрии каждого помещения.",L,770f,500f,8f,MUTED)
     }
     private fun plan(c:Canvas,room:Room,index:Int,points:List<EngineeringPoint>) {
         val v=room.vertices;val minX=v.minOf{it.x};val maxX=v.maxOf{it.x};val minY=v.minOf{it.y};val maxY=v.maxOf{it.y}
