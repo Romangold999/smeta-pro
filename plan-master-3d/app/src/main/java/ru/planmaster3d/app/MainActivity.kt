@@ -52,6 +52,62 @@ CatalogWork("Установка, сборка, подключение ванны
 CatalogWork("Установка зеркала",1300.0,"шт","Монтаж"),CatalogWork("Установка зеркала с подсветкой",1500.0,"шт","Электрика"),CatalogWork("Установка аксессуаров",800.0,"шт","Монтаж"),CatalogWork("Установка смесителя",1800.0,"шт","Сантехника"),CatalogWork("Установка крана умывальника",800.0,"шт","Сантехника"),CatalogWork("Установка тумбы умывальника",1700.0,"шт","Сантехника"),CatalogWork("Установка встраиваемого смесителя",3500.0,"шт","Сантехника"),CatalogWork("Установка гигиенического душа",1400.0,"шт","Сантехника"),CatalogWork("Установка встраиваемого гигиенического душа",3500.0,"шт","Сантехника"),CatalogWork("Установка смесителя + штанга",3000.0,"шт","Сантехника"),CatalogWork("Установка системы тропический душ",3500.0,"шт","Сантехника"),
 CatalogWork("Распайка ПП трубы (1 точка)",2000.0,"точка","Сантехника"),CatalogWork("Канализация",2000.0,"точка","Сантехника"),CatalogWork("Установка водомера",800.0,"шт","Сантехника"),CatalogWork("Штроба в бетоне 20 мм",1000.0,"м.п.","Электрика"),CatalogWork("Штроба в бетоне 50 мм",1500.0,"м.п.","Электрика"),CatalogWork("Штроба в газоблоке 20 мм",700.0,"м.п.","Электрика"),CatalogWork("Заделка штробы",200.0,"м.п.","Подготовка"),CatalogWork("Отверстие в бетоне для подрозетника",400.0,"шт","Электрика"),CatalogWork("Монтаж подрозетника",100.0,"шт","Электрика"),CatalogWork("Установка розетки",250.0,"шт","Электрика"),CatalogWork("Демонтаж старой штукатурки",450.0,"м²","Демонтаж"),CatalogWork("Демонтаж плитки",1000.0,"м²","Демонтаж"),CatalogWork("Изготовление раковины из керамогранита (до 80 см)",25000.0,"шт","Сантехника"),CatalogWork("Монтаж раковины",7000.0,"шт","Сантехника",true)
 )
+val additionalCatalog=listOf(
+    CatalogWork("Шпаклёвка стен",550.0,"м²","Малярные работы",true),
+    CatalogWork("Шпаклёвка потолка",650.0,"м²","Малярные работы",true),
+    CatalogWork("Покраска стен",450.0,"м²","Малярные работы",true),
+    CatalogWork("Покраска потолка",550.0,"м²","Малярные работы",true),
+    CatalogWork("Шлифовка шпаклёвки",180.0,"м²","Малярные работы",true),
+    CatalogWork("Армирование стен стеклохолстом",250.0,"м²","Малярные работы",true),
+    CatalogWork("Оклейка стен стеклохолстом",300.0,"м²","Малярные работы",true),
+    CatalogWork("Декоративная штукатурка стен",1800.0,"м²","Декоративная отделка",true),
+    CatalogWork("Венецианская штукатурка",3500.0,"м²","Декоративная отделка",true),
+    CatalogWork("Декоративное покрытие замша / нубук",2200.0,"м²","Декоративная отделка",true),
+    CatalogWork("Декоративное покрытие микроцемент",3000.0,"м²","Декоративная отделка",true),
+    CatalogWork("Декоративное покрытие травертин",2500.0,"м²","Декоративная отделка",true),
+    CatalogWork("Декоративное покрытие под бетон",2000.0,"м²","Декоративная отделка",true),
+    CatalogWork("Нанесение защитного лака",350.0,"м²","Декоративная отделка",true),
+    CatalogWork("Поклейка флизелиновых обоев",500.0,"м²","Обои",true),
+    CatalogWork("Поклейка виниловых обоев",600.0,"м²","Обои",true),
+    CatalogWork("Поклейка фотообоев",900.0,"м²","Обои",true),
+    CatalogWork("Подготовка стен под обои",500.0,"м²","Обои",true),
+    CatalogWork("Демонтаж обоев",180.0,"м²","Демонтаж",true),
+    CatalogWork("Укладка ламината",650.0,"м²","Полы",true),
+    CatalogWork("Укладка инженерной доски",1500.0,"м²","Полы",true),
+    CatalogWork("Укладка паркетной доски",1200.0,"м²","Полы",true),
+    CatalogWork("Монтаж подложки",100.0,"м²","Полы",true),
+    CatalogWork("Монтаж плинтуса МДФ",450.0,"м.п.","Полы",true),
+    CatalogWork("Монтаж напольного плинтуса ПВХ",250.0,"м.п.","Полы",true),
+    CatalogWork("Наливной пол",550.0,"м²","Полы",true),
+    CatalogWork("Выравнивание пола самонивелирующейся смесью",450.0,"м²","Полы",true),
+    CatalogWork("Монтаж потолка ГКЛ одноуровневого",1800.0,"м²","Потолки",true),
+    CatalogWork("Монтаж потолка ГКЛ многоуровневого",2600.0,"м²","Потолки",true),
+    CatalogWork("Монтаж натяжного потолка",900.0,"м²","Потолки",true),
+    CatalogWork("Монтаж перегородки ГКЛ",1800.0,"м²","Перегородки",true),
+    CatalogWork("Обшивка стен ГКЛ на каркас",1200.0,"м²","ГКЛ",true),
+    CatalogWork("Кладка перегородки из газобетона",1800.0,"м²","Перегородки",true),
+    CatalogWork("Кладка перегородки из ПГП",1500.0,"м²","Перегородки",true),
+    CatalogWork("Кладка кирпичной перегородки",2500.0,"м²","Перегородки",true),
+    CatalogWork("Монтаж тепло- и шумоизоляции",350.0,"м²","Перегородки",true),
+    CatalogWork("Монтаж дверного блока",4500.0,"шт","Двери",true),
+    CatalogWork("Установка межкомнатной двери",5000.0,"шт","Двери",true),
+    CatalogWork("Монтаж электрокабеля открыто",120.0,"м.п.","Электрика",true),
+    CatalogWork("Прокладка кабеля в штробе",180.0,"м.п.","Электрика",true),
+    CatalogWork("Сборка электрощита",5000.0,"шт","Электрика",true),
+    CatalogWork("Установка автомата в щит",450.0,"шт","Электрика",true),
+    CatalogWork("Монтаж электрического тёплого пола",900.0,"м²","Электрика",true),
+    CatalogWork("Монтаж водорозетки",1200.0,"шт","Сантехника",true),
+    CatalogWork("Монтаж коллектора водоснабжения",3500.0,"шт","Сантехника",true),
+    CatalogWork("Монтаж фильтра грубой очистки",700.0,"шт","Сантехника",true),
+    CatalogWork("Монтаж канализационной трубы",450.0,"м.п.","Сантехника",true),
+    CatalogWork("Опрессовка системы водоснабжения",2500.0,"система","Сантехника",true)
+)
+fun mergeCatalog(saved:List<CatalogWork>):List<CatalogWork> {
+    val merged=linkedMapOf<String,CatalogWork>()
+    (additionalCatalog+originalCatalog).forEach { merged[it.n.lowercase()]=it }
+    saved.forEach { merged[it.n.lowercase()]=it }
+    return merged.values.toList()
+}
 
 data class Room(val id:Long,val name:String,val width:Double,val length:Double,val height:Double,val wall1:Double,val wall2:Double,val wall3:Double,val wall4:Double,val vertices:List<Vec2> = listOf(Vec2(0.0,0.0),Vec2(width,0.0),Vec2(width,length),Vec2(0.0,length)),val wallHeights:List<Double> = emptyList(),val wallThicknesses:List<Double> = emptyList(),val openingsByWall:Map<Int,List<Opening>> = emptyMap(),val wallHeightOverrides:List<Double> = emptyList(),val wallMeasurements:List<WallVectorMeasurement> = emptyList()) {
     val floor get() = GeometryEngine.area(vertices)
@@ -122,7 +178,7 @@ class MainActivity:ComponentActivity(){
  val initialPriceBook=remember{projectStore.loadPriceBook()}
  var priceBook by remember { mutableStateOf(initialPriceBook ?: PriceBook("",emptyList())) }
  val initialCatalog=initialPriceBook?.versions?.firstOrNull{it.id==initialPriceBook.activeVersionId}?.items
- var catalogItems by remember { mutableStateOf(initialCatalog ?: originalCatalog) }
+ var catalogItems by remember { mutableStateOf(mergeCatalog(initialCatalog ?: emptyList())) }
  var catalogPriceDrafts by remember { mutableStateOf<Map<String,String>>(emptyMap()) }
  var priceBookName by remember { mutableStateOf(initialPriceBook?.versions?.firstOrNull{it.id==initialPriceBook.activeVersionId}?.name ?: "Мой прайс-лист") }
  var newCatalogWorkName by remember { mutableStateOf("") }
@@ -595,7 +651,7 @@ class MainActivity:ComponentActivity(){
                   onClick={
                     val next=priceBook.copy(activeVersionId=version.id)
                     priceBook=next
-                    catalogItems=version.items
+                    catalogItems=mergeCatalog(version.items)
                     catalogPriceDrafts=emptyMap()
                     priceBookName=version.name
                     projectStore.savePriceBook(next)
