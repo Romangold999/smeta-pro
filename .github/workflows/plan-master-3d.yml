@@ -1,5 +1,5 @@
 name: PLAN MASTER 3D APK
-# CI verifies geometry-driven estimates, builds the APK, runs unit tests, and uses an Android emulator to generate and open multi-page technical/proposal PDFs with dense long-text data, pagination, plans, axonometric pages, construction records, engineering points, and material tables. The emulator exports both PDFs as reviewable artifacts.
+# Build the APK independently, then run emulator-based PDF instrumentation QA.
 on:
   push:
     branches: [ plan-master-3d ]
@@ -26,6 +26,12 @@ jobs:
         run: |
           gradle testDebugUnitTest assembleDebug --stacktrace
           cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/PLAN-MASTER-3D.apk
+      - name: Upload APK independently of emulator QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: PLAN-MASTER-3D-APK
+          path: plan-master-3d/app/build/outputs/apk/debug/PLAN-MASTER-3D.apk
+          retention-days: 14
       - name: Generate and validate PDF reports on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -35,32 +41,10 @@ jobs:
           profile: pixel_2
           cores: 4
           emulator-boot-timeout: 1200
-          script: |
-            cd plan-master-3d
-            gradle connectedDebugAndroidTest --info
-            RESULTS_DIR="app/build/outputs/androidTest-results/connected/debug"
-            echo "Checking that Android instrumentation tests actually executed..."
-            find "$RESULTS_DIR" -type f -name '*.xml' -print
-            if ! grep -R -E 'tests="[1-9][0-9]*"' "$RESULTS_DIR" --include='*.xml'; then
-              echo "ERROR: No executed Android instrumentation tests were found."
-              exit 1
-            fi
-            mkdir -p pdf-artifacts
-            adb exec-out run-as ru.planmaster3d.app cat files/PLAN-MASTER-3D-technical-test.pdf > pdf-artifacts/PLAN-MASTER-3D-technical-test.pdf
-            adb exec-out run-as ru.planmaster3d.app cat files/PLAN-MASTER-3D-proposal-test.pdf > pdf-artifacts/PLAN-MASTER-3D-proposal-test.pdf
-            for pdf in pdf-artifacts/*.pdf; do
-              test -s "$pdf"
-              test "$(head -c 5 "$pdf")" = "%PDF-"
-              test "$(wc -c < "$pdf")" -gt 5000
-              echo "Validated $pdf ($(wc -c < "$pdf") bytes)"
-            done
-      - uses: actions/upload-artifact@v4
+          script: bash .github/scripts/plan-master-3d-pdf-qa.sh
+      - name: Upload validated PDF reports
+        uses: actions/upload-artifact@v4
         with:
           name: PLAN-MASTER-3D-PDF-QA
           path: plan-master-3d/pdf-artifacts/*.pdf
-          retention-days: 14
-      - uses: actions/upload-artifact@v4
-        with:
-          name: PLAN-MASTER-3D-APK
-          path: plan-master-3d/app/build/outputs/apk/debug/PLAN-MASTER-3D.apk
           retention-days: 14
