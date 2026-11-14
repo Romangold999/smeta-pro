@@ -26,6 +26,7 @@ class GeometryTakeoffTest {
         val room = Room(
             3L, "Стена", 4.0, 3.0, 2.7, 4.0, 3.0, 4.0, 3.0,
             wallThicknesses = listOf(0.1, 0.2, 0.15, 0.1),
+            wallHeightOverrides = listOf(2.0, 3.0, 4.0, 5.0),
             openingsByWall = mapOf(0 to listOf(
                 Opening("door", "Дверь", 1.0, 1.0, offsetFromStart = 1.0)
             ))
