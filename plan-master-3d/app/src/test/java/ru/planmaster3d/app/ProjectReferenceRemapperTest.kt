@@ -31,6 +31,11 @@ class ProjectReferenceRemapperTest {
         assertEquals(listOf(0, 1, 3), result.map { it.roomIndex })
     }
 
+    @Test fun doesNotMoveLineRecordsThatCrossTheSplitRoomBoundary() {
+        val crossing = record("crossing-line", 0, Vec2(1.0, 1.0), Vec2(3.0, 1.0))
+        val result = ProjectReferenceRemapper.afterRoomSplit(listOf(crossing), 0, secondRoom)
+        assertEquals(0, result.single().roomIndex)
+    }
     @Test fun keepsRecordsOnSplitBoundaryWithOriginalRoom() {
         val boundary = record("boundary", 0, Vec2(2.0, 0.5), Vec2(2.0, 2.5))
         val result = ProjectReferenceRemapper.afterRoomSplit(listOf(boundary), 0, secondRoom)

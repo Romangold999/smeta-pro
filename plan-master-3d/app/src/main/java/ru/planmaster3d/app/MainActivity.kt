@@ -301,6 +301,9 @@ class MainActivity:ComponentActivity(){
   prefs.edit().putString("active_project_id",id).putString("project",project).apply()
   showProjects=false;saveMessage="Открыт проект «${saved.name}»"
  }
+ LaunchedEffect(selected,current.height) {
+  roomH=current.height.toString()
+ }
  // Автосохранение проекта: изменения геометрии, сметы и конструктивных записей
  // фиксируются локально при каждом изменении состояния, а не только по кнопке.
  LaunchedEffect(activeProjectId, project, rooms, lines, constructionRecords, engineeringPoints) {
@@ -600,7 +603,7 @@ class MainActivity:ComponentActivity(){
         Text("Чистая площадь стен: ${df.format(current.walls)} м²")
         Text("Объём стен: ${df.format(current.geometry.netWallVolumeM3)} м³")
         Text("Проёмы: ${current.openingsByWall.values.sumOf{it.size}} • площадь ${df.format(current.geometry.openingArea)} м²")
-        Text("Это первый геометрический 3D-просмотр: контур и высоты стен отображаются в объёме. Следующий этап — корректные вырезы дверей/окон, ниши, интерактивное выделение элементов и скрытие стен.")
+        Text("3D-модель отображает объём стен, индивидуальную высоту, проёмы и позволяет скрывать стены, вращать и масштабировать сцену. Ниши и выбор отдельных элементов пока не реализованы.")
       } }
     }
     "Смета" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp),contentPadding=PaddingValues(vertical=12.dp)){

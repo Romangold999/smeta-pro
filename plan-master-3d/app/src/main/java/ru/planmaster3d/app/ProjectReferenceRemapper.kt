@@ -22,12 +22,14 @@ object ProjectReferenceRemapper {
 
     private fun belongsToSecondRoom(record: ConstructionRecord, polygon: List<Vec2>): Boolean {
         if (record.regionPoints.size >= 3) {
-            return record.regionPoints.all { GeometryEngine.containsPoint(polygon, it) } &&
-                record.regionPoints.any { isStrictlyInside(it, polygon) }
+            return GeometryEngine.polygonContainedBy(polygon, record.regionPoints)
         }
         val start = Vec2(record.startX, record.startY)
         val end = Vec2(record.endX, record.endY)
-        if (!listOf(start.x, start.y, end.x, end.y).all(Double::isFinite)) return false
+        if (!listOf(start.x, start.y, end.x, end.y).all { it.isFinite() }) return false
+        if (!GeometryEngine.containsPoint(polygon, start) ||
+            !GeometryEngine.containsPoint(polygon, end)
+        ) return false
         return isStrictlyInside((start + end) * 0.5, polygon)
     }
 
