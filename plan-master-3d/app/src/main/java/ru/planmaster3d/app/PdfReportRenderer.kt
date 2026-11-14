@@ -144,17 +144,45 @@ object PdfReportRenderer {
     private fun drawWrappedLimited(c:Canvas,value:String,x:Float,y:Float,width:Float,size:Float,color:Int,bold:Boolean=false,maxLines:Int=2):Float {
         val paint=p(color,size,bold)
         val lines=mutableListOf<String>()
-        value.split("\\s+".toRegex()).forEach { word ->
-            if(word.isBlank()) return@forEach
-            val candidate=if(lines.isEmpty()) word else lines.last()+" "+word
-            if(paint.measureText(candidate)<=width) {
-                if(lines.isEmpty()) lines.add(candidate) else lines[lines.lastIndex]=candidate
-            } else if(lines.size<maxLines) lines.add(word) else {
-                val last=lines.last()
-                lines[lines.lastIndex]=fitText(last+" "+word,width,size,bold)
+        val limit=maxLines.coerceAtLeast(1)
+        var truncated=false
+        value.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }.forEach { original ->
+            if(truncated) return@forEach
+            var word=original
+            while(word.isNotEmpty() && !truncated) {
+                if(lines.isEmpty()) lines.add("")
+                val current=lines.last()
+                val candidate=if(current.isEmpty()) word else "$current $word"
+                if(paint.measureText(candidate)<=width) {
+                    lines[lines.lastIndex]=candidate
+                    word=""
+                } else if(current.isNotEmpty() && lines.size<limit) {
+                    lines.add("")
+                } else if(paint.measureText(word)>width) {
+                    val count=paint.breakText(word,true,width,null).coerceAtLeast(1)
+                    val piece=word.substring(0,count)
+                    if(lines.size<limit) {
+                        lines[lines.lastIndex]=piece
+                        word=word.substring(count)
+                        if(word.isNotEmpty() && lines.size<limit) lines.add("")
+                        else if(word.isNotEmpty()) {
+                            lines[lines.lastIndex]=fitText(piece+"…",width,size,bold)
+                            truncated=true
+                        }
+                    } else {
+                        lines[lines.lastIndex]=fitText(if(current.isEmpty()) word else current+" "+word,width,size,bold)
+                        truncated=true
+                    }
+                } else if(lines.size<limit) {
+                    lines.add(word)
+                    word=""
+                } else {
+                    lines[lines.lastIndex]=fitText(current+" "+word,width,size,bold)
+                    truncated=true
+                }
             }
         }
-        lines.take(maxLines).forEachIndexed { i,line -> c.drawText(line,x,y+i*(size+4f),paint) }
+        lines.forEachIndexed { i,line -> c.drawText(line,x,y+i*(size+4f),paint) }
         return y+lines.size*(size+4f)
     }
     private fun header(c:Canvas,title:String,subtitle:String) {
@@ -176,10 +204,10 @@ object PdfReportRenderer {
         drawWrappedLimited(c,d.projectName,L,232f,500f,19f,WHITE,true,2)
         t(c,SimpleDateFormat("d MMMM yyyy",Locale("ru")).format(Date(d.createdAt)),L,292f,10f,0xFFB7C6D8.toInt())
         var metaY=350f
-        if(d.customerName.isNotBlank()){t(c,"Заказчик: "+d.customerName,L,metaY,8.5f,MUTED);metaY+=15f}
-        if(d.executorName.isNotBlank()){t(c,"Исполнитель: "+d.executorName,L,metaY,8.5f,MUTED);metaY+=15f}
-        if(d.executorContact.isNotBlank()){t(c,"Контакты: "+d.executorContact,L,metaY,8.5f,MUTED);metaY+=15f}
-        if(d.objectAddress.isNotBlank()){t(c,"Адрес: "+d.objectAddress.take(80),L,metaY,8.5f,MUTED);metaY+=15f}
+        if(d.customerName.isNotBlank()){t(c,fitText("Заказчик: "+d.customerName,500f,8.5f),L,metaY,8.5f,MUTED);metaY+=15f}
+        if(d.executorName.isNotBlank()){t(c,fitText("Исполнитель: "+d.executorName,500f,8.5f),L,metaY,8.5f,MUTED);metaY+=15f}
+        if(d.executorContact.isNotBlank()){t(c,fitText("Контакты: "+d.executorContact,500f,8.5f),L,metaY,8.5f,MUTED);metaY+=15f}
+        if(d.objectAddress.isNotBlank()){t(c,fitText("Адрес: "+d.objectAddress,500f,8.5f),L,metaY,8.5f,MUTED);metaY+=15f}
         t(c,"ОБЪЕКТ В ЦИФРАХ",L,420f,10f,TEAL,true)
         val cards=listOf("ПОМЕЩЕНИЯ" to d.rooms.size.toString(),"ПЛОЩАДЬ ПОЛА" to fmt(d.floorArea)+" м²","ПЛОЩАДЬ СТЕН" to fmt(d.wallArea)+" м²","ПОЗИЦИЙ СМЕТЫ" to d.estimate.size.toString())
         cards.forEachIndexed { i,pair ->
@@ -189,7 +217,7 @@ object PdfReportRenderer {
         }
         t(c,if(mode==PdfReportMode.PROPOSAL)"ИТОГОВАЯ СТОИМОСТЬ" else "ИТОГО ПО СМЕТЕ",L,632f,10f,MUTED,true)
         t(c,money(d.total),L,690f,32f,TEAL,true)
-        wrap(c,if(mode==PdfReportMode.PROPOSAL)"Состав и стоимость работ приведены по текущей смете проекта. Объёмы основаны на сохранённых обмерах." else "Документ сформирован из сохранённых данных проекта: геометрии помещений, конструктивных записей, инженерных точек и сметных строк.",L,740f,500f,9f,MUTED)
+        drawWrappedLimited(c,if(mode==PdfReportMode.PROPOSAL)"Состав и стоимость работ приведены по текущей смете проекта. Объёмы основаны на сохранённых обмерах." else "Документ сформирован из сохранённых данных проекта: геометрии помещений, конструктивных записей, инженерных точек и сметных строк.",L,740f,500f,9f,MUTED,false,3)
         t(c,"Сформировано приложением PLAN MASTER 3D",L,817f,8f,MUTED)
     }
     private fun summary(c:Canvas,d:PdfReportData,mode:PdfReportMode) {
