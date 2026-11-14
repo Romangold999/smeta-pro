@@ -384,6 +384,17 @@ class MainActivity:ComponentActivity(){
            }
          },modifier=Modifier.fillMaxWidth()){Text("Применить координаты вершины")}
         NumberField("Высота помещения, м",roomH){roomH=it}
+        Button(onClick={
+          val parsed=roomH.trim().replace(',','.').toDoubleOrNull()
+          if(parsed==null||!parsed.isFinite()||parsed !in 0.1..20.0) {
+            geometryMessage="Высота помещения должна быть от 0,1 до 20 м."
+          } else {
+            rooms=rooms.toMutableList().also{it[selected]=current.copy(
+              height=parsed,wallHeights=List(current.vertices.size){parsed}
+            )}
+            geometryMessage="Высота помещения обновлена. Индивидуальные высоты стен сохранены."
+          }
+        },modifier=Modifier.fillMaxWidth()){Text("Применить высоту помещения")}
         Text("Координаты вершин контура (метры)",fontWeight=FontWeight.SemiBold)
         val initialVertexText=current.vertices.joinToString("\n"){ "${String.format(java.util.Locale.US,"%.3f",it.x)};${String.format(java.util.Locale.US,"%.3f",it.y)}" }
         val draft=vertexDrafts[current.id]?:initialVertexText
@@ -1120,6 +1131,12 @@ class MainActivity:ComponentActivity(){
               constructionRecords=ProjectReferenceRemapper.afterRoomSplit(
                 constructionRecords,partitionRoomIndex,split.second
               )
+              if(engineeringRoomIndex>partitionRoomIndex) engineeringRoomIndex+=1
+              openingWallIndex=0
+              selectedDemolitionWallIndex=0
+              hidden3dWalls=emptySet()
+              partitionStart=null
+              partitionEnd=null
               selected=selected+1
               constructionRecords=constructionRecords+ConstructionRecord(
                 id=java.util.UUID.randomUUID().toString(),kind="PARTITION",roomIndex=partitionRoomIndex,
