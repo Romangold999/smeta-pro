@@ -1149,14 +1149,14 @@ class MainActivity:ComponentActivity(){
     planPan=centroid-(centroid-latestPan.value)*(next/latestZoom.value)+gesturePan
     planZoom=next
    }}
-   .pointerInput(room.id,room.vertices,planZoom,planPan){
+   .pointerInput(room.id,room.vertices){
    fun screenPoint(point:Offset):Vec2 {
     val minX=room.vertices.minOf{it.x};val maxX=room.vertices.maxOf{it.x}
     val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
     val bw=(maxX-minX).coerceAtLeast(0.01).toFloat()
     val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
-    val scale=min(size.width/(bw+1f),size.height/(bh+1f))*planZoom
-    val left=(size.width-bw*scale)/2f+planPan.x;val top=(size.height-bh*scale)/2f+planPan.y
+    val scale=min(size.width/(bw+1f),size.height/(bh+1f))*latestZoom.value
+    val left=(size.width-bw*scale)/2f+latestPan.value.x;val top=(size.height-bh*scale)/2f+latestPan.value.y
     return Vec2(minX+(point.x-left)/scale,minY+(point.y-top)/scale)
    }
    fun vertexScreen(point:Vec2):Offset {
@@ -1164,8 +1164,8 @@ class MainActivity:ComponentActivity(){
     val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
     val bw=(maxX-minX).coerceAtLeast(0.01).toFloat()
     val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
-    val scale=min(size.width/(bw+1f),size.height/(bh+1f))*planZoom
-    val left=(size.width-bw*scale)/2f+planPan.x;val top=(size.height-bh*scale)/2f+planPan.y
+    val scale=min(size.width/(bw+1f),size.height/(bh+1f))*latestZoom.value
+    val left=(size.width-bw*scale)/2f+latestPan.value.x;val top=(size.height-bh*scale)/2f+latestPan.value.y
     return Offset(left+(point.x-minX).toFloat()*scale,top+(point.y-minY).toFloat()*scale)
    }
    detectDragGestures(
@@ -1193,8 +1193,8 @@ class MainActivity:ComponentActivity(){
   val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
   val bw=(maxX-minX).coerceAtLeast(0.01).toFloat()
   val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
-  val scale=min(size.width/(bw+1f),size.height/(bh+1f))*planZoom
-  val left=(size.width-bw*scale)/2f+planPan.x;val top=(size.height-bh*scale)/2f+planPan.y
+  val scale=min(size.width/(bw+1f),size.height/(bh+1f))*latestZoom.value
+  val left=(size.width-bw*scale)/2f+latestPan.value.x;val top=(size.height-bh*scale)/2f+latestPan.value.y
   fun map(point:Vec2)=Offset(left+(point.x-minX).toFloat()*scale,top+(point.y-minY).toFloat()*scale)
   val path=Path()
   draft.forEachIndexed{index,point->val p=map(point);if(index==0)path.moveTo(p.x,p.y)else path.lineTo(p.x,p.y)}
