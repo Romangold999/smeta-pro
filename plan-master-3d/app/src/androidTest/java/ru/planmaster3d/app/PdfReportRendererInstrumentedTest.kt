@@ -23,7 +23,10 @@ class PdfReportRendererInstrumentedTest {
             wall1 = 5.0,
             wall2 = 4.0,
             wall3 = 5.0,
-            wall4 = 4.0
+            wall4 = 4.0,
+            openingsByWall = mapOf(
+                0 to listOf(Opening("door-1", "Дверь", width = 0.9, height = 2.1, offsetFromStart = 1.2))
+            )
         )
         val estimate = (1..24).map { index ->
             EstimateLine(

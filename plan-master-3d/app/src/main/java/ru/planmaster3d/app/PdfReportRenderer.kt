@@ -262,7 +262,7 @@ object PdfReportRenderer {
         v.forEachIndexed { i,a ->
             val b=v[(i+1)%v.size];val pa=pt(a);val pb=pt(b);c.drawCircle(pa.x,pa.y,3.5f,p(TEAL,1f))
             t(c,fmt(a.distanceTo(b))+" м",(pa.x+pb.x)/2f+4f,(pa.y+pb.y)/2f-5f,8f,MUTED,true)
-            val length=max(0.001f,a.distanceTo(b).toFloat());val ux=(pb.x-pa.x)/length;val uy=(pb.y-pa.y)/length
+            val pixelLength=max(0.001f,kotlin.math.hypot(pb.x-pa.x,pb.y-pa.y));val ux=(pb.x-pa.x)/pixelLength;val uy=(pb.y-pa.y)/pixelLength
             room.openingsByWall[i].orEmpty().forEach { o ->
                 val start=o.offsetFromStart.toFloat()*scale;val end=(o.offsetFromStart+o.width).toFloat()*scale
                 c.drawLine(pa.x+ux*start,pa.y+uy*start,pa.x+ux*end,pa.y+uy*end,p(TEAL,5f))
