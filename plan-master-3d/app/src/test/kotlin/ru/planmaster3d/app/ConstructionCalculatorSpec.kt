@@ -40,8 +40,10 @@ class ConstructionCalculatorSpec {
         val r = PartitionCalculator.calculate(PartitionInput(PartitionKind.GYPSUM_BOARD, 3.0, 2.7, 100,
             boardLayersPerSide = 1, boardSides = 2, studSpacingMm = 600, insulation = true))
         assertEquals(6, r.boardSheets)
-        assertEquals(6, r.studs)
+        assertEquals(7, r.studs)
         assertEquals(6.0, r.trackLengthM, 1e-8)
-        assertEquals(0.81, r.insulationVolumeM3, 1e-8)
+        assertEquals(25.32, r.profileTotalLengthM, 1e-8)
+        assertEquals(0.8667, r.insulationVolumeM3, 1e-8)
+        assertEquals(30.3345, r.insulationMassKg, 1e-8)
     }
 }

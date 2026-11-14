@@ -1009,9 +1009,9 @@ class MainActivity:ComponentActivity(){
             Text("${if(partitionKind=="Кирпич") "Раствор" else "Клей"}: ${df.format(result.adhesiveKg)} кг")
           } else {
             Text("Листов ГКЛ с запасом: ${result.boardSheets} шт")
-            Text("Стойки: ${result.studs} шт • шаг $studSpacing мм")
+            Text("Стойки с запасом: ${result.studs} шт • шаг $studSpacing мм")
             Text("Направляющие: ${df.format(result.trackLengthM)} м.п. • хлыстов по 3 м: ${result.trackPieces}")
-            Text("Общая длина профиля (стойки + направляющие): ${df.format(result.profileTotalLengthM)} м")
+            Text("Общая длина профиля с запасом: ${df.format(result.profileTotalLengthM)} м")
             if(insulation) Text("Шумоизоляция: ${df.format(result.insulationVolumeM3)} м³ • масса ${df.format(result.insulationMassKg)} кг")
           }
           Button(onClick={
