@@ -301,7 +301,7 @@ class MainActivity:ComponentActivity(){
   prefs.edit().putString("active_project_id",id).putString("project",project).apply()
   showProjects=false;saveMessage="Открыт проект «${saved.name}»"
  }
- LaunchedEffect(selected,current.height) {
+ LaunchedEffect(activeProjectId,selected,current.height) {
   roomH=current.height.toString()
  }
  // Автосохранение проекта: изменения геометрии, сметы и конструктивных записей
