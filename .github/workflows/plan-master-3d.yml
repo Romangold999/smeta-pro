@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: plan-master-3d-ci
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -32,10 +35,23 @@ jobs:
           profile: pixel_2
           script: |
             cd plan-master-3d
-            gradle connectedDebugAndroidTest
+            gradle connectedDebugAndroidTest --info
+            RESULTS_DIR="app/build/outputs/androidTest-results/connected/debug"
+            echo "Checking that Android instrumentation tests actually executed..."
+            find "$RESULTS_DIR" -type f -name '*.xml' -print
+            if ! grep -R -E 'tests="[1-9][0-9]*"' "$RESULTS_DIR" --include='*.xml'; then
+              echo "ERROR: No executed Android instrumentation tests were found."
+              exit 1
+            fi
             mkdir -p pdf-artifacts
-            adb pull /sdcard/Android/data/ru.planmaster3d.app/files/PLAN-MASTER-3D-technical-test.pdf pdf-artifacts/
-            adb pull /sdcard/Android/data/ru.planmaster3d.app/files/PLAN-MASTER-3D-proposal-test.pdf pdf-artifacts/
+            adb exec-out run-as ru.planmaster3d.app cat files/PLAN-MASTER-3D-technical-test.pdf > pdf-artifacts/PLAN-MASTER-3D-technical-test.pdf
+            adb exec-out run-as ru.planmaster3d.app cat files/PLAN-MASTER-3D-proposal-test.pdf > pdf-artifacts/PLAN-MASTER-3D-proposal-test.pdf
+            for pdf in pdf-artifacts/*.pdf; do
+              test -s "$pdf"
+              test "$(head -c 5 "$pdf")" = "%PDF-"
+              test "$(wc -c < "$pdf")" -gt 5000
+              echo "Validated $pdf ($(wc -c < "$pdf") bytes)"
+            done
       - uses: actions/upload-artifact@v4
         with:
           name: PLAN-MASTER-3D-PDF-QA
