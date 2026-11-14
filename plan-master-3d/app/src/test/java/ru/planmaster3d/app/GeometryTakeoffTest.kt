@@ -22,6 +22,19 @@ class GeometryTakeoffTest {
         assertEquals(0.765, result.revealAreaM2, 1e-8)
     }
 
+    @Test fun aggregatesWallVolumesUsingIndividualThicknessesAndOpenings() {
+        val room = Room(
+            3L, "Стена", 4.0, 3.0, 2.7, 4.0, 3.0, 4.0, 3.0,
+            wallThicknesses = listOf(0.1, 0.2, 0.15, 0.1),
+            openingsByWall = mapOf(0 to listOf(
+                Opening("door", "Дверь", 1.0, 1.0, offsetFromStart = 1.0)
+            ))
+        )
+        val result = GeometryTakeoff.calculate(listOf(room))
+        assertEquals(6.5, result.grossWallVolumeM3, 1e-8)
+        assertEquals(6.4, result.netWallVolumeM3, 1e-8)
+    }
+
     @Test fun emptyProjectIsRejected() {
         assertThrows(IllegalArgumentException::class.java) {
             GeometryTakeoff.calculate(emptyList())

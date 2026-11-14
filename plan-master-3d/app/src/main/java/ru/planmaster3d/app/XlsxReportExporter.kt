@@ -17,6 +17,8 @@ object XlsxReportExporter {
 
         val totalFloor = rooms.sumOf { it.floor }
         val totalWalls = rooms.sumOf { it.walls }
+        val totalGrossWallVolume = rooms.sumOf { it.geometry.grossWallVolumeM3 }
+        val totalNetWallVolume = rooms.sumOf { it.geometry.netWallVolumeM3 }
         val total = estimate.sumOf { it.total }
         val sheets = listOf(
             "Сводка" to listOf(
@@ -25,15 +27,18 @@ object XlsxReportExporter {
                 listOf(Cell("Помещений"), Cell(rooms.size.toString(), true)),
                 listOf(Cell("Площадь пола, м²"), Cell(totalFloor.toString(), true)),
                 listOf(Cell("Чистая площадь стен, м²"), Cell(totalWalls.toString(), true)),
+                listOf(Cell("Черновой объём стен, м³"), Cell(totalGrossWallVolume.toString(), true)),
+                listOf(Cell("Чистый объём стен, м³"), Cell(totalNetWallVolume.toString(), true)),
                 listOf(Cell("Позиций сметы"), Cell(estimate.size.toString(), true)),
                 listOf(Cell("Итого, ₽"), Cell(total.toString(), true))
             ),
             "Помещения" to buildList {
-                add(listOf(Cell("Помещение"), Cell("Площадь пола, м²"), Cell("Площадь стен, м²"), Cell("Периметр, м"), Cell("Проёмы, м²"), Cell("Откосы, м²")))
+                add(listOf(Cell("Помещение"), Cell("Площадь пола, м²"), Cell("Площадь стен, м²"), Cell("Периметр, м"), Cell("Проёмы, м²"), Cell("Откосы, м²"), Cell("Черновой объём стен, м³"), Cell("Чистый объём стен, м³")))
                 rooms.forEach { room ->
                     add(listOf(Cell(room.name), Cell(room.floor.toString(), true), Cell(room.walls.toString(), true),
                         Cell(room.perimeter.toString(), true), Cell(room.geometry.openingArea.toString(), true),
-                        Cell(room.geometry.revealArea.toString(), true)))
+                        Cell(room.geometry.revealArea.toString(), true), Cell(room.geometry.grossWallVolumeM3.toString(), true),
+                        Cell(room.geometry.netWallVolumeM3.toString(), true)))
                 }
             },
             "Работы" to estimate.filterNot { it.material }.toSheetRows(),
