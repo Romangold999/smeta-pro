@@ -63,7 +63,7 @@ object PdfReportRenderer {
         }
         if(data.construction.isNotEmpty()) addPage("Конструктивные работы","Демонтаж и новые перегородки") { construction(it,data) }
         if(data.engineeringPoints.isNotEmpty()) addPage("Инженерные точки","Размещение по помещениям и координатам") { engineering(it,data) }
-        val perPage=25
+        val perPage=16
         val pages=max(1,(data.estimate.size+perPage-1)/perPage)
         repeat(pages) { index ->
             val from=index*perPage
@@ -205,5 +205,5 @@ object PdfReportRenderer {
         wrap(c,"Цены и единицы измерения перенесены из текущей сметы проекта.",L,770f,500f,7.5f,MUTED)
     }
     private fun fmt(v:Double)=String.format(Locale.US,"%.2f",v).trimEnd('0').trimEnd('.')
-    private fun money(v:Double)=String.format(Locale("ru","RU"),"% ,.0f ₽",v).replace(" ","")
+    private fun money(v:Double)=String.format(Locale("ru","RU"),"%,.0f ₽",v)
 }

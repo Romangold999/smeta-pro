@@ -662,7 +662,7 @@ class MainActivity:ComponentActivity(){
           IconButton(onClick={lines=lines+EstimateLine(item.n,item.u,item.p,1.0,item.c)}){Icon(Icons.Default.Add,tint=accent,contentDescription="Добавить")}
         }
       } }
-      if(lines.isNotEmpty()) item { CardBlock {
+      item { CardBlock {
         Text("Экспорт проекта",fontWeight=FontWeight.Bold)
         Text("PDF: титульная страница, планы помещений, ведомости и смета.",fontSize=12.sp,color=Color.LightGray)
         Button(onClick={showPdfOptions=true},modifier=Modifier.fillMaxWidth()){Icon(Icons.Default.PictureAsPdf,null);Text(" Сформировать PDF-отчёт")}
