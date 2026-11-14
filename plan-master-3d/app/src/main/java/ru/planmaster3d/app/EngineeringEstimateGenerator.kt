@@ -7,7 +7,9 @@ object EngineeringEstimateGenerator {
         "Выключатель" to ("Монтаж выключателя" to "Электрика"),
         "Светильник" to ("Установка светильника" to "Электрика"),
         "Вентилятор" to ("Установка вентилятора" to "Электрика"),
-        "Водорозетка" to ("Распайка ПП трубы (1 точка)" to "Сантехника"),
+        "Электровывод" to ("Монтаж электровывода" to "Электрика"),
+        "Интернет" to ("Монтаж интернет-розетки" to "Электрика"),
+        "Водорозетка" to ("Монтаж водорозетки" to "Сантехника"),
         "Канализация" to ("Канализация" to "Сантехника"),
         "Унитаз" to ("Установка унитаза" to "Сантехника"),
         "Раковина" to ("Установка умывальника" to "Сантехника"),
@@ -27,7 +29,7 @@ object EngineeringEstimateGenerator {
         return points.groupBy { it.kind }.mapNotNull { (kind, placed) ->
             val (rateName, category) = rateByKind[kind] ?: return@mapNotNull null
             val rate = rates[rateName] ?: return@mapNotNull null
-            require(rate.p.isFinite() && rate.p >= 0.0) { "Некорректная цена для «$rateName»" }
+            require(rate.p.isFinite() && rate.p >= 0.0) { "Некорректная цена для «${rateName}»" }
             EstimateLine(
                 name = "Инженерия · $kind",
                 unit = rate.u,

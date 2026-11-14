@@ -23,6 +23,20 @@ class EngineeringEstimateGeneratorTest {
         assertTrue(result.none { it.name.endsWith("Выключатель") })
     }
 
+    @Test fun everySelectableEngineeringKindHasADefaultCatalogRate() {
+        val kinds = listOf(
+            "Розетка", "Выключатель", "Светильник", "Вентилятор", "Электровывод", "Интернет",
+            "Водорозетка", "Канализация", "Унитаз", "Раковина", "Смеситель", "Душ",
+            "Полотенцесушитель", "Ванна", "Водомер", "Инсталляция"
+        )
+        val points = kinds.mapIndexed { index, kind ->
+            EngineeringPoint(index.toString(), kind, 0, 1.0, 1.0)
+        }
+        val generated = EngineeringEstimateGenerator.generate(points, mergeCatalog(emptyList()))
+        assertEquals(kinds.size, generated.size)
+        assertTrue(generated.all { it.qty == 1.0 && it.price >= 0.0 })
+    }
+
     @Test fun rejectsInvalidCoordinates() {
         org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
             EngineeringEstimateGenerator.generate(

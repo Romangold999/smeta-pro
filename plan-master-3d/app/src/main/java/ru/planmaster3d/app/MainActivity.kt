@@ -97,6 +97,9 @@ val additionalCatalog=listOf(
     CatalogWork("Установка автомата в щит",450.0,"шт","Электрика",true),
     CatalogWork("Монтаж электрического тёплого пола",900.0,"м²","Электрика",true),
     CatalogWork("Монтаж водорозетки",1200.0,"шт","Сантехника",true),
+    CatalogWork("Монтаж выключателя",250.0,"шт","Электрика",true),
+    CatalogWork("Монтаж электровывода",250.0,"шт","Электрика",true),
+    CatalogWork("Монтаж интернет-розетки",350.0,"шт","Электрика",true),
     CatalogWork("Монтаж коллектора водоснабжения",3500.0,"шт","Сантехника",true),
     CatalogWork("Монтаж фильтра грубой очистки",700.0,"шт","Сантехника",true),
     CatalogWork("Монтаж канализационной трубы",450.0,"м.п.","Сантехника",true),
@@ -1114,9 +1117,9 @@ class MainActivity:ComponentActivity(){
                   else -> point
                 }
               }
-              constructionRecords=constructionRecords.map { record ->
-                if(record.roomIndex>partitionRoomIndex) record.copy(roomIndex=record.roomIndex+1) else record
-              }
+              constructionRecords=ProjectReferenceRemapper.afterRoomSplit(
+                constructionRecords,partitionRoomIndex,split.second
+              )
               selected=selected+1
               constructionRecords=constructionRecords+ConstructionRecord(
                 id=java.util.UUID.randomUUID().toString(),kind="PARTITION",roomIndex=partitionRoomIndex,
@@ -1127,7 +1130,7 @@ class MainActivity:ComponentActivity(){
                 studSpacingMm=studSpacing.toIntOrNull()?:600,insulation=insulation,
                 densityKgM3=blockDensity.toDoubleOrNull()?:0.0,quantity=result.netAreaM2
               )
-              saveMessage="Помещение разделено на две области. Нажми «Сохранить» для записи."
+              saveMessage="Помещение разделено на две области. Изменения сохраняются автоматически."
             } else {
               saveMessage=if(cutsOpening) "Разделение отменено: точка попала внутрь существующего проёма. Перенеси точку разреза на участок стены вне проёма." else "Разделение не выполнено: выбери две точки на границе помещения."
               return@Button
