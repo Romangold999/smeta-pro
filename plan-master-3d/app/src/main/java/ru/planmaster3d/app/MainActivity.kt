@@ -1006,11 +1006,23 @@ class MainActivity:ComponentActivity(){
 @Composable fun Metric(name:String,value:Double,unit:String,modifier:Modifier=Modifier){Card(modifier,colors=CardDefaults.cardColors(containerColor=panel)){Column(Modifier.padding(10.dp)){Text(name,fontSize=11.sp,color=Color.LightGray);Text(df.format(value),fontWeight=FontWeight.Bold,fontSize=17.sp);Text(unit,fontSize=11.sp,color=Color.LightGray)}}}
 @Composable fun NumberField(label:String,value:String,onChange:(String)->Unit){OutlinedTextField(value,onChange,label={Text(label)},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth(),singleLine=true)}
 @Composable fun varType(value:String,onChange:(String)->Unit,options:List<String>){Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){options.forEach{FilterChip(selected=value==it,onClick={onChange(it)},label={Text(it,fontSize=11.sp)})}}}
-@Composable fun RoomPlan(room:Room,modifier:Modifier=Modifier){Canvas(modifier){
+@Composable fun RoomPlan(room:Room,modifier:Modifier=Modifier){
+ var zoom by remember(room.id){mutableFloatStateOf(1f)}
+ var pan by remember(room.id){mutableStateOf(Offset.Zero)}
+ val cameraZoom=rememberUpdatedState(zoom)
+ Canvas(modifier
+  .pointerInput(room.id){detectTransformGestures{centroid,gesturePan,gestureZoom,_->
+   val next=(cameraZoom.value*gestureZoom).coerceIn(0.55f,5f)
+   pan=centroid-(centroid-pan)*(next/cameraZoom.value)+gesturePan
+   zoom=next
+  }}
+  .pointerInput(room.id){detectTapGestures(onDoubleTap={zoom=(zoom*1.5f).coerceIn(0.55f,5f)})}
+ ){
  val minX=room.vertices.minOf{it.x};val maxX=room.vertices.maxOf{it.x};val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
  val bw=(maxX-minX).coerceAtLeast(0.01).toFloat();val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
- val scale=min(size.width/(bw+1f),size.height/(bh+1f));val w=bw*scale;val h=bh*scale;val left=(size.width-w)/2;val top=(size.height-h)/2
- fun map(p:Vec2)=Offset(left+(p.x-minX).toFloat()*scale,top+(p.y-minY).toFloat()*scale)
+ val baseScale=min(size.width/(bw+1f),size.height/(bh+1f));val scale=baseScale*zoom
+ val w=bw*scale;val h=bh*scale;val left=(size.width-w)/2;val top=(size.height-h)/2
+ fun map(p:Vec2)=Offset(left+(p.x-minX).toFloat()*scale+pan.x,top+(p.y-minY).toFloat()*scale+pan.y)
  val path=Path();room.vertices.forEachIndexed{i,p->val pt=map(p);if(i==0)path.moveTo(pt.x,pt.y)else path.lineTo(pt.x,pt.y)};path.close()
  drawPath(path,Color(0xFF6ED4E5),style=Stroke(5f))
  room.openingsByWall.forEach { (wall,openings) ->
@@ -1124,17 +1136,27 @@ class MainActivity:ComponentActivity(){
 ){
  var draft by remember(room.id,room.vertices){ mutableStateOf(room.vertices) }
  var draggingIndex by remember(room.id,room.vertices){ mutableIntStateOf(-1) }
+ var planZoom by remember(room.id){mutableFloatStateOf(1f)}
+ var planPan by remember(room.id){mutableStateOf(Offset.Zero)}
+ val latestZoom=rememberUpdatedState(planZoom)
+ val latestPan=rememberUpdatedState(planPan)
  val latestSelected=rememberUpdatedState(onSelectedVertex)
  val latestCommit=rememberUpdatedState(onCommit)
  Canvas(
-  modifier.pointerInput(room.id,room.vertices){
+  modifier
+   .pointerInput(room.id){detectTransformGestures{centroid,gesturePan,gestureZoom,_->
+    val next=(latestZoom.value*gestureZoom).coerceIn(0.55f,5f)
+    planPan=centroid-(centroid-latestPan.value)*(next/latestZoom.value)+gesturePan
+    planZoom=next
+   }}
+   .pointerInput(room.id,room.vertices,planZoom,planPan){
    fun screenPoint(point:Offset):Vec2 {
     val minX=room.vertices.minOf{it.x};val maxX=room.vertices.maxOf{it.x}
     val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
     val bw=(maxX-minX).coerceAtLeast(0.01).toFloat()
     val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
-    val scale=min(size.width/(bw+1f),size.height/(bh+1f))
-    val left=(size.width-bw*scale)/2f;val top=(size.height-bh*scale)/2f
+    val scale=min(size.width/(bw+1f),size.height/(bh+1f))*planZoom
+    val left=(size.width-bw*scale)/2f+planPan.x;val top=(size.height-bh*scale)/2f+planPan.y
     return Vec2(minX+(point.x-left)/scale,minY+(point.y-top)/scale)
    }
    fun vertexScreen(point:Vec2):Offset {
@@ -1142,8 +1164,8 @@ class MainActivity:ComponentActivity(){
     val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
     val bw=(maxX-minX).coerceAtLeast(0.01).toFloat()
     val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
-    val scale=min(size.width/(bw+1f),size.height/(bh+1f))
-    val left=(size.width-bw*scale)/2f;val top=(size.height-bh*scale)/2f
+    val scale=min(size.width/(bw+1f),size.height/(bh+1f))*planZoom
+    val left=(size.width-bw*scale)/2f+planPan.x;val top=(size.height-bh*scale)/2f+planPan.y
     return Offset(left+(point.x-minX).toFloat()*scale,top+(point.y-minY).toFloat()*scale)
    }
    detectDragGestures(
@@ -1171,8 +1193,8 @@ class MainActivity:ComponentActivity(){
   val minY=room.vertices.minOf{it.y};val maxY=room.vertices.maxOf{it.y}
   val bw=(maxX-minX).coerceAtLeast(0.01).toFloat()
   val bh=(maxY-minY).coerceAtLeast(0.01).toFloat()
-  val scale=min(size.width/(bw+1f),size.height/(bh+1f))
-  val left=(size.width-bw*scale)/2f;val top=(size.height-bh*scale)/2f
+  val scale=min(size.width/(bw+1f),size.height/(bh+1f))*planZoom
+  val left=(size.width-bw*scale)/2f+planPan.x;val top=(size.height-bh*scale)/2f+planPan.y
   fun map(point:Vec2)=Offset(left+(point.x-minX).toFloat()*scale,top+(point.y-minY).toFloat()*scale)
   val path=Path()
   draft.forEachIndexed{index,point->val p=map(point);if(index==0)path.moveTo(p.x,p.y)else path.lineTo(p.x,p.y)}
