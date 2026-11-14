@@ -23,6 +23,24 @@ jobs:
         run: |
           gradle testDebugUnitTest assembleDebug --stacktrace
           cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/PLAN-MASTER-3D.apk
+      - name: Generate and validate PDF reports on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          script: |
+            cd plan-master-3d
+            gradle connectedDebugAndroidTest
+            mkdir -p pdf-artifacts
+            adb pull /sdcard/Android/data/ru.planmaster3d.app/files/PLAN-MASTER-3D-technical-test.pdf pdf-artifacts/
+            adb pull /sdcard/Android/data/ru.planmaster3d.app/files/PLAN-MASTER-3D-proposal-test.pdf pdf-artifacts/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PLAN-MASTER-3D-PDF-QA
+          path: plan-master-3d/pdf-artifacts/*.pdf
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: PLAN-MASTER-3D-APK
