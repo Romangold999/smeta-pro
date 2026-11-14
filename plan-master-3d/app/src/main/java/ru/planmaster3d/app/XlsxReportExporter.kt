@@ -15,20 +15,20 @@ object XlsxReportExporter {
             "Смета содержит некорректные числовые значения"
         }
 
-        val totalFloor = rooms.sumOf { it.floor }
-        val totalWalls = rooms.sumOf { it.walls }
-        val totalGrossWallVolume = rooms.sumOf { it.geometry.grossWallVolumeM3 }
-        val totalNetWallVolume = rooms.sumOf { it.geometry.netWallVolumeM3 }
+        // Validate project-wide totals as well as each room: individually finite room
+        // values can still overflow when aggregated across a large project.
+        val takeoff = GeometryTakeoff.calculate(rooms)
         val total = estimate.sumOf { it.total }
+        require(total.isFinite()) { "Итоговая сумма сметы превышает допустимый диапазон" }
         val sheets = listOf(
             "Сводка" to listOf(
                 listOf(Cell("PLAN MASTER 3D — $projectName")),
                 listOf(Cell("Показатель"), Cell("Значение")),
                 listOf(Cell("Помещений"), Cell(rooms.size.toString(), true)),
-                listOf(Cell("Площадь пола, м²"), Cell(totalFloor.toString(), true)),
-                listOf(Cell("Чистая площадь стен, м²"), Cell(totalWalls.toString(), true)),
-                listOf(Cell("Черновой объём стен, м³"), Cell(totalGrossWallVolume.toString(), true)),
-                listOf(Cell("Чистый объём стен, м³"), Cell(totalNetWallVolume.toString(), true)),
+                listOf(Cell("Площадь пола, м²"), Cell(takeoff.floorAreaM2.toString(), true)),
+                listOf(Cell("Чистая площадь стен, м²"), Cell(takeoff.netWallAreaM2.toString(), true)),
+                listOf(Cell("Черновой объём стен, м³"), Cell(takeoff.grossWallVolumeM3.toString(), true)),
+                listOf(Cell("Чистый объём стен, м³"), Cell(takeoff.netWallVolumeM3.toString(), true)),
                 listOf(Cell("Позиций сметы"), Cell(estimate.size.toString(), true)),
                 listOf(Cell("Итого, ₽"), Cell(total.toString(), true))
             ),
