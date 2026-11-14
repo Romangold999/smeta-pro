@@ -23,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -1144,10 +1146,31 @@ class MainActivity:ComponentActivity(){
  val latestCommit=rememberUpdatedState(onCommit)
  Canvas(
   modifier
-   .pointerInput(room.id){detectTransformGestures{centroid,gesturePan,gestureZoom,_->
-    val next=(latestZoom.value*gestureZoom).coerceIn(0.55f,5f)
-    planPan=centroid-(centroid-latestPan.value)*(next/latestZoom.value)+gesturePan
-    planZoom=next
+   .pointerInput(room.id){awaitEachGesture{
+    awaitFirstDown(requireUnconsumed=false)
+    var previousCentroid:Offset?=null
+    var previousSpan=0f
+    do {
+     val event=awaitPointerEvent()
+     val pressed=event.changes.filter{it.pressed}
+     if(pressed.size>=2){
+      val centroid=pressed.map{it.position}.reduce{a,b->a+b}/pressed.size.toFloat()
+      val span=pressed.map{(it.position-centroid).getDistance()}.average().toFloat()
+      val oldCentroid=previousCentroid
+      if(oldCentroid!=null&&previousSpan>0f){
+       val zoomChange=(span/previousSpan).coerceIn(0.5f,2f)
+       val next=(latestZoom.value*zoomChange).coerceIn(0.55f,5f)
+       planPan=centroid-(centroid-latestPan.value)*(next/latestZoom.value)+(centroid-oldCentroid)
+       planZoom=next
+       event.changes.forEach{if(it.pressed)it.consume()}
+      }
+      previousCentroid=centroid
+      previousSpan=span
+     }else{
+      previousCentroid=null
+      previousSpan=0f
+     }
+    }while(event.changes.any{it.pressed})
    }}
    .pointerInput(room.id,room.vertices){
    fun screenPoint(point:Offset):Vec2 {
