@@ -142,10 +142,11 @@ class ConstructionCalculatorTest {
             )
         )
         assertEquals(6, result.boardSheets)
-        assertEquals(6, result.studs)
+        assertEquals(7, result.studs)
         assertEquals(6.0, result.trackLengthM, 1e-8)
         assertEquals(3, result.trackPieces)
-        assertEquals(0.81, result.insulationVolumeM3, 1e-8)
-        assertEquals(28.35, result.insulationMassKg, 1e-8)
+        assertEquals(25.32, result.profileTotalLengthM, 1e-8)
+        assertEquals(0.8667, result.insulationVolumeM3, 1e-8)
+        assertEquals(30.3345, result.insulationMassKg, 1e-8)
     }
 }

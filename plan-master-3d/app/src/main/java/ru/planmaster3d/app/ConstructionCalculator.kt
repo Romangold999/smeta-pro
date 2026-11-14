@@ -150,15 +150,17 @@ object PartitionCalculator {
                 val sheets = safeCount(net * input.boardLayersPerSide * input.boardSides / sheetArea * factor, "Количество листов")
                 val intermediateStuds = safeCount(input.lengthM * 1000.0 / input.studSpacingMm, "Количество стоек")
                 require(intermediateStuds < Int.MAX_VALUE) { "Количество стоек превышает допустимый диапазон" }
-                val studs = intermediateStuds + 1
+                val baseStuds = intermediateStuds + 1
+                val studs = safeCount(baseStuds * factor, "Количество стоек с запасом")
                 require(studs > 0) { "Количество стоек превышает допустимый диапазон" }
                 val trackLength = input.lengthM * 2.0
-                val trackPieces = safeCount(trackLength / input.profileStockLengthM * factor, "Количество направляющих")
+                val trackLengthWithReserve = trackLength * factor
+                val trackPieces = safeCount(trackLengthWithReserve / input.profileStockLengthM, "Количество направляющих")
                 val studLength = studs.toDouble() * input.heightM
-                val totalProfile = studLength + trackLength
-                val insulationVolume = if (input.insulation) net * input.thicknessMm / 1000.0 else 0.0
+                val totalProfile = studLength + trackLengthWithReserve
+                val insulationVolume = if (input.insulation) net * input.thicknessMm / 1000.0 * factor else 0.0
                 val insulationMass = insulationVolume * input.insulationDensityKgM3
-                requireFiniteResults(trackLength, studLength, totalProfile, insulationVolume, insulationMass)
+                requireFiniteResults(trackLength, trackLengthWithReserve, studLength, totalProfile, insulationVolume, insulationMass)
                 PartitionResult(gross, net, volume, 0, 0.0, 0.0,
                     sheets, studs, trackLength, trackPieces, totalProfile,
                     insulationVolume, insulationMass)

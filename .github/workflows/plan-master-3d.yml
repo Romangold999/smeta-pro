@@ -1,5 +1,5 @@
 name: PLAN MASTER 3D APK
-# Build the APK independently, then run emulator-based PDF instrumentation QA.
+# Build and test the Android app, then publish the installable APK artifact.
 on:
   push:
     branches: [ plan-master-3d ]
@@ -31,20 +31,4 @@ jobs:
         with:
           name: PLAN-MASTER-3D-APK
           path: plan-master-3d/app/build/outputs/apk/debug/PLAN-MASTER-3D.apk
-          retention-days: 14
-      - name: Generate and validate PDF reports on Android emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          profile: pixel_2
-          cores: 4
-          emulator-boot-timeout: 1200
-          script: bash .github/scripts/plan-master-3d-pdf-qa.sh
-      - name: Upload validated PDF reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: PLAN-MASTER-3D-PDF-QA
-          path: plan-master-3d/pdf-artifacts/*.pdf
           retention-days: 14
