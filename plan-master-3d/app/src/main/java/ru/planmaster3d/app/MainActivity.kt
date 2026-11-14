@@ -7,6 +7,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -72,6 +74,10 @@ class MainActivity:ComponentActivity(){
  val prefs=remember{ctx.getSharedPreferences("plan_master_3d",0)}
  var showPdfOptions by remember { mutableStateOf(false) }
  var pendingPdfBytes by remember { mutableStateOf<ByteArray?>(null) }
+ var pdfCustomer by remember { mutableStateOf(prefs.getString("pdf_customer","") ?: "") }
+ var pdfExecutor by remember { mutableStateOf(prefs.getString("pdf_executor","") ?: "") }
+ var pdfContact by remember { mutableStateOf(prefs.getString("pdf_contact","") ?: "") }
+ var pdfAddress by remember { mutableStateOf(prefs.getString("pdf_address","") ?: "") }
  val pdfSaveLauncher=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
   if(uri!=null) runCatching { ctx.contentResolver.openOutputStream(uri)?.use { it.write(pendingPdfBytes ?: byteArrayOf()) } }
    .onSuccess { android.widget.Toast.makeText(ctx,"PDF сохранён",android.widget.Toast.LENGTH_SHORT).show() }
@@ -1018,14 +1024,21 @@ class MainActivity:ComponentActivity(){
  if(showPdfOptions) AlertDialog(
   onDismissRequest={showPdfOptions=false},
   title={Text("Экспорт PDF")},
-  text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){
+  text={Column(Modifier.heightIn(max=430.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)){
+   Text("Реквизиты необязательны. Заполненные поля сохраняются для следующих экспортов.")
+   OutlinedTextField(pdfCustomer,{pdfCustomer=it},label={Text("Заказчик")},singleLine=true,modifier=Modifier.fillMaxWidth())
+   OutlinedTextField(pdfExecutor,{pdfExecutor=it},label={Text("Исполнитель")},singleLine=true,modifier=Modifier.fillMaxWidth())
+   OutlinedTextField(pdfContact,{pdfContact=it},label={Text("Телефон / контакты")},singleLine=true,modifier=Modifier.fillMaxWidth())
+   OutlinedTextField(pdfAddress,{pdfAddress=it},label={Text("Адрес объекта")},singleLine=true,modifier=Modifier.fillMaxWidth())
    Text("Выбери формат документа. Используются сохранённые данные текущего проекта.")
    OutlinedButton(onClick={
-    val data=PdfReportData(project,rooms,lines,constructionRecords,engineeringPoints)
+    prefs.edit().putString("pdf_customer",pdfCustomer).putString("pdf_executor",pdfExecutor).putString("pdf_contact",pdfContact).putString("pdf_address",pdfAddress).apply()
+    val data=PdfReportData(project,rooms,lines,constructionRecords,engineeringPoints,customerName=pdfCustomer.trim(),executorName=pdfExecutor.trim(),executorContact=pdfContact.trim(),objectAddress=pdfAddress.trim())
     runCatching{PdfReportRenderer.render(data,PdfReportMode.TECHNICAL)}.onSuccess{pendingPdfBytes=it;showPdfOptions=false;pdfSaveLauncher.launch("PLAN-MASTER-3D-Технический-отчёт.pdf")}.onFailure{android.widget.Toast.makeText(ctx,"Ошибка PDF: " + (it.message ?: "ошибка"),android.widget.Toast.LENGTH_LONG).show()}
    },modifier=Modifier.fillMaxWidth()){Text("Технический отчёт")}
    OutlinedButton(onClick={
-    val data=PdfReportData(project,rooms,lines,constructionRecords,engineeringPoints)
+    prefs.edit().putString("pdf_customer",pdfCustomer).putString("pdf_executor",pdfExecutor).putString("pdf_contact",pdfContact).putString("pdf_address",pdfAddress).apply()
+    val data=PdfReportData(project,rooms,lines,constructionRecords,engineeringPoints,customerName=pdfCustomer.trim(),executorName=pdfExecutor.trim(),executorContact=pdfContact.trim(),objectAddress=pdfAddress.trim())
     runCatching{PdfReportRenderer.render(data,PdfReportMode.PROPOSAL)}.onSuccess{pendingPdfBytes=it;showPdfOptions=false;pdfSaveLauncher.launch("PLAN-MASTER-3D-Коммерческое-предложение.pdf")}.onFailure{android.widget.Toast.makeText(ctx,"Ошибка PDF: " + (it.message ?: "ошибка"),android.widget.Toast.LENGTH_LONG).show()}
    },modifier=Modifier.fillMaxWidth()){Text("Коммерческое предложение")}
   }},

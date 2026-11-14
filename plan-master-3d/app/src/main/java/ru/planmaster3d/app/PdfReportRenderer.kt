@@ -19,7 +19,11 @@ data class PdfReportData(
     val estimate:List<EstimateLine>,
     val construction:List<ConstructionRecord>,
     val engineeringPoints:List<EngineeringPoint>,
-    val createdAt:Long=System.currentTimeMillis()
+    val createdAt:Long=System.currentTimeMillis(),
+    val customerName:String="",
+    val executorName:String="",
+    val executorContact:String="",
+    val objectAddress:String=""
 ) {
     val total get()=estimate.sumOf { it.total }
     val floorArea get()=rooms.sumOf { it.floor }
@@ -63,6 +67,15 @@ object PdfReportRenderer {
             addPage("Объёмная схема помещения",room.name) { axonometric(it,room) }
         }
         if(data.construction.isNotEmpty()) addPage("Конструктивные работы","Демонтаж и новые перегородки") { construction(it,data) }
+        if(mode==PdfReportMode.TECHNICAL && data.estimate.any { it.material || it.category.contains("Материал",true) }) {
+            val materialItems=data.estimate.filter { it.material || it.category.contains("Материал",true) }
+            val materialPages=max(1,(materialItems.size+22)/23)
+            repeat(materialPages) { pageIndex ->
+                val from=pageIndex*23
+                val to=min(materialItems.size,from+23)
+                addPage("Ведомость материалов","Лист "+(pageIndex+1)+" из "+materialPages) { materials(it,materialItems,from,to) }
+            }
+        }
         if(data.engineeringPoints.isNotEmpty()) addPage("Инженерные точки","Размещение по помещениям и координатам") { engineering(it,data) }
         val perPage=16
         val pages=max(1,(data.estimate.size+perPage-1)/perPage)
@@ -118,16 +131,21 @@ object PdfReportRenderer {
         t(c,if(mode==PdfReportMode.PROPOSAL)"ПРЕДЛОЖЕНИЕ" else "ОТЧЁТ",L,181f,27f,WHITE,true)
         wrap(c,d.projectName,L,232f,500f,19f,WHITE,true)
         t(c,SimpleDateFormat("d MMMM yyyy",Locale("ru")).format(Date(d.createdAt)),L,292f,10f,0xFFB7C6D8.toInt())
-        t(c,"ОБЪЕКТ В ЦИФРАХ",L,386f,10f,TEAL,true)
+        var metaY=350f
+        if(d.customerName.isNotBlank()){t(c,"Заказчик: "+d.customerName,L,metaY,8.5f,MUTED);metaY+=15f}
+        if(d.executorName.isNotBlank()){t(c,"Исполнитель: "+d.executorName,L,metaY,8.5f,MUTED);metaY+=15f}
+        if(d.executorContact.isNotBlank()){t(c,"Контакты: "+d.executorContact,L,metaY,8.5f,MUTED);metaY+=15f}
+        if(d.objectAddress.isNotBlank()){t(c,"Адрес: "+d.objectAddress.take(80),L,metaY,8.5f,MUTED);metaY+=15f}
+        t(c,"ОБЪЕКТ В ЦИФРАХ",L,420f,10f,TEAL,true)
         val cards=listOf("ПОМЕЩЕНИЯ" to d.rooms.size.toString(),"ПЛОЩАДЬ ПОЛА" to fmt(d.floorArea)+" м²","ПЛОЩАДЬ СТЕН" to fmt(d.wallArea)+" м²","ПОЗИЦИЙ СМЕТЫ" to d.estimate.size.toString())
         cards.forEachIndexed { i,pair ->
-            val x=L+(i%2)*260f;val y=410f+(i/2)*86f
+            val x=L+(i%2)*260f;val y=444f+(i/2)*86f
             c.drawRoundRect(x,y,x+245f,y+70f,9f,9f,p(PALE,1f))
             t(c,pair.first,x+14f,y+24f,8f,MUTED,true);t(c,pair.second,x+14f,y+51f,18f,INK,true)
         }
         t(c,if(mode==PdfReportMode.PROPOSAL)"ИТОГОВАЯ СТОИМОСТЬ" else "ИТОГО ПО СМЕТЕ",L,632f,10f,MUTED,true)
-        t(c,money(d.total),L,686f,34f,TEAL,true)
-        wrap(c,if(mode==PdfReportMode.PROPOSAL)"Состав и стоимость работ приведены по текущей смете проекта. Объёмы основаны на сохранённых обмерах." else "Документ сформирован из сохранённых данных проекта: геометрии помещений, конструктивных записей, инженерных точек и сметных строк.",L,733f,500f,10f,MUTED)
+        t(c,money(d.total),L,690f,32f,TEAL,true)
+        wrap(c,if(mode==PdfReportMode.PROPOSAL)"Состав и стоимость работ приведены по текущей смете проекта. Объёмы основаны на сохранённых обмерах." else "Документ сформирован из сохранённых данных проекта: геометрии помещений, конструктивных записей, инженерных точек и сметных строк.",L,740f,500f,9f,MUTED)
         t(c,"Сформировано приложением PLAN MASTER 3D",L,817f,8f,MUTED)
     }
     private fun summary(c:Canvas,d:PdfReportData,mode:PdfReportMode) {
@@ -221,6 +239,23 @@ object PdfReportRenderer {
             t(c,fmt(item.quantity),R-65f,y+14f,9f,INK,true);y+=38f;line(c,y)
         }
         wrap(c,"Параметры и количества перенесены из конструктивных записей проекта. Перед закупкой материалов проверьте фактические условия объекта.",L,min(y+22f,760f),500f,8f,MUTED)
+    }
+    private fun materials(c:Canvas,items:List<EstimateLine>,from:Int,to:Int) {
+        var y=132f
+        t(c,"Материал",L,y,8f,MUTED,true)
+        t(c,"Количество",365f,y,8f,MUTED,true)
+        t(c,"Цена",438f,y,8f,MUTED,true)
+        t(c,"Сумма",505f,y,8f,MUTED,true)
+        y+=16f;line(c,y)
+        for(i in from until to) {
+            val item=items[i]
+            wrap(c,item.name,L+4f,y+14f,245f,8f,INK)
+            t(c,fmt(item.qty)+" "+item.unit,365f,y+14f,8f)
+            t(c,money(item.price),438f,y+14f,8f)
+            t(c,money(item.total),505f,y+14f,8f,INK,true)
+            y+=28f;line(c,y,SOFT);y+=4f
+        }
+        wrap(c,"Ведомость сформирована из строк сметы, отмеченных как материалы. Расходы, не добавленные в смету, здесь не отображаются.",L,770f,500f,7.5f,MUTED)
     }
     private fun engineering(c:Canvas,d:PdfReportData) {
         var y=132f;t(c,"Точка",L,y,8f,MUTED,true);t(c,"Помещение",L+155f,y,8f,MUTED,true);t(c,"Координаты",R-115f,y,8f,MUTED,true);y+=16f;line(c,y)
