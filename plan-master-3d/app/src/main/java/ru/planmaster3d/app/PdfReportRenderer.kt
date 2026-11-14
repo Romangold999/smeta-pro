@@ -66,17 +66,30 @@ object PdfReportRenderer {
             addPage("План помещения",room.name) { plan(it,room,i,data.engineeringPoints.filter { p->p.roomIndex==i }) }
             addPage("Объёмная схема помещения",room.name) { axonometric(it,room) }
         }
-        if(data.construction.isNotEmpty()) addPage("Конструктивные работы","Демонтаж и новые перегородки") { construction(it,data) }
+        val constructionPageSize=14
+        val constructionPages=max(1,(data.construction.size+constructionPageSize-1)/constructionPageSize)
+        repeat(constructionPages) { pageIndex ->
+            val from=pageIndex*constructionPageSize
+            val to=min(data.construction.size,from+constructionPageSize)
+            if(data.construction.isNotEmpty()) addPage("Конструктивные работы","Лист "+(pageIndex+1)+" из "+constructionPages) { construction(it,data,from,to) }
+        }
         if(mode==PdfReportMode.TECHNICAL && data.estimate.any { it.material || it.category.contains("Материал",true) }) {
             val materialItems=data.estimate.filter { it.material || it.category.contains("Материал",true) }
-            val materialPages=max(1,(materialItems.size+22)/23)
+            val materialPageSize=17
+            val materialPages=max(1,(materialItems.size+materialPageSize-1)/materialPageSize)
             repeat(materialPages) { pageIndex ->
-                val from=pageIndex*23
-                val to=min(materialItems.size,from+23)
+                val from=pageIndex*materialPageSize
+                val to=min(materialItems.size,from+materialPageSize)
                 addPage("Ведомость материалов","Лист "+(pageIndex+1)+" из "+materialPages) { materials(it,materialItems,from,to) }
             }
         }
-        if(data.engineeringPoints.isNotEmpty()) addPage("Инженерные точки","Размещение по помещениям и координатам") { engineering(it,data) }
+        val engineeringPageSize=14
+        val engineeringPages=max(1,(data.engineeringPoints.size+engineeringPageSize-1)/engineeringPageSize)
+        repeat(engineeringPages) { pageIndex ->
+            val from=pageIndex*engineeringPageSize
+            val to=min(data.engineeringPoints.size,from+engineeringPageSize)
+            if(data.engineeringPoints.isNotEmpty()) addPage("Инженерные точки","Лист "+(pageIndex+1)+" из "+engineeringPages) { engineering(it,data,from,to) }
+        }
         val perPage=16
         val pages=max(1,(data.estimate.size+perPage-1)/perPage)
         repeat(pages) { index ->
@@ -229,10 +242,10 @@ object PdfReportRenderer {
         wrap(c,"Объёмная схема построена по фактическому контуру и высоте помещения. Она показывает геометрию объёма; дверные и оконные вырезы не прорисованы на этой схеме и отдельно обозначены на 2D-плане.",L,765f,500f,8f,MUTED)
     }
 
-    private fun construction(c:Canvas,d:PdfReportData) {
+    private fun construction(c:Canvas,d:PdfReportData,from:Int,to:Int) {
         var y=132f;t(c,"Тип",L,y,8f,MUTED,true);t(c,"Материал и параметры",L+140f,y,8f,MUTED,true);t(c,"Кол-во",R-70f,y,8f,MUTED,true);y+=16f;line(c,y)
-        d.construction.forEach { item->
-            if(y>750f)return@forEach
+        for(index in from until to) {
+            val item=d.construction[index]
             val room=d.rooms.getOrNull(item.roomIndex)?.name ?: "Помещение "+(item.roomIndex+1)
             t(c,item.kind.take(22),L,y+14f,8f,INK,true)
             wrap(c,room+" • "+item.material+" • L "+fmt(item.lengthM)+" м • H "+fmt(item.heightM)+" м • t "+fmt(item.thicknessMm)+" мм",L+140f,y+14f,240f,8f,MUTED)
@@ -257,10 +270,10 @@ object PdfReportRenderer {
         }
         wrap(c,"Ведомость сформирована из строк сметы, отмеченных как материалы. Расходы, не добавленные в смету, здесь не отображаются.",L,770f,500f,7.5f,MUTED)
     }
-    private fun engineering(c:Canvas,d:PdfReportData) {
+    private fun engineering(c:Canvas,d:PdfReportData,from:Int,to:Int) {
         var y=132f;t(c,"Точка",L,y,8f,MUTED,true);t(c,"Помещение",L+155f,y,8f,MUTED,true);t(c,"Координаты",R-115f,y,8f,MUTED,true);y+=16f;line(c,y)
-        d.engineeringPoints.forEach { point->
-            if(y>755f)return@forEach
+        for(index in from until to) {
+            val point=d.engineeringPoints[index]
             t(c,point.kind,L,y+14f,9f,INK,true);t(c,d.rooms.getOrNull(point.roomIndex)?.name ?: "—",L+155f,y+14f,9f)
             t(c,"X "+fmt(point.x)+" / Y "+fmt(point.y)+" м",R-115f,y+14f,8f,MUTED)
             if(point.note.isNotBlank())t(c,point.note.take(65),L+155f,y+28f,7f,MUTED)
