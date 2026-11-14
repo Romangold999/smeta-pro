@@ -721,7 +721,7 @@ class MainActivity:ComponentActivity(){
         Slider(waste,{waste=it},valueRange=0f..25f)
         Text("Запас: ${waste.toInt()}%")
         val layout=runCatching {
-          LayoutCalculator.calculate(LayoutCalculationInput(
+          JointLayoutCalculator.calculate(LayoutCalculationInput(
             elementAMm=layoutA.replace(',','.').toDouble(),
             elementBMm=layoutB.replace(',','.').toDouble(),
             roomAMm=layoutRoomA.replace(',','.').toDouble(),
