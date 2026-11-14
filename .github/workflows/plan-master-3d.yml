@@ -1,5 +1,4 @@
-name: PLAN MASTER 3D APK
-# Build and test the Android app, then publish the installable APK artifact.
+name: PLAN MASTER 3D Android
 on:
   push:
     branches: [ plan-master-3d ]
@@ -21,14 +20,40 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Build PLAN MASTER 3D APK and run unit tests
+      - name: Build debug APK and run unit tests
         working-directory: plan-master-3d
         run: |
           gradle testDebugUnitTest assembleDebug --stacktrace
-          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/PLAN-MASTER-3D.apk
-      - name: Upload APK independently of emulator QA
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/PLAN-MASTER-3D-debug.apk
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: PLAN-MASTER-3D-APK
-          path: plan-master-3d/app/build/outputs/apk/debug/PLAN-MASTER-3D.apk
+          name: PLAN-MASTER-3D-debug-APK
+          path: plan-master-3d/app/build/outputs/apk/debug/PLAN-MASTER-3D-debug.apk
           retention-days: 14
+      - name: Build signed release APK
+        working-directory: plan-master-3d
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::notice::Release signing secrets are not configured; signed release APK will be skipped."
+            exit 0
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > app/plan-master-3d-release.p12
+          export KEYSTORE_FILE="$PWD/app/plan-master-3d-release.p12"
+          gradle assembleRelease --stacktrace
+          mkdir -p app/build/outputs/apk/release
+          cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/PLAN-MASTER-3D-release.apk
+          rm -f app/plan-master-3d-release.p12
+      - name: Upload signed release APK
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: PLAN-MASTER-3D-release-APK
+          path: plan-master-3d/app/build/outputs/apk/release/PLAN-MASTER-3D-release.apk
+          if-no-files-found: ignore
+          retention-days: 30
