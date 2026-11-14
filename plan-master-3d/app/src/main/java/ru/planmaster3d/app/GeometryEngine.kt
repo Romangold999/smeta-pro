@@ -291,6 +291,20 @@ object GeometryEngine {
         val vertices=if(result.closed) path.dropLast(1) else emptyList()
         return MeasurementBuildResult(path,vertices,result)
     }
+    /** Фактическая высота верхней кромки стены в доле t от её начала к концу. */
+    fun wallHeightAt(room:RoomGeometry,wallIndex:Int,t:Double,defaultHeight:Double=2.7):Double {
+        require(wallIndex in room.vertices.indices) { "Индекс стены вне контура" }
+        require(t.isFinite() && t in 0.0..1.0) { "Положение на стене должно быть в диапазоне от 0 до 1" }
+        require(defaultHeight.isFinite() && defaultHeight>0.0) { "Высота помещения должна быть конечной и больше нуля" }
+        val next=(wallIndex+1)%room.vertices.size
+        val start=room.wallHeightOverrides.getOrNull(wallIndex) ?: room.wallHeights.getOrElse(wallIndex){defaultHeight}
+        val end=room.wallHeightEndOverrides.getOrNull(wallIndex)
+            ?: room.wallHeightOverrides.getOrNull(wallIndex)
+            ?: room.wallHeights.getOrElse(next){defaultHeight}
+        require(start.isFinite() && start>0.0 && end.isFinite() && end>0.0) { "Высоты стены должны быть конечными и больше нуля" }
+        return start+(end-start)*t
+    }
+
     fun diagonal(a:Vec2,b:Vec2)=a.distanceTo(b)
     fun wallLengths(points:List<Vec2>)=points.indices.map{points[it].distanceTo(points[(it+1)%points.size])}
 

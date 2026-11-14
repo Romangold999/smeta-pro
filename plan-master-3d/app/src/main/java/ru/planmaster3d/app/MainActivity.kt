@@ -1056,7 +1056,7 @@ class MainActivity:ComponentActivity(){
                   val edge=original.indices.firstOrNull { projection(original[it],original[(it+1)%original.size],point)!=null }
                   if(edge==null) current.height else {
                     val t=projection(original[edge],original[(edge+1)%original.size],point)!!
-                    originalHeights[edge]+(originalHeights[(edge+1)%original.size]-originalHeights[edge])*t
+                    GeometryEngine.wallHeightAt(current,edge,t,current.height)
                   }
                 }
                 val thicknesses=points.indices.map { i ->
@@ -1067,14 +1067,14 @@ class MainActivity:ComponentActivity(){
                   val edge=sourceEdge(points[i],points[(i+1)%points.size])
                   if(edge==null) partitionHeight.toDoubleOrNull()?:current.height else {
                     val t=projection(original[edge],original[(edge+1)%original.size],points[i])!!
-                    current.wallHeightOverrides.getOrNull(edge) ?: (originalHeights[edge]+(originalHeights[(edge+1)%original.size]-originalHeights[edge])*t)
+                    GeometryEngine.wallHeightAt(current,edge,t,current.height)
                   }
                 }
                 val wallEndHeights=points.indices.map { i ->
                   val edge=sourceEdge(points[i],points[(i+1)%points.size])
                   if(edge==null) partitionHeight.toDoubleOrNull()?:current.height else {
                     val t=projection(original[edge],original[(edge+1)%original.size],points[(i+1)%points.size])!!
-                    current.wallHeightEndOverrides.getOrNull(edge) ?: current.wallHeightOverrides.getOrNull(edge) ?: (originalHeights[edge]+(originalHeights[(edge+1)%original.size]-originalHeights[edge])*t)
+                    GeometryEngine.wallHeightAt(current,edge,t,current.height)
                   }
                 }
                 val openings=mutableMapOf<Int,List<Opening>>()

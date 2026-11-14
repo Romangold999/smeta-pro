@@ -236,6 +236,25 @@ class GeometryEngineTest {
   assertEquals(0.7,result.walls.first().netVolumeM3,1e-8)
  }
 
+ @Test fun wallHeightInterpolationHonorsExplicitStartAndEndOverrides() {
+  val room=RoomGeometry("Скос",listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0)),
+   wallHeights=listOf(2.7,2.7,2.7),
+   wallHeightOverrides=listOf(2.0,3.0,4.0),
+   wallHeightEndOverrides=listOf(4.0,3.0,4.0))
+  assertEquals(2.0,GeometryEngine.wallHeightAt(room,0,0.0),1e-8)
+  assertEquals(3.0,GeometryEngine.wallHeightAt(room,0,0.5),1e-8)
+  assertEquals(4.0,GeometryEngine.wallHeightAt(room,0,1.0),1e-8)
+ }
+ @Test fun wallHeightInterpolationFallsBackToVertexHeights() {
+  val room=RoomGeometry("Скос",listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0)),
+   wallHeights=listOf(2.0,4.0,3.0))
+  assertEquals(3.0,GeometryEngine.wallHeightAt(room,0,0.5),1e-8)
+ }
+ @Test fun wallHeightInterpolationRejectsInvalidPosition() {
+  val room=RoomGeometry("Скос",listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0)))
+  assertThrows(IllegalArgumentException::class.java){GeometryEngine.wallHeightAt(room,0,Double.NaN)}
+ }
+
  @Test fun measuredRectangleClosesAndProducesVertices() {
   val measurements=listOf(WallVectorMeasurement(4.0,0.0),WallVectorMeasurement(3.0,90.0),WallVectorMeasurement(4.0,180.0),WallVectorMeasurement(3.0,270.0))
   val result=GeometryEngine.buildFromMeasurements(measurements)
