@@ -571,7 +571,7 @@ class MainActivity:ComponentActivity(){
         Text("Интерактивная 3D-модель помещения",fontSize=19.sp,fontWeight=FontWeight.Bold)
         Text("${current.name} • ${current.vertices.size} стен • высота и толщина учитываются по каждой стене")
         RoomModel3D(
-          current,view3dAngle,view3dZoom,hidden3dWalls,Offset(view3dPanX,view3dPanY),
+          current,view3dAngle,view3dPitch,view3dZoom,hidden3dWalls,Offset(view3dPanX,view3dPanY),
           onCameraGesture={pan,zoomChange,rotationChange,pitchChange->
             view3dPanX=(view3dPanX+pan.x).coerceIn(-1200f,1200f)
             view3dZoom=(view3dZoom*zoomChange).coerceIn(0.65f,2.4f)
@@ -1248,6 +1248,7 @@ class MainActivity:ComponentActivity(){
 @Composable fun RoomModel3D(
  room:Room,
  angle:Float,
+ pitch:Float,
  zoom:Float,
  hiddenWalls:Set<Int>,
  pan:Offset=Offset.Zero,
