@@ -572,7 +572,7 @@ class MainActivity:ComponentActivity(){
         Text("Интерактивная 3D-модель помещения",fontSize=19.sp,fontWeight=FontWeight.Bold)
         Text("${current.name} • ${current.vertices.size} стен • высота и толщина учитываются по каждой стене")
         RoomModel3D(
-          current,view3dAngle,view3dPitch,view3dZoom,hidden3dWalls,Offset(view3dPanX,view3dPanY),
+          current,view3dAngle,view3dPitch,view3dRoll,view3dZoom,hidden3dWalls,Offset(view3dPanX,view3dPanY),
           onCameraGesture={pan,zoomChange,rotationChange,pitchChange,rollChange->
             view3dPanX=(view3dPanX+pan.x).coerceIn(-1200f,1200f)
             view3dZoom=(view3dZoom*zoomChange).coerceIn(0.65f,2.4f)
@@ -601,8 +601,8 @@ class MainActivity:ComponentActivity(){
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
           OutlinedButton(onClick={view3dAngle=(view3dAngle-15f+360f)%360f},modifier=Modifier.weight(1f)){Text("↶ 15°")}
           OutlinedButton(onClick={view3dAngle=(view3dAngle+15f)%360f},modifier=Modifier.weight(1f)){Text("15° ↷")}
-          OutlinedButton(onClick={view3dPitch=(view3dPitch-10f).coerceAtLeast(-10f)},modifier=Modifier.weight(1f)){Text("Ниже")}
-          OutlinedButton(onClick={view3dPitch=(view3dPitch+10f).coerceAtMost(85f)},modifier=Modifier.weight(1f)){Text("Выше")}
+          OutlinedButton(onClick={view3dPitch=(view3dPitch-10f).coerceIn(-360f,360f)},modifier=Modifier.weight(1f)){Text("Ниже")}
+          OutlinedButton(onClick={view3dPitch=(view3dPitch+10f).coerceIn(-360f,360f)},modifier=Modifier.weight(1f)){Text("Выше")}
           OutlinedButton(onClick={view3dAngle=35f;view3dPitch=25f;view3dRoll=0f;view3dZoom=1f;view3dPanX=0f;view3dPanY=0f},modifier=Modifier.weight(1f)){Text("Сброс")}
         }
       } }
@@ -1293,12 +1293,12 @@ class MainActivity:ComponentActivity(){
   val minY=raw.minOf{it.second};val maxY=raw.maxOf{it.second}
   val spanX=(maxX-minX).coerceAtLeast(0.1);val spanY=(maxY-minY).coerceAtLeast(0.1)
   val scale=(min(size.width/spanX.toFloat(),size.height/spanY.toFloat())*0.78f*zoom).coerceAtMost(220f)
-  val cx=size.width/2f;val cy=size.height/2f
+  val centerX=size.width/2f;val centerY=size.height/2f
   fun project(p:Vec2,z:Double=0.0):Offset{
    val v=rotate3d(p.x,p.y,z)
    val px=(v.first-v.second)*0.82
    val py=(v.second+v.third)*0.42
-   return Offset(cx+pan.x+((px-(minX+maxX)/2)*scale).toFloat(),cy+pan.y+((py-(minY+maxY)/2)*scale).toFloat())
+   return Offset(centerX+pan.x+((px-(minX+maxX)/2)*scale).toFloat(),centerY+pan.y+((py-(minY+maxY)/2)*scale).toFloat())
   }
   val floor=Path()
   room.vertices.forEachIndexed{i,p->val q=project(p);if(i==0)floor.moveTo(q.x,q.y)else floor.lineTo(q.x,q.y)}
@@ -1307,7 +1307,7 @@ class MainActivity:ComponentActivity(){
   val order=room.vertices.indices.sortedByDescending{i->
    val a=room.vertices[i];val b=room.vertices[(i+1)%room.vertices.size]
    val mid=(a+b)*0.5
-   mid.x*sinA+mid.y*cosA
+   rotate3d(mid.x,mid.y,room.height/2.0).third
   }
   order.forEach{i->
    if(i in hiddenWalls) return@forEach
