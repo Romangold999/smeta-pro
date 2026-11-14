@@ -53,11 +53,14 @@ object XlsxReportExporter {
         return output.toByteArray()
     }
 
-    private fun List<EstimateLine>.toSheetRows(): List<List<Cell>> = buildList {
-        add(listOf(Cell("Раздел"), Cell("Наименование"), Cell("Ед."), Cell("Количество"), Cell("Цена, ₽"), Cell("Сумма, ₽")))
-        forEach { line ->
-            add(listOf(Cell(line.category), Cell(line.name), Cell(line.unit), Cell(line.qty.toString(), true),
-                Cell(line.price.toString(), true), Cell(line.total.toString(), true)))
+    private fun List<EstimateLine>.toSheetRows(): List<List<Cell>> {
+        val estimateLines = this
+        return buildList {
+            add(listOf(Cell("Раздел"), Cell("Наименование"), Cell("Ед."), Cell("Количество"), Cell("Цена, ₽"), Cell("Сумма, ₽")))
+            estimateLines.forEach { line ->
+                add(listOf(Cell(line.category), Cell(line.name), Cell(line.unit), Cell(line.qty.toString(), true),
+                    Cell(line.price.toString(), true), Cell(line.total.toString(), true)))
+            }
         }
     }
 
