@@ -268,6 +268,7 @@ class MainActivity:ComponentActivity(){
  var partitionRate by remember { mutableStateOf("0") }
  var demolitionBagPrice by remember { mutableStateOf("0") }
  var view3dAngle by remember { mutableFloatStateOf(35f) }
+ var view3dPitch by remember { mutableFloatStateOf(0f) }
  var view3dZoom by remember { mutableFloatStateOf(1f) }
  var view3dPanX by remember { mutableFloatStateOf(0f) }
  var view3dPanY by remember { mutableFloatStateOf(0f) }
@@ -571,15 +572,15 @@ class MainActivity:ComponentActivity(){
         Text("${current.name} • ${current.vertices.size} стен • высота и толщина учитываются по каждой стене")
         RoomModel3D(
           current,view3dAngle,view3dZoom,hidden3dWalls,Offset(view3dPanX,view3dPanY),
-          onCameraGesture={pan,zoomChange,rotationChange->
+          onCameraGesture={pan,zoomChange,rotationChange,pitchChange->
             view3dPanX=(view3dPanX+pan.x).coerceIn(-1200f,1200f)
-            view3dPanY=(view3dPanY+pan.y).coerceIn(-1200f,1200f)
             view3dZoom=(view3dZoom*zoomChange).coerceIn(0.65f,2.4f)
             view3dAngle=(view3dAngle+rotationChange+360f)%360f
+            view3dPitch=(view3dPitch+pitchChange).coerceIn(-10f,85f)
           },
           modifier=Modifier.fillMaxWidth().height(340.dp)
         )
-        Text("Управление жестами: один палец — перемещение, два пальца — масштаб и поворот.",fontSize=11.sp,color=Color.LightGray)
+        Text("Жесты: двумя пальцами вращай и наклоняй модель; сведение/разведение — масштаб. Наклон: ${view3dPitch.toInt()}°",fontSize=11.sp,color=Color.LightGray)
         Text("Видимость стен",fontWeight=FontWeight.SemiBold)
         Row(horizontalArrangement=Arrangement.spacedBy(6.dp),modifier=Modifier.fillMaxWidth()){
           current.vertices.indices.forEach { wallIndex ->
@@ -587,14 +588,18 @@ class MainActivity:ComponentActivity(){
           }
         }
         OutlinedButton(onClick={hidden3dWalls=emptySet()},modifier=Modifier.fillMaxWidth()){Text("Показать все стены")}
-        Text("Поворот модели: ${view3dAngle.toInt()}°")
+        Text("Поворот по горизонтали: ${view3dAngle.toInt()}°")
         Slider(value=view3dAngle,onValueChange={view3dAngle=it},valueRange=0f..360f)
+        Text("Наклон вверх/вниз: ${view3dPitch.toInt()}°")
+        Slider(value=view3dPitch,onValueChange={view3dPitch=it},valueRange=(-10f)..85f)
         Text("Масштаб: ${(view3dZoom*100).toInt()}%")
         Slider(value=view3dZoom,onValueChange={view3dZoom=it},valueRange=0.65f..2.4f)
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
           OutlinedButton(onClick={view3dAngle=(view3dAngle-15f+360f)%360f},modifier=Modifier.weight(1f)){Text("↶ 15°")}
           OutlinedButton(onClick={view3dAngle=(view3dAngle+15f)%360f},modifier=Modifier.weight(1f)){Text("15° ↷")}
-          OutlinedButton(onClick={view3dAngle=35f;view3dZoom=1f;view3dPanX=0f;view3dPanY=0f},modifier=Modifier.weight(1f)){Text("Сброс")}
+          OutlinedButton(onClick={view3dPitch=(view3dPitch-10f).coerceAtLeast(-10f)},modifier=Modifier.weight(1f)){Text("Ниже")}
+          OutlinedButton(onClick={view3dPitch=(view3dPitch+10f).coerceAtMost(85f)},modifier=Modifier.weight(1f)){Text("Выше")}
+          OutlinedButton(onClick={view3dAngle=35f;view3dPitch=0f;view3dZoom=1f;view3dPanX=0f;view3dPanY=0f},modifier=Modifier.weight(1f)){Text("Сброс")}
         }
       } }
       item { CardBlock {
@@ -1246,29 +1251,33 @@ class MainActivity:ComponentActivity(){
  zoom:Float,
  hiddenWalls:Set<Int>,
  pan:Offset=Offset.Zero,
- onCameraGesture:(Offset,Float,Float)->Unit={_,_,_->},
+ onCameraGesture:(Offset,Float,Float,Float)->Unit={_,_,_,_->},
  modifier:Modifier=Modifier
 ){
  val currentCameraGesture=rememberUpdatedState(onCameraGesture)
  Canvas(modifier.background(Color(0xFF111C2B)).pointerInput(room.vertices){
   detectTransformGestures { _, gesturePan, gestureZoom, gestureRotation ->
-   currentCameraGesture.value(gesturePan,gestureZoom,gestureRotation)
+   currentCameraGesture.value(Offset(gesturePan.x,0f),gestureZoom,gestureRotation,-gesturePan.y*0.35f)
   }
  }){
   if(room.vertices.size<3)return@Canvas
   val radians=Math.toRadians(angle.toDouble())
   val cosA=cos(radians);val sinA=sin(radians)
+  val pitchRadians=Math.toRadians(pitch.toDouble())
+  val cosP=cos(pitchRadians);val sinP=sin(pitchRadians)
   val raw=mutableListOf<Pair<Double,Double>>()
   room.vertices.forEachIndexed{i,p->
    val x=p.x*cosA-p.y*sinA;val y=p.x*sinA+p.y*cosA
-   raw.add((x-y)*0.82 to (x+y)*0.42)
+   val depth=(x+y)*0.42
+   raw.add((x-y)*0.82 to (depth*cosP+depth*sinP))
    val next=(i+1)%room.vertices.size
    val h0=room.wallHeightOverrides.getOrNull(i)?:room.wallHeights.getOrNull(i)?:room.height
    val h1=room.wallHeightEndOverrides.getOrNull(i)?:room.wallHeightOverrides.getOrNull(i)?:room.wallHeights.getOrNull(next)?:room.height
-   raw.add((x-y)*0.82 to ((x+y)*0.42-h0*0.95))
+   raw.add((x-y)*0.82 to (depth*cosP-h0*0.95*cosP+depth*sinP))
    val q=room.vertices[next]
    val qx=q.x*cosA-q.y*sinA;val qy=q.x*sinA+q.y*cosA
-   raw.add((qx-qy)*0.82 to ((qx+qy)*0.42-h1*0.95))
+   val nextDepth=(qx+qy)*0.42
+   raw.add((qx-qy)*0.82 to (nextDepth*cosP-h1*0.95*cosP+nextDepth*sinP))
   }
   val minX=raw.minOf{it.first};val maxX=raw.maxOf{it.first}
   val minY=raw.minOf{it.second};val maxY=raw.maxOf{it.second}
@@ -1277,7 +1286,9 @@ class MainActivity:ComponentActivity(){
   val cx=size.width/2f;val cy=size.height/2f
   fun project(p:Vec2,z:Double=0.0):Offset{
    val x=p.x*cosA-p.y*sinA;val y=p.x*sinA+p.y*cosA
-   val px=(x-y)*0.82;val py=(x+y)*0.42-z*0.95
+   val px=(x-y)*0.82
+   val depth=(x+y)*0.42
+   val py=(depth-z*0.95)*cosP+depth*sinP
    return Offset(cx+pan.x+((px-(minX+maxX)/2)*scale).toFloat(),cy+pan.y+((py-(minY+maxY)/2)*scale).toFloat())
   }
   val floor=Path()
