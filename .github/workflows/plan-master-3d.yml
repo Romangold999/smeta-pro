@@ -1,5 +1,5 @@
 name: PLAN MASTER 3D APK
-# CI verifies geometry-driven estimates and multi-page PDF technical/proposal reports with room plan and axonometric pages, expanded electrical and plumbing points, two-finger 2D plan navigation, vertex editing, persistence, estimate tests, and Android packaging. Gesture imports are checked by Kotlin compilation.
+# CI verifies geometry-driven estimates and multi-page PDF technical/proposal reports with paginated construction and engineering schedules, bounded material pages, room plans and axonometric pages, two-finger 2D plan navigation, vertex editing, persistence, estimate tests, and Android packaging. Gesture imports are checked by Kotlin compilation.
 on:
   push:
     branches: [ plan-master-3d ]
