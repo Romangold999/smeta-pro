@@ -146,6 +146,7 @@ class MainActivity:ComponentActivity(){
  var layoutType by remember { mutableStateOf("Плитка") }
  var layoutA by remember { mutableStateOf("600") }
  var layoutB by remember { mutableStateOf("600") }
+ var layoutJoint by remember { mutableStateOf("2") }
  var layoutRoomA by remember { mutableStateOf("4000") }
  var layoutRoomB by remember { mutableStateOf("5000") }
  var waste by remember { mutableStateOf(10f) }
@@ -709,7 +710,36 @@ class MainActivity:ComponentActivity(){
       } }
     }
     "Раскладка" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
-      item { CardBlock { Text("Калькулятор раскладки",fontSize=19.sp,fontWeight=FontWeight.Bold); varType(layoutType,{layoutType=it},listOf("Плитка","Ламинат","Панели")); NumberField("Размер элемента A, мм",layoutA){layoutA=it}; NumberField("Размер элемента B, мм",layoutB){layoutB=it}; NumberField("Размер помещения A, мм",layoutRoomA){layoutRoomA=it}; NumberField("Размер помещения B, мм",layoutRoomB){layoutRoomB=it}; Slider(waste,{waste=it},valueRange=0f..25f); Text("Запас: ${waste.toInt()}%"); val a=(layoutA.toDoubleOrNull()?:1.0).coerceAtLeast(1.0); val b=(layoutB.toDoubleOrNull()?:1.0).coerceAtLeast(1.0); val ra=(layoutRoomA.toDoubleOrNull()?:0.0); val rb=(layoutRoomB.toDoubleOrNull()?:0.0); val count=ceil(ra/a)*ceil(rb/b); val area=(ra*rb)/1_000_000.0; Text("Площадь: ${df.format(area)} м² • элементов без запаса: ${count.toInt()} • с запасом: ${ceil(count*(1+waste/100)).toInt()}",color=accent,fontWeight=FontWeight.Bold); Text("Предварительная сетка без оптимизации раскроя по рисунку, швам и повторному использованию обрезков.") } }
+      item { CardBlock {
+        Text("Калькулятор раскладки",fontSize=19.sp,fontWeight=FontWeight.Bold)
+        varType(layoutType,{layoutType=it},listOf("Плитка","Ламинат","Панели"))
+        NumberField("Размер элемента A, мм",layoutA){layoutA=it}
+        NumberField("Размер элемента B, мм",layoutB){layoutB=it}
+        NumberField("Размер помещения A, мм",layoutRoomA){layoutRoomA=it}
+        NumberField("Размер помещения B, мм",layoutRoomB){layoutRoomB=it}
+        NumberField("Ширина шва/зазора, мм",layoutJoint){layoutJoint=it}
+        Slider(waste,{waste=it},valueRange=0f..25f)
+        Text("Запас: ${waste.toInt()}%")
+        val layout=runCatching {
+          LayoutCalculator.calculate(LayoutCalculationInput(
+            elementAMm=layoutA.replace(',','.').toDouble(),
+            elementBMm=layoutB.replace(',','.').toDouble(),
+            roomAMm=layoutRoomA.replace(',','.').toDouble(),
+            roomBMm=layoutRoomB.replace(',','.').toDouble(),
+            jointMm=layoutJoint.replace(',','.').toDouble(),
+            reservePercent=waste.toDouble()
+          ))
+        }.getOrNull()
+        if(layout!=null) {
+          Text("Площадь помещения: ${df.format(layout.roomAreaM2)} м²",color=accent,fontWeight=FontWeight.Bold)
+          Text("Лучшее направление: ${if(layout.rotated) "элемент повёрнут на 90°" else "без поворота"}")
+          Text("Ряды: ${layout.rows} • элементов в ряду: ${layout.columns}")
+          Text("Всего элементов без запаса: ${layout.pieces} шт.")
+          Text("С запасом: ${layout.piecesWithReserve} шт.",color=accent,fontWeight=FontWeight.Bold)
+          Text("Площадь закупки: ${df.format(layout.purchaseAreaM2)} м² • ориентировочный остаток: ${df.format(layout.wasteAreaM2)} м²")
+        } else Text("Проверь размеры: все значения должны быть конечными и больше нуля, запас — от 0 до 100%.",color=Color(0xFFFFB86B))
+        Text("Расчёт сравнивает два направления укладки и учитывает ширину шва. Повторное использование обрезков и сложные рисунки пока не оптимизируются.",fontSize=12.sp,color=Color.LightGray)
+      } }
     }
     "Инженерия" -> LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)){
       item { CardBlock {
