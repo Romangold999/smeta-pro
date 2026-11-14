@@ -1038,6 +1038,11 @@ class MainActivity:ComponentActivity(){
                 val w=(points.maxOf{it.x}-points.minOf{it.x}).coerceAtLeast(0.01)
                 val h=(points.maxOf{it.y}-points.minOf{it.y}).coerceAtLeast(0.01)
                 val original=current.vertices
+                val sourceGeometry=RoomGeometry(
+                  current.name,original,current.wallHeights,current.wallThicknesses,
+                  current.openingsByWall,current.wallHeightOverrides,
+                  wallHeightEndOverrides=current.wallHeightEndOverrides
+                )
                 val originalHeights=if(current.wallHeights.size==original.size) current.wallHeights else List(original.size){current.height}
                 val originalThicknesses=if(current.wallThicknesses.size==original.size) current.wallThicknesses else List(original.size){0.0}
                 fun projection(a:Vec2,b:Vec2,p:Vec2):Double? {
@@ -1056,7 +1061,7 @@ class MainActivity:ComponentActivity(){
                   val edge=original.indices.firstOrNull { projection(original[it],original[(it+1)%original.size],point)!=null }
                   if(edge==null) current.height else {
                     val t=projection(original[edge],original[(edge+1)%original.size],point)!!
-                    GeometryEngine.wallHeightAt(current,edge,t,current.height)
+                    GeometryEngine.wallHeightAt(sourceGeometry,edge,t,current.height)
                   }
                 }
                 val thicknesses=points.indices.map { i ->
@@ -1067,14 +1072,14 @@ class MainActivity:ComponentActivity(){
                   val edge=sourceEdge(points[i],points[(i+1)%points.size])
                   if(edge==null) partitionHeight.toDoubleOrNull()?:current.height else {
                     val t=projection(original[edge],original[(edge+1)%original.size],points[i])!!
-                    GeometryEngine.wallHeightAt(current,edge,t,current.height)
+                    GeometryEngine.wallHeightAt(sourceGeometry,edge,t,current.height)
                   }
                 }
                 val wallEndHeights=points.indices.map { i ->
                   val edge=sourceEdge(points[i],points[(i+1)%points.size])
                   if(edge==null) partitionHeight.toDoubleOrNull()?:current.height else {
                     val t=projection(original[edge],original[(edge+1)%original.size],points[(i+1)%points.size])!!
-                    GeometryEngine.wallHeightAt(current,edge,t,current.height)
+                    GeometryEngine.wallHeightAt(sourceGeometry,edge,t,current.height)
                   }
                 }
                 val openings=mutableMapOf<Int,List<Opening>>()
@@ -1098,6 +1103,19 @@ class MainActivity:ComponentActivity(){
               rooms=rooms.toMutableList().also { list ->
                 list[selected]=roomFromPolygon(current.id,current.name,split.first)
                 list.add(selected+1,roomFromPolygon(System.currentTimeMillis(),"${current.name} — 2",split.second))
+              }
+              // Keep point-to-room references valid after inserting the second half.
+              engineeringPoints=engineeringPoints.map { point ->
+                when {
+                  point.roomIndex>partitionRoomIndex -> point.copy(roomIndex=point.roomIndex+1)
+                  point.roomIndex==partitionRoomIndex &&
+                    GeometryEngine.containsPoint(split.second,Vec2(point.x,point.y)) ->
+                    point.copy(roomIndex=partitionRoomIndex+1)
+                  else -> point
+                }
+              }
+              constructionRecords=constructionRecords.map { record ->
+                if(record.roomIndex>partitionRoomIndex) record.copy(roomIndex=record.roomIndex+1) else record
               }
               selected=selected+1
               constructionRecords=constructionRecords+ConstructionRecord(
