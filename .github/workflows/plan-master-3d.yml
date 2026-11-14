@@ -1,5 +1,5 @@
 name: PLAN MASTER 3D APK
-# CI verifies geometry-driven estimates and multi-page PDF technical/proposal reports with separately paginated room schedules, bounded long-text table cells including unbroken tokens and cover metadata, room plans and axonometric pages, two-finger 2D plan navigation, vertex editing, persistence, estimate tests, and Android packaging. Gesture imports are checked by Kotlin compilation.
+# CI verifies geometry-driven estimates, builds the APK, runs unit tests, and uses an Android emulator to generate and open multi-page technical/proposal PDFs with dense long-text data, pagination, plans, axonometric pages, construction records, engineering points, and material tables. The emulator exports both PDFs as reviewable artifacts.
 on:
   push:
     branches: [ plan-master-3d ]
