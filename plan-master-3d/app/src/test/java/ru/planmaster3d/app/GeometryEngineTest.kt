@@ -200,6 +200,24 @@ class GeometryEngineTest {
   assertEquals(48.0,result.grossWallArea,1e-8)
   assertEquals(listOf(2.0,3.0,4.0,5.0),result.walls.map{it.heightStart})
  }
+
+ @Test fun slopedWallStartAndEndOverridesPreserveDifferentEndpointHeights() {
+  val room=RoomGeometry("Наклонная стена",listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0)),
+   wallHeightOverrides=listOf(2.0,3.0,4.0,5.0),
+   wallHeightEndOverrides=listOf(3.0,3.0,4.0,5.0))
+  val result=GeometryEngine.metrics(room)
+  assertEquals(2.0,result.walls[0].heightStart,1e-8)
+  assertEquals(3.0,result.walls[0].heightEnd,1e-8)
+  assertEquals(10.0,result.walls[0].grossArea,1e-8)
+  assertEquals(50.0,result.grossWallArea,1e-8)
+ }
+ @Test fun openingOnSlopedWallCannotExceedLowerEndHeight() {
+  val room=RoomGeometry("Наклонная стена",listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0)),
+   wallHeightOverrides=listOf(2.0,3.0,4.0,5.0),
+   wallHeightEndOverrides=listOf(3.0,3.0,4.0,5.0),
+   openingsByWall=mapOf(0 to listOf(Opening("w","Окно",1.0,2.5,offsetFromStart=1.0))))
+  assertTrue(GeometryEngine.validateOpenings(room).any{it.contains("высота выходит")})
+ }
  @Test fun openingValidationUsesItsOwnWallHeightOverride() {
   val room=RoomGeometry("Проём",listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),Vec2(4.0,3.0),Vec2(0.0,3.0)),openingsByWall=mapOf(0 to listOf(Opening("o","Окно",1.0,2.2,sillHeight=0.0,offsetFromStart=1.0))),wallHeightOverrides=listOf(2.0,3.0,4.0,5.0))
   assertTrue(GeometryEngine.validateOpenings(room).any{it.contains("высота выходит")})

@@ -55,6 +55,7 @@ class ProjectStore(context:Context) {
             r.put("measurements",JSONArray().also{arr->room.measurements.forEach{measurement->arr.put(JSONObject().put("lengthM",measurement.lengthM).put("azimuthDegrees",measurement.azimuthDegrees).put("label",measurement.label))}})
             r.put("heights",JSONArray(room.wallHeights))
             r.put("wallHeightOverrides",JSONArray(room.wallHeightOverrides))
+            r.put("wallHeightEndOverrides",JSONArray(room.wallHeightEndOverrides))
             r.put("thicknesses",JSONArray(room.wallThicknesses))
             val openings=JSONObject()
             room.openingsByWall.forEach{(index,list)->
@@ -97,6 +98,7 @@ class ProjectStore(context:Context) {
                 val measurements=r.optJSONArray("measurements")?.let{arr->buildList{for(j in 0 until arr.length()){val item=arr.getJSONObject(j);add(WallVectorMeasurement(item.getDouble("lengthM"),item.getDouble("azimuthDegrees"),item.optString("label","")))}}}.orEmpty()
                 val heights=r.optJSONArray("heights")?.toDoubleList().orEmpty()
                 val wallHeightOverrides=r.optJSONArray("wallHeightOverrides")?.toDoubleList().orEmpty()
+                val wallHeightEndOverrides=r.optJSONArray("wallHeightEndOverrides")?.toDoubleList().orEmpty()
                 val thicknesses=r.optJSONArray("thicknesses")?.toDoubleList().orEmpty()
                 val openings=mutableMapOf<Int,List<Opening>>()
                 val objectOpenings=r.optJSONObject("openings") ?: JSONObject()
@@ -104,7 +106,7 @@ class ProjectStore(context:Context) {
                     val oa=objectOpenings.getJSONArray(key)
                     openings[key.toInt()]=buildList{for(k in 0 until oa.length()){val o=oa.getJSONObject(k);add(Opening(o.getString("id"),o.getString("name"),o.getDouble("width"),o.getDouble("height"),o.optDouble("sillHeight",0.0),o.optDouble("depth",0.0),o.optBoolean("hasSill",false),o.optDouble("offsetFromStart",0.0),o.optString("kind","Проём")))}}
                 }
-                add(RoomGeometry(r.getString("name"),points,heights,thicknesses,openings,wallHeightOverrides,measurements))
+                add(RoomGeometry(r.getString("name"),points,heights,thicknesses,openings,wallHeightOverrides,measurements,wallHeightEndOverrides))
             }
         }
         val estimate=buildList {

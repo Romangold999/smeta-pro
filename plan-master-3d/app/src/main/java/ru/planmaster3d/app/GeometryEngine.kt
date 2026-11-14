@@ -51,10 +51,12 @@ data class RoomGeometry(
     val wallHeights:List<Double> = emptyList(),
     val wallThicknesses:List<Double> = emptyList(),
     val openingsByWall:Map<Int,List<Opening>> = emptyMap(),
-    /** Optional constant height override per wall. */
+    /** Legacy constant height override per wall. */
     val wallHeightOverrides:List<Double> = emptyList(),
     /** Original field measurements, retained independently from calculated vertices. */
-    val measurements:List<WallVectorMeasurement> = emptyList()
+    val measurements:List<WallVectorMeasurement> = emptyList(),
+    /** Optional end height per wall; wallHeightOverrides supplies its start height. */
+    val wallHeightEndOverrides:List<Double> = emptyList()
 )
 data class ClosureResult(val dx:Double,val dy:Double,val residual:Double,val closed:Boolean)
 data class WallVectorMeasurement(val lengthM:Double,val azimuthDegrees:Double,val label:String="")
@@ -151,7 +153,9 @@ object GeometryEngine {
             val end=room.vertices[(wallIndex+1)%room.vertices.size]
             val length=start.distanceTo(end)
             val next=(wallIndex+1)%room.vertices.size
-            val maxHeight=room.wallHeightOverrides.getOrNull(wallIndex) ?: min(room.wallHeights.getOrElse(wallIndex){defaultHeight},room.wallHeights.getOrElse(next){defaultHeight})
+            val startHeight=room.wallHeightOverrides.getOrNull(wallIndex) ?: room.wallHeights.getOrElse(wallIndex){defaultHeight}
+            val endHeight=room.wallHeightEndOverrides.getOrNull(wallIndex) ?: room.wallHeightOverrides.getOrNull(wallIndex) ?: room.wallHeights.getOrElse(next){defaultHeight}
+            val maxHeight=min(startHeight,endHeight)
             openings.forEach { opening ->
                 if(opening.offsetFromStart+opening.width>length+EPS) errors.add("${opening.name}: ширина выходит за пределы стены №${wallIndex+1}")
                 if(opening.sillHeight+opening.height>maxHeight+EPS) errors.add("${opening.name}: высота выходит за пределы стены №${wallIndex+1}")
@@ -178,8 +182,10 @@ object GeometryEngine {
         if(room.wallHeights.isNotEmpty()&&room.wallHeights.size!=room.vertices.size) errors.add("Количество высот не совпадает с количеством стен")
         if(room.wallThicknesses.isNotEmpty()&&room.wallThicknesses.size!=room.vertices.size) errors.add("Количество толщин не совпадает с количеством стен")
         if(room.wallHeightOverrides.isNotEmpty()&&room.wallHeightOverrides.size!=room.vertices.size) errors.add("Количество индивидуальных высот не совпадает с количеством стен")
+        if(room.wallHeightEndOverrides.isNotEmpty()&&room.wallHeightEndOverrides.size!=room.vertices.size) errors.add("Количество конечных высот не совпадает с количеством стен")
         if(room.wallHeights.any{!it.isFinite()||it<=0.0}) errors.add("Высоты стен должны быть конечными и больше нуля")
         if(room.wallHeightOverrides.any{!it.isFinite()||it<=0.0}) errors.add("Индивидуальные высоты стен должны быть конечными и больше нуля")
+        if(room.wallHeightEndOverrides.any{!it.isFinite()||it<=0.0}) errors.add("Конечные высоты стен должны быть конечными и больше нуля")
         if(room.wallThicknesses.any{!it.isFinite()||it<0.0}) errors.add("Толщины стен должны быть конечными и неотрицательными")
         if(room.vertices.all{it.x.isFinite()&&it.y.isFinite()}) {
             val polygonArea=area(room.vertices)
@@ -197,13 +203,13 @@ object GeometryEngine {
             }
         }
         if(room.vertices.all{it.x.isFinite()&&it.y.isFinite()} && room.wallHeights.size in 0..room.vertices.size &&
-            room.wallHeightOverrides.size in 0..room.vertices.size && room.wallThicknesses.size in 0..room.vertices.size) {
+            room.wallHeightOverrides.size in 0..room.vertices.size && room.wallHeightEndOverrides.size in 0..room.vertices.size && room.wallThicknesses.size in 0..room.vertices.size) {
             var totalGrossWallArea=0.0
             var totalGrossWallVolume=0.0
             room.vertices.indices.forEach{i->
                 val next=(i+1)%room.vertices.size
                 val h1=room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(i){defaultHeight}}
-                val h2=room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(next){defaultHeight}}
+                val h2=room.wallHeightEndOverrides.getOrElse(i){room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(next){defaultHeight}}}
                 val thickness=room.wallThicknesses.getOrElse(i){0.0}
                 val length=room.vertices[i].distanceTo(room.vertices[next])
                 val grossArea=length*(h1+h2)/2.0
@@ -227,12 +233,14 @@ object GeometryEngine {
         require(room.wallHeights.isEmpty()||room.wallHeights.size==room.vertices.size)
         require(room.wallThicknesses.isEmpty()||room.wallThicknesses.size==room.vertices.size)
         require(room.wallHeightOverrides.isEmpty()||room.wallHeightOverrides.size==room.vertices.size)
+        require(room.wallHeightEndOverrides.isEmpty()||room.wallHeightEndOverrides.size==room.vertices.size)
         require(room.wallHeightOverrides.all{it.isFinite()&&it>0.0})
+        require(room.wallHeightEndOverrides.all{it.isFinite()&&it>0.0})
         val walls=room.vertices.indices.map{i->
             val j=(i+1)%room.vertices.size
             WallMeasure(room.vertices[i],room.vertices[j],
                 room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(i){defaultHeight}},
-                room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(j){defaultHeight}},
+                room.wallHeightEndOverrides.getOrElse(i){room.wallHeightOverrides.getOrElse(i){room.wallHeights.getOrElse(j){defaultHeight}}},
                 room.wallThicknesses.getOrElse(i){0.0},
                 room.openingsByWall[i].orEmpty(), "Стена ${i+1}")
         }
