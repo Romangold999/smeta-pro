@@ -56,7 +56,7 @@ object PdfReportRenderer {
             }
             doc.finishPage(page)
         }
-        addPage(if(mode==PdfReportMode.PROPOSAL) "Коммерческое предложение" else "Технический отчёт",cover=true)
+        addPage(if(mode==PdfReportMode.PROPOSAL) "Коммерческое предложение" else "Технический отчёт",isCover=true)
         addPage("Сводка проекта","Площади и состав объекта") { summary(it,data,mode) }
         data.rooms.forEachIndexed { i,room ->
             addPage("План помещения",room.name) { plan(it,room,i,data.engineeringPoints.filter { p->p.roomIndex==i }) }
