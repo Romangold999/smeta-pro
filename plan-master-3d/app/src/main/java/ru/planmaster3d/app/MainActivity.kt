@@ -1205,13 +1205,17 @@ class MainActivity:ComponentActivity(){
   if(room.vertices.size<3)return@Canvas
   val radians=Math.toRadians(angle.toDouble())
   val cosA=cos(radians);val sinA=sin(radians)
-  val heights=room.vertices.indices.map{i->room.wallHeightOverrides.getOrNull(i)?:room.height}
   val raw=mutableListOf<Pair<Double,Double>>()
   room.vertices.forEachIndexed{i,p->
    val x=p.x*cosA-p.y*sinA;val y=p.x*sinA+p.y*cosA
    raw.add((x-y)*0.82 to (x+y)*0.42)
-   val h=heights[i]
-   raw.add((x-y)*0.82 to ((x+y)*0.42-h*0.95))
+   val next=(i+1)%room.vertices.size
+   val h0=room.wallHeightOverrides.getOrNull(i)?:room.wallHeights.getOrNull(i)?:room.height
+   val h1=room.wallHeightOverrides.getOrNull(i)?:room.wallHeights.getOrNull(next)?:room.height
+   raw.add((x-y)*0.82 to ((x+y)*0.42-h0*0.95))
+   val q=room.vertices[next]
+   val qx=q.x*cosA-q.y*sinA;val qy=q.x*sinA+q.y*cosA
+   raw.add((qx-qy)*0.82 to ((qx+qy)*0.42-h1*0.95))
   }
   val minX=raw.minOf{it.first};val maxX=raw.maxOf{it.first}
   val minY=raw.minOf{it.second};val maxY=raw.maxOf{it.second}
@@ -1227,7 +1231,6 @@ class MainActivity:ComponentActivity(){
   room.vertices.forEachIndexed{i,p->val q=project(p);if(i==0)floor.moveTo(q.x,q.y)else floor.lineTo(q.x,q.y)}
   floor.close()
   drawPath(floor,Color(0xFF263B50))
-  // Рисуем дальние стены первыми, затем ближние — по средней глубине.
   val order=room.vertices.indices.sortedByDescending{i->
    val a=room.vertices[i];val b=room.vertices[(i+1)%room.vertices.size]
    val mid=(a+b)*0.5
@@ -1238,29 +1241,41 @@ class MainActivity:ComponentActivity(){
    val j=(i+1)%room.vertices.size
    val a=room.vertices[i];val b=room.vertices[j]
    val length=a.distanceTo(b)
-   val h=heights[i]
-   val openings=room.openingsByWall[i].orEmpty().filter{it.offsetFromStart>=0.0&&it.offsetFromStart+it.width<=length+1e-6&&it.sillHeight+it.height<=h+1e-6}
+   if(length<=1e-9)return@forEach
+   val h0=room.wallHeightOverrides.getOrNull(i)?:room.wallHeights.getOrNull(i)?:room.height
+   val h1=room.wallHeightOverrides.getOrNull(i)?:room.wallHeights.getOrNull(j)?:room.height
+   val openings=room.openingsByWall[i].orEmpty().filter{
+    it.offsetFromStart>=0.0&&it.offsetFromStart+it.width<=length+1e-6&&
+    it.sillHeight+it.height<=min(h0,h1)+1e-6
+   }
+   fun wallTop(distance:Double):Double=h0+(h1-h0)*(distance/length).coerceIn(0.0,1.0)
    fun wallPoint(distance:Double,z:Double):Offset{
-    val t=(distance/length.coerceAtLeast(1e-9)).coerceIn(0.0,1.0)
+    val t=(distance/length).coerceIn(0.0,1.0)
     return project(a+(b-a)*t,z)
    }
-   // Разбиваем плоскость стены на прямоугольные участки и не рисуем ячейки проёмов.
    val xs=(listOf(0.0,length)+openings.flatMap{listOf(it.offsetFromStart,it.offsetFromStart+it.width)}).distinct().sorted()
-   val ys=(listOf(0.0,h)+openings.flatMap{listOf(it.sillHeight,it.sillHeight+it.height)}).distinct().sorted()
-   for(xi in 0 until xs.lastIndex) for(yi in 0 until ys.lastIndex){
-    val x0=xs[xi];val x1=xs[xi+1];val z0=ys[yi];val z1=ys[yi+1]
-    val mx=(x0+x1)/2.0;val mz=(z0+z1)/2.0
-    val isOpening=openings.any{mx>it.offsetFromStart-1e-7&&mx<it.offsetFromStart+it.width+1e-7&&mz>it.sillHeight-1e-7&&mz<it.sillHeight+it.height+1e-7}
-    if(!isOpening&&x1-x0>1e-7&&z1-z0>1e-7){
-     val p1=wallPoint(x0,z0);val p2=wallPoint(x1,z0);val p3=wallPoint(x1,z1);val p4=wallPoint(x0,z1)
-     val panelPath=Path().apply{moveTo(p1.x,p1.y);lineTo(p2.x,p2.y);lineTo(p3.x,p3.y);lineTo(p4.x,p4.y);close()}
-     val tint=if(i%2==0)Color(0xFF6C879C) else Color(0xFF526D84)
-     drawPath(panelPath,tint)
-     drawPath(panelPath,Color(0xFFB7D0DE),style=Stroke(1.5f))
+   val ys=(listOf(0.0,max(h0,h1))+openings.flatMap{listOf(it.sillHeight,it.sillHeight+it.height)}).distinct().sorted()
+   for(xi in 0 until xs.lastIndex) {
+    val x0=xs[xi];val x1=xs[xi+1]
+    val top0=wallTop(x0);val top1=wallTop(x1)
+    for(yi in 0 until ys.lastIndex) {
+     val z0=ys[yi]
+     if(z0>=max(top0,top1)-1e-7)continue
+     val z1=min(ys[yi+1],max(top0,top1))
+     if(z1-z0<=1e-7)continue
+     val mx=(x0+x1)/2.0;val mz=(z0+z1)/2.0
+     val isOpening=openings.any{mx>it.offsetFromStart-1e-7&&mx<it.offsetFromStart+it.width+1e-7&&mz>it.sillHeight-1e-7&&mz<it.sillHeight+it.height+1e-7}
+     if(!isOpening){
+      val p1=wallPoint(x0,z0);val p2=wallPoint(x1,z0)
+      val p3=wallPoint(x1,min(z1,top1));val p4=wallPoint(x0,min(z1,top0))
+      val panelPath=Path().apply{moveTo(p1.x,p1.y);lineTo(p2.x,p2.y);lineTo(p3.x,p3.y);lineTo(p4.x,p4.y);close()}
+      val tint=if(i%2==0)Color(0xFF6C879C) else Color(0xFF526D84)
+      drawPath(panelPath,tint)
+      drawPath(panelPath,Color(0xFFB7D0DE),style=Stroke(1.5f))
+     }
     }
    }
-   // Контур стены и цветная рама проёма помогают читать двери и окна в объёме.
-   val p1=project(a);val p2=project(b);val p3=project(b,h);val p4=project(a,h)
+   val p1=project(a);val p2=project(b);val p3=project(b,h1);val p4=project(a,h0)
    val outline=Path().apply{moveTo(p1.x,p1.y);lineTo(p2.x,p2.y);lineTo(p3.x,p3.y);lineTo(p4.x,p4.y);close()}
    drawPath(outline,Color(0xFFB7D0DE),style=Stroke(2f))
    openings.forEach{opening->
