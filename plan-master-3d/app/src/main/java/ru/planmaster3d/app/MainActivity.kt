@@ -74,6 +74,7 @@ class MainActivity:ComponentActivity(){
  val prefs=remember{ctx.getSharedPreferences("plan_master_3d",0)}
  var showPdfOptions by remember { mutableStateOf(false) }
  var pendingPdfBytes by remember { mutableStateOf<ByteArray?>(null) }
+ var pendingXlsxBytes by remember { mutableStateOf<ByteArray?>(null) }
  var pdfCustomer by remember { mutableStateOf(prefs.getString("pdf_customer","") ?: "") }
  var pdfExecutor by remember { mutableStateOf(prefs.getString("pdf_executor","") ?: "") }
  var pdfContact by remember { mutableStateOf(prefs.getString("pdf_contact","") ?: "") }
@@ -83,6 +84,12 @@ class MainActivity:ComponentActivity(){
    .onSuccess { android.widget.Toast.makeText(ctx,"PDF сохранён",android.widget.Toast.LENGTH_SHORT).show() }
    .onFailure { android.widget.Toast.makeText(ctx,"Ошибка сохранения PDF: " + (it.message ?: "ошибка"),android.widget.Toast.LENGTH_LONG).show() }
   pendingPdfBytes=null
+ }
+ val xlsxSaveLauncher=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) { uri ->
+  if(uri!=null) runCatching { ctx.contentResolver.openOutputStream(uri)?.use { it.write(pendingXlsxBytes ?: byteArrayOf()) } }
+   .onSuccess { android.widget.Toast.makeText(ctx,"XLSX сохранён",android.widget.Toast.LENGTH_SHORT).show() }
+   .onFailure { android.widget.Toast.makeText(ctx,"Ошибка сохранения XLSX: " + (it.message ?: "ошибка"),android.widget.Toast.LENGTH_LONG).show() }
+  pendingXlsxBytes=null
  }
  var tab by remember { mutableStateOf("Объект") }
  val projectStore=remember{ProjectStore(ctx)}
@@ -673,6 +680,14 @@ class MainActivity:ComponentActivity(){
         Text("Экспорт проекта",fontWeight=FontWeight.Bold)
         Text("PDF: титульная страница, планы помещений, ведомости и смета.",fontSize=12.sp,color=Color.LightGray)
         Button(onClick={showPdfOptions=true},modifier=Modifier.fillMaxWidth()){Icon(Icons.Default.PictureAsPdf,null);Text(" Сформировать PDF-отчёт")}
+        OutlinedButton(onClick={
+          runCatching { XlsxReportExporter.export(project,rooms,lines) }
+            .onSuccess { bytes ->
+              pendingXlsxBytes=bytes
+              xlsxSaveLauncher.launch("PLAN-MASTER-3D-${project.replace(Regex("[^A-Za-zА-Яа-я0-9_-]"), "_")}.xlsx")
+            }
+            .onFailure { android.widget.Toast.makeText(ctx,"Ошибка подготовки XLSX: " + (it.message ?: "ошибка"),android.widget.Toast.LENGTH_LONG).show() }
+        },modifier=Modifier.fillMaxWidth()){Text("Экспорт ведомостей и сметы в Excel (XLSX)")}
       } }
       if(lines.isNotEmpty()) item { CardBlock { Text("Смета",fontWeight=FontWeight.Bold); lines.forEachIndexed{i,line->Text("${line.name}: ${df.format(line.qty)} ${line.unit} × ${df.format(line.price)} ₽ = ${df.format(line.total)} ₽"); Row { TextButton(onClick={lines=lines.toMutableList().also{it[i]=line.copy(qty=(line.qty-1).coerceAtLeast(0.0))}}){Text("−")}; TextButton(onClick={lines=lines.toMutableList().also{it[i]=line.copy(qty=line.qty+1)}}){Text("+")}; TextButton(onClick={lines=lines.toMutableList().also{it.removeAt(i)}}){Text("Удалить")} } }; Text("ИТОГО: ${df.format(lines.sumOf{it.total})} ₽",fontWeight=FontWeight.Bold); Button(onClick={shareEstimate(ctx,lines)},modifier=Modifier.fillMaxWidth()){Text("Поделиться сметой / текст")} ; OutlinedButton(onClick={shareCsv(ctx,lines)},modifier=Modifier.fillMaxWidth()){Text("Экспорт таблицы CSV (Excel)")} } }
     }
