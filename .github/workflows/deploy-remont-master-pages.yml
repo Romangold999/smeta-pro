@@ -15,7 +15,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages-remont-master"
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
@@ -25,8 +25,24 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout RemontMaster source
         uses: actions/checkout@v4
+        with:
+          ref: remont-master-pages
+          path: remont-source
+
+      - name: Checkout current published site
+        uses: actions/checkout@v4
+        with:
+          ref: telegram-mini-app
+          path: existing-site
+
+      - name: Assemble website
+        run: |
+          mkdir -p public/remont-master
+          cp existing-site/index.html public/index.html
+          cp remont-source/remont-master-site/index.html public/remont-master/index.html
+          cp remont-source/remont-master-site/work-catalog.js public/remont-master/work-catalog.js
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -34,7 +50,7 @@ jobs:
       - name: Upload website files
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "./remont-master-site"
+          path: "./public"
 
       - name: Deploy to GitHub Pages
         id: deployment
