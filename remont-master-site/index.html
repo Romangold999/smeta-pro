@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111315">
+<title>РемонтМастер — Роман Геннадьевич</title>
+<style>
+:root{--bg:#111315;--panel:#1b1e20;--panel2:#222629;--line:#303638;--gold:#d7ad62;--gold2:#f0cc86;--muted:#9ba2a3;--text:#f3f1eb;--green:#92b59a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}.app{max-width:520px;min-height:100dvh;margin:auto;background:linear-gradient(180deg,#171a1c 0,#111315 38%);position:relative;padding-bottom:84px;box-shadow:0 0 60px #0008}.top{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 19px;border-bottom:1px solid #ffffff0b;position:sticky;top:0;background:#151819ed;backdrop-filter:blur(14px);z-index:5}.brand{display:flex;align-items:center;gap:10px}.mark{width:35px;height:35px;border:1px solid var(--gold);border-radius:11px;display:grid;place-items:center;color:var(--gold);font-weight:800;font-size:17px}.brand strong{display:block;font-size:14px;letter-spacing:.7px}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:1.5px;text-transform:uppercase}.avatar{width:37px;height:37px;border-radius:50%;border:1px solid #9e7c46;background:linear-gradient(135deg,#5b4931,#24282a);display:grid;place-items:center;color:var(--gold2);font-weight:700}.screen{padding:18px 17px 24px;display:none;animation:in .18s ease}.screen.active{display:block}@keyframes in{from{opacity:.35;transform:translateY(5px)}to{opacity:1;transform:none}}.eyebrow{color:var(--gold);font-size:10px;text-transform:uppercase;letter-spacing:2px;font-weight:700}.hero{padding:18px 18px 20px;border:1px solid #b58d4a44;border-radius:20px;background:radial-gradient(ellipse at 85% 5%,#8b693333,transparent 45%),linear-gradient(135deg,#272a2a,#191c1e 70%);position:relative;overflow:hidden}.hero:after{content:"";position:absolute;width:170px;height:170px;border:1px solid #d7ad6222;border-radius:50%;right:-65px;top:25px;box-shadow:0 0 0 20px #d7ad6208,0 0 0 42px #d7ad6206}.hero h1{font-size:26px;line-height:1.15;margin:10px 0 8px;max-width:280px;letter-spacing:-.6px}.hero p{color:#b9bdbb;font-size:12px;max-width:270px;margin:0 0 17px}.goldbtn{border:0;border-radius:12px;background:linear-gradient(135deg,#f0cf8d,#c99a4d);color:#211b12;font-weight:800;padding:13px 16px;box-shadow:0 7px 22px #d7ad6222}.ghostbtn{border:1px solid #555b5a;background:#ffffff06;color:var(--text);border-radius:11px;padding:11px 14px}.sectionhead{display:flex;align-items:center;justify-content:space-between;margin:22px 2px 11px}.sectionhead h2{font-size:16px;margin:0}.link{border:0;background:none;color:var(--gold);font-size:12px;padding:4px}.search{margin-top:14px;display:flex;gap:9px;background:#202426;border:1px solid var(--line);padding:12px 13px;border-radius:12px;color:var(--muted)}.search input{background:none;border:0;outline:0;color:var(--text);width:100%;font-size:13px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tile{background:linear-gradient(145deg,#252a2c,#1b1f21);border:1px solid #343a3b;border-radius:15px;padding:13px;min-height:112px;text-align:left;color:var(--text);position:relative;overflow:hidden}.tile .ico{font-size:22px;margin-bottom:12px;display:block}.tile strong{display:block;font-size:13px}.tile small{color:var(--muted);font-size:10px}.tile:active,.rowcard:active{transform:scale(.985)}.widecard{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:14px;margin-top:10px}.rowcard{display:flex;align-items:center;gap:12px;padding:13px;background:var(--panel);border:1px solid var(--line);border-radius:13px;margin:8px 0;color:var(--text);text-align:left;width:100%}.rowico{width:40px;height:40px;border-radius:11px;background:#3b3325;color:var(--gold2);display:grid;place-items:center;font-size:19px;flex-shrink:0}.rowcard strong{display:block;font-size:13px}.rowcard small{color:var(--muted);font-size:11px}.arrow{margin-left:auto;color:var(--gold);font-size:20px}.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);height:75px;padding:8px 7px calc(8px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr);background:#171a1cf2;border-top:1px solid #ffffff12;backdrop-filter:blur(16px);z-index:10}.nav{border:0;background:none;color:#858d8e;font-size:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}.nav span{font-size:19px;line-height:1}.nav.active{color:var(--gold2)}.nav.active span{filter:drop-shadow(0 0 7px #d7ad6266)}.pagehead{display:flex;align-items:center;gap:12px;margin:2px 0 17px}.back{width:35px;height:35px;border:1px solid var(--line);border-radius:10px;background:#202426;color:var(--gold);font-size:19px}.pagehead h1{font-size:21px;margin:0}.pagehead p{margin:2px 0 0;color:var(--muted);font-size:11px}.chips{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.chip{border:1px solid #454b4b;background:#202426;color:#c7ccca;border-radius:30px;padding:7px 10px;font-size:10px}.chip.selected{border-color:var(--gold);color:var(--gold2);background:#d7ad6215}.detail-visual{height:145px;border-radius:17px;background:radial-gradient(circle at 75% 25%,#d7ad6244,transparent 25%),linear-gradient(135deg,#45413a,#202729 65%,#111);border:1px solid #5d513b;display:flex;align-items:end;padding:15px;margin-bottom:14px}.detail-visual span{font-size:11px;color:#e4d4b5;letter-spacing:1px;text-transform:uppercase}.muted{color:var(--muted)}.price{font-size:22px;color:var(--gold2);font-weight:800}.field{display:block;margin:12px 0;color:#c9cecb;font-size:12px}.field input,.field select{display:block;width:100%;margin-top:6px;border:1px solid var(--line);border-radius:10px;background:#202426;color:var(--text);padding:12px;outline:none}.calc-line{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #ffffff12;font-size:12px}.calc-total{display:flex;justify-content:space-between;padding:15px 0;font-size:17px;font-weight:800}.notice{font-size:10px;color:#a9aeaa;background:#222729;border-radius:10px;padding:11px;margin:12px 0}.tag{font-size:9px;color:var(--gold2);border:1px solid #8b6c3d;border-radius:5px;padding:3px 6px;display:inline-block}.profilebox{text-align:center;padding:23px 15px;background:linear-gradient(135deg,#282b2b,#1a1d1f);border:1px solid var(--line);border-radius:18px}.profilepic{width:74px;height:74px;border-radius:50%;margin:0 auto 10px;border:2px solid var(--gold);background:linear-gradient(135deg,#a47c45,#343a3a);display:grid;place-items:center;font-size:27px;color:#211b12}.profilebox h2{margin:5px 0;font-size:18px}.profilebox p{margin:0;color:var(--muted);font-size:11px}.empty{text-align:center;padding:35px 18px;border:1px dashed #454b4b;border-radius:16px;color:var(--muted);font-size:12px}.empty b{display:block;color:var(--gold2);font-size:28px;margin-bottom:9px}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mini{padding:12px;border-radius:12px;background:#222729;border:1px solid var(--line)}.mini strong{font-size:17px;color:var(--gold2);display:block}.mini small{font-size:10px;color:var(--muted)}.hidden{display:none!important}
+
+.catalogitem{display:flex;align-items:center;gap:9px;padding:10px 0;border-top:1px solid #ffffff12}
+.catalogitem:first-child{border-top:0}.catalogitem .ci{flex:1;min-width:0}.catalogitem strong{display:block;font-size:12px}.catalogitem small{font-size:10px;color:var(--muted)}
+.addbtn{border:1px solid #9c7945;background:#d7ad6218;color:var(--gold2);border-radius:9px;padding:8px 10px;font-size:11px}
+.estimateitem{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:12px;margin:8px 0}
+.estimateitemhead{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.estimateitemhead strong{font-size:12px}
+.itemcontrols{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.itemcontrols label{font-size:10px;color:var(--muted)}.itemcontrols input,.itemcontrols select{width:100%;margin-top:4px;background:#202426;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:9px}
+.itemamount{font-size:13px;color:var(--gold2);font-weight:800}.removeitem{border:0;background:none;color:#d58d7d;font-size:18px}
+
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+ <div class="brand"><div class="mark">РМ</div><div><strong>РЕМОНТМАСТЕР</strong><small>Роман Геннадьевич · Краснодар</small></div></div>
+ <div class="avatar">РГ</div>
+</header>
+
+<main>
+<section class="screen active" id="home">
+ <div class="hero"><div class="eyebrow">Ремонт · отделка · интерьер</div><h1>Качество, которое видно в деталях</h1><p>Профессиональный подход к ремонту и отделке. От идеи до готового результата.</p><button class="goldbtn" onclick="go('estimate')">Рассчитать стоимость ↗</button></div>
+ <div class="search">⌕ <input id="homeSearch" placeholder="Найти услугу или материал..." oninput="filterHome(this.value)"></div>
+ <div class="sectionhead"><h2>Направления работ</h2><button class="link" onclick="go('services')">Все услуги →</button></div>
+ <div class="grid" id="homeTiles">
+  <button class="tile" data-search="штукатурка стены"><span class="ico">◩</span><strong>Штукатурка</strong><small>Стены и геометрия</small></button>
+  <button class="tile" data-search="декоративная отделка"><span class="ico">✧</span><strong>Декоративная отделка</strong><small>Фактуры и покрытия</small></button>
+  <button class="tile" data-search="плитка керамогранит"><span class="ico">▦</span><strong>Плиточные работы</strong><small>Керамогранит и мозаика</small></button>
+  <button class="tile" data-search="гипсокартон потолки"><span class="ico">▱</span><strong>ГКЛ и потолки</strong><small>Конструкции и формы</small></button>
+ </div>
+ <div class="sectionhead"><h2>Быстрый доступ</h2></div>
+ <div class="grid">
+  <button class="tile" onclick="go('portfolio')"><span class="ico">▧</span><strong>Портфолио</strong><small>Примеры работ</small></button>
+  <button class="tile" onclick="go('materials')"><span class="ico">◈</span><strong>Материалы</strong><small>Подбор и решения</small></button>
+  <button class="tile" onclick="go('diy')"><span class="ico">▶</span><strong>Сделай сам <span class="tag">БЕТА</span></strong><small>Рецептуры и инструкции</small></button>
+  <button class="tile" onclick="go('orders')"><span class="ico">▤</span><strong>Мои заказы</strong><small>Заявки и расчёты</small></button>
+ </div>
+ <div class="widecard"><div class="eyebrow">Персональный подход</div><h3 style="margin:7px 0 5px;font-size:15px">Нужна консультация?</h3><p class="muted" style="font-size:11px;margin:0 0 12px">Обсудим задачу, подберём технологию и составим предварительную смету.</p><button class="ghostbtn" onclick="go('profile')">Связаться с мастером →</button></div>
+</section>
+
+<section class="screen" id="services">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Услуги</h1><p>Выберите направление работ</p></div></div>
+ <div class="search">⌕ <input placeholder="Поиск по услугам..." oninput="filterList('serviceList',this.value)"></div>
+ <div id="serviceList">
+  <button class="rowcard" onclick="detail('Штукатурные работы','Выравнивание стен, маячная штукатурка, подготовка поверхностей.')"><span class="rowico">◩</span><span><strong>Штукатурные работы</strong><small>Выравнивание стен и углов</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Декоративная отделка','Декоративные штукатурки, замша, нубук, фактурные и гладкие покрытия.')"><span class="rowico">✧</span><span><strong>Декоративная отделка</strong><small>Замша, нубук, фактуры, микроцемент</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Плиточные работы','Укладка плитки, керамогранита, мозаики, затирка и примыкания.')"><span class="rowico">▦</span><span><strong>Плиточные работы</strong><small>Плитка, керамогранит, мозаика</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Гипсокартон и потолки','Перегородки, короба, ниши, радиусные элементы и потолочные конструкции.')"><span class="rowico">▱</span><span><strong>Гипсокартон и потолки</strong><small>Перегородки, ниши, сложные формы</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Полы и стяжки','Подготовка основания, стяжки, наливные полы и укладка покрытий.')"><span class="rowico">▤</span><span><strong>Полы и стяжки</strong><small>Стяжка, ламинат, покрытия</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Покраска и обои','Подготовка стен, шпаклевание, окраска и оклейка обоями.')"><span class="rowico">▨</span><span><strong>Покраска и обои</strong><small>Подготовка и финишная отделка</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Электрика и сантехника','Монтаж и перенос точек, разводка коммуникаций и установка оборудования.')"><span class="rowico">⌁</span><span><strong>Электрика и сантехника</strong><small>Коммуникации и оборудование</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Изделия из архитектурного бетона','Столешницы, раковины, подоконники, ступени, панели и изделия по эскизу.')"><span class="rowico">⬡</span><span><strong>Архитектурный бетон</strong><small>Столешницы, раковины, панели</small></span><span class="arrow">›</span></button>
+ </div>
+</section>
+
+<section class="screen" id="detail">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1 id="detailTitle">Направление</h1><p>Услуги и варианты исполнения</p></div></div>
+ <div class="detail-visual"><span>РЕМОНТМАСТЕР · КРАСНОДАР</span></div>
+ <p id="detailText" class="muted" style="font-size:13px"></p>
+ <div class="sectionhead"><h2>Что входит</h2></div>
+ <div class="widecard"><div class="calc-line"><span>Консультация и оценка задачи</span><span>✓</span></div><div class="calc-line"><span>Подбор технологии и материалов</span><span>✓</span></div><div class="calc-line"><span>Подготовка основания и выполнение</span><span>✓</span></div><div class="calc-line"><span>Контроль качества результата</span><span>✓</span></div></div>
+ <div class="sectionhead"><h2>Как начать</h2></div>
+ <p class="muted" style="font-size:12px">Оставьте заявку с описанием задачи. Стоимость зависит от объёма, состояния основания и выбранных материалов.</p>
+ <button class="goldbtn" style="width:100%" onclick="go('estimate')">Перейти к расчёту ↗</button>
+</section>
+
+<section class="screen" id="estimate">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Конструктор сметы</h1><p>Добавляйте несколько видов работ</p></div></div>
+ <div class="widecard">
+  <label class="field">Название объекта / помещения<input id="estimateRoom" placeholder="Например: Ванная, квартира..." value="Новый объект"></label>
+  <label class="field">Категория работ<select id="workCategory" onchange="renderCatalog()"><option value="all">Все работы</option><option value="walls">Стены и подготовка</option><option value="ceilings">Потолки и ГКЛ</option><option value="floors">Полы</option><option value="tile">Плиточные работы</option><option value="decor">Декоративная отделка</option><option value="other">Другое</option><option value="demolition">Демонтаж</option><option value="prep">Подготовка поверхностей</option><option value="plaster">Штукатурные работы</option><option value="painting">Малярные работы</option><option value="wallpaper">Поклейка обоев</option><option value="drywall">Гипсокартон</option></select></label>
+  <label class="field">Поиск работы<input id="workSearch" placeholder="Например: грунтовка, штукатурка..." oninput="renderCatalog()"></label>
+  <div id="catalogList"></div>
+ </div>
+ <div class="sectionhead"><h2>Позиции сметы</h2><button class="link" onclick="clearEstimate()">Очистить</button></div>
+ <div id="estimateItems"><div class="empty"><b>＋</b>Пока нет работ.<br>Выберите позицию выше, чтобы добавить её в смету.</div></div>
+ <div class="widecard">
+  <div class="calc-line"><span>Количество позиций</span><strong id="itemCount">0</strong></div>
+  <div class="calc-total"><span>Итого по работам</span><span class="price" id="estimateTotal">0 ₽</span></div>
+  <div class="notice">Предварительный расчёт. Окончательная стоимость согласовывается с мастером. Материалы учитываются отдельно, если не указано иное.</div>
+  <button class="goldbtn" style="width:100%" onclick="saveEstimate()">Сохранить расчёт</button>
+  <button class="ghostbtn" style="width:100%;margin-top:9px" onclick="printEstimate()">Печать / PDF</button>
+ </div>
+ <div class="sectionhead"><h2>Как рассчитывается</h2></div>
+ <p class="muted" style="font-size:11px">Выберите работу, укажите объём и единицу измерения. Цена за единицу и сумма позиции рассчитываются автоматически. Утверждённые расценки появятся после согласования прайса мастером.</p>
+</section>
+
+<section class="screen" id="materials">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Материалы</h1><p>Подбор решений под вашу задачу</p></div></div>
+ <button class="rowcard" onclick="detail('Декоративные покрытия','Подбор декоративных штукатурок, красок и защитных составов под интерьер и условия эксплуатации.')"><span class="rowico">✧</span><span><strong>Декоративные покрытия</strong><small>Фактуры, краски, защитные составы</small></span><span class="arrow">›</span></button>
+ <button class="rowcard" onclick="detail('Сухие строительные смеси','Штукатурки, шпаклёвки, клеи, затирки и составы для подготовки основания.')"><span class="rowico">▧</span><span><strong>Сухие смеси</strong><small>Штукатурки, шпаклёвки, клеи</small></span><span class="arrow">›</span></button>
+ <button class="rowcard" onclick="detail('Материалы для пола','Составы для стяжки, грунты, наливные смеси и напольные покрытия.')"><span class="rowico">▤</span><span><strong>Материалы для пола</strong><small>Стяжки, грунты, покрытия</small></span><span class="arrow">›</span></button>
+ <button class="rowcard" onclick="detail('Архитектурный бетон','Цементные системы, пигменты, наполнители, армирование и защитные пропитки.')"><span class="rowico">⬡</span><span><strong>Архитектурный бетон</strong><small>Составы и компоненты</small></span><span class="arrow">›</span></button>
+ <div class="notice">Каталог и конкретные рекомендации по брендам и компонентам будут добавляться после проверки характеристик и доступности.</div>
+</section>
+
+<section class="screen" id="diy">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Сделай сам</h1><p><span class="tag">БЕТА-ВЕРСИЯ</span></p></div></div>
+</section>
+
+
+
+<section class="screen" id="portfolio">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Портфолио</h1><p>Примеры направлений и фактур</p></div></div>
+ <div class="grid">
+  <div class="tile" style="min-height:150px;background:linear-gradient(145deg,#78654c,#292b29)"><span class="ico">✧</span><strong>Декоративные стены</strong><small>Фото работ добавим позже</small></div>
+  <div class="tile" style="min-height:150px;background:linear-gradient(145deg,#555b5b,#222729)"><span class="ico">▦</span><strong>Плитка и керамогранит</strong><small>Фото работ добавим позже</small></div>
+  <div class="tile" style="min-height:150px;background:linear-gradient(145deg,#645b50,#252729)"><span class="ico">⬡</span><strong>Архитектурный бетон</strong><small>Фото изделий добавим позже</small></div>
+  <div class="tile" style="min-height:150px;background:linear-gradient(145deg,#3e4b4a,#202729)"><span class="ico">▱</span><strong>Сложные конструкции</strong><small>Фото работ добавим позже</small></div>
+ </div>
+ <div class="notice">Это демонстрационные карточки категорий, не фотографии выполненных объектов. Реальные работы добавим отдельно.</div>
+</section>
+
+<section class="screen" id="orders">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Мои заказы</h1><p>Ваши заявки и сохранённые расчёты</p></div></div>
+ <div id="ordersList"><div class="empty"><b>▤</b>Пока здесь пусто.<br>Сохраните предварительный расчёт или отправьте заявку мастеру.</div></div>
+ <button class="goldbtn" style="width:100%;margin-top:13px" onclick="go('estimate')">Создать расчёт</button>
+</section>
+
+<section class="screen" id="profile">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Профиль мастера</h1><p>Контакты и информация</p></div></div>
+ <div class="profilebox"><div class="profilepic">РГ</div><h2>Роман Геннадьевич</h2><p>Мастер по ремонту и отделке · Краснодар</p><div class="twocol" style="margin-top:17px"><div class="mini"><strong>Опыт</strong><small>Уточняется</small></div><div class="mini"><strong>Краснодар</strong><small>Регион работы</small></div></div></div>
+ <div class="sectionhead"><h2>Связаться</h2></div>
+ <div class="notice">Контактные данные будут добавлены после согласования. Пока можно подготовить описание задачи и предварительную смету.</div>
+ <button class="rowcard" onclick="go('estimate')"><span class="rowico">₽</span><span><strong>Рассчитать стоимость</strong><small>Перейти к калькулятору</small></span><span class="arrow">›</span></button>
+ <button class="rowcard" onclick="go('portfolio')"><span class="rowico">▧</span><span><strong>Посмотреть портфолио</strong><small>Направления работ</small></span><span class="arrow">›</span></button>
+</section>
+</main>
+
+<nav class="bottom">
+ <button class="nav active" data-nav="home" onclick="go('home')"><span>⌂</span>Главная</button>
+ <button class="nav" data-nav="services" onclick="go('services')"><span>▦</span>Услуги</button>
+ <button class="nav" data-nav="estimate" onclick="go('estimate')"><span>₽</span>Смета</button>
+ <button class="nav" data-nav="portfolio" onclick="go('portfolio')"><span>▧</span>Работы</button>
+ <button class="nav" data-nav="profile" onclick="go('profile')"><span>◉</span>Профиль</button>
+</nav>
+</div>
+<script src="work-catalog.js"></script>
+<script>
+let current='home',historyStack=[];
+function go(id){if(!document.getElementById(id))return;if(current!==id)historyStack.push(current);show(id)}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));current=id;let root=id==='detail'||id==='diydetail'?'services':id;document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active',n.dataset.nav===root));window.scrollTo({top:0,behavior:'instant'})}
+function back(){show(historyStack.pop()||'home')}
+function detail(title,desc){document.getElementById('detailTitle').textContent=title;document.getElementById('detailText').textContent=desc;go('detail')}
+function diyDetail(){go('diydetail')}
+const workCatalog=[
+{id:'w1',cat:'walls',name:'Грунтовка стен',unit:'м²',price:null},
+{id:'w2',cat:'walls',name:'Штукатурка стен по маякам',unit:'м²',price:null},
+{id:'w3',cat:'walls',name:'Шпаклёвка стен под обои',unit:'м²',price:null},
+{id:'w4',cat:'walls',name:'Шпаклёвка стен под покраску',unit:'м²',price:null},
+{id:'w5',cat:'walls',name:'Шлифовка стен',unit:'м²',price:null},
+{id:'w6',cat:'walls',name:'Покраска стен',unit:'м²',price:null},
+{id:'c1',cat:'ceilings',name:'Штукатурка потолка',unit:'м²',price:null},
+{id:'c2',cat:'ceilings',name:'Шпаклёвка потолка',unit:'м²',price:null},
+{id:'c3',cat:'ceilings',name:'Монтаж конструкции ГКЛ',unit:'м²',price:null},
+{id:'f1',cat:'floors',name:'Цементно-песчаная стяжка',unit:'м²',price:null},
+{id:'f2',cat:'floors',name:'Наливной пол',unit:'м²',price:null},
+{id:'f3',cat:'floors',name:'Укладка ламината',unit:'м²',price:null},
+{id:'t1',cat:'tile',name:'Укладка плитки на стены',unit:'м²',price:null},
+{id:'t2',cat:'tile',name:'Укладка керамогранита',unit:'м²',price:null},
+{id:'t3',cat:'tile',name:'Затирка швов',unit:'м²',price:null},
+{id:'d1',cat:'decor',name:'Декоративная штукатурка',unit:'м²',price:null},
+{id:'d2',cat:'decor',name:'Декоративное покрытие «Замша / Нубук»',unit:'м²',price:null},
+{id:'o1',cat:'other',name:'Монтаж розетки / выключателя',unit:'шт.',price:null},
+{id:'o2',cat:'other',name:'Монтаж плинтуса',unit:'пог. м',price:null}
+];
+workCatalog.push(...extraWorkCatalog);
+let estimateRows=[];
+function money(v){return Number(v||0).toLocaleString('ru-RU')+' ₽'}
+function renderCatalog(){let cat=document.getElementById('workCategory')?.value||'all',q=(document.getElementById('workSearch')?.value||'').toLowerCase();let arr=workCatalog.filter(x=>(cat==='all'||x.cat===cat)&&x.name.toLowerCase().includes(q));let box=document.getElementById('catalogList');if(!box)return;box.innerHTML=arr.map(x=>`<div class="catalogitem"><div class="ci"><strong>${x.name}</strong><small>${x.price===null?"Цена будет согласована":money(x.price)+" за "+x.unit}</small></div><button class="addbtn" onclick="addWork('${x.id}')">＋ Добавить</button></div>`).join('')||'<p class="muted" style="font-size:11px">Ничего не найдено</p>'}
+function addWork(id){let w=workCatalog.find(x=>x.id===id);if(!w)return;estimateRows.push({id:Date.now()+Math.random(),workId:id,name:w.name,unit:w.unit,qty:1,price:w.price});renderEstimate()}
+function renderEstimate(){let box=document.getElementById('estimateItems');if(!box)return;if(!estimateRows.length){box.innerHTML='<div class="empty"><b>＋</b>Пока нет работ.<br>Выберите позицию выше, чтобы добавить её в смету.</div>'}else{box.innerHTML=estimateRows.map(r=>`<div class="estimateitem"><div class="estimateitemhead"><strong>${r.name}</strong><button class="removeitem" onclick="removeWork(${r.id})">×</button></div><div class="itemcontrols"><label>Количество<input type="number" min="0" step="0.01" value="${r.qty}" onchange="updateRow(${r.id}, 'qty', this.value)"></label><label>Единица<select onchange="updateRow(${r.id}, 'unit', this.value)">${['м²','пог. м','шт.','компл.','м³','час'].map(u=>`<option ${u===r.unit?'selected':''}>${u}</option>`).join('')}</select></label><label>Цена за единицу, ₽<input type="number" min="0" placeholder="Ожидает утверждения" value="${r.price??''}" disabled></label><label>Сумма позиции<div class="itemamount">${r.price===null?'Цена не утверждена':money(r.qty*r.price)}</div></label></div></div>`).join('')}
+document.getElementById('itemCount').textContent=estimateRows.length;let valid=estimateRows.every(r=>r.price!==null);let total=estimateRows.reduce((s,r)=>s+(r.price===null?0:r.qty*r.price),0);document.getElementById('estimateTotal').textContent=estimateRows.length?(valid?money(total):'Цены уточняются'):'0 ₽'}
+function updateRow(id,key,val){let r=estimateRows.find(x=>x.id===id);if(!r)return;r[key]=key==='qty'?Math.max(0,Number(val)||0):val;renderEstimate()}
+function removeWork(id){estimateRows=estimateRows.filter(x=>x.id!==id);renderEstimate()}
+function clearEstimate(){estimateRows=[];renderEstimate()}
+function saveEstimate(){if(!estimateRows.length){alert('Сначала добавьте хотя бы одну работу.');return}let obj={room:document.getElementById('estimateRoom').value,rows:estimateRows.map(r=>({...r})),date:new Date().toLocaleDateString('ru-RU')};let saved=JSON.parse(localStorage.getItem('rm_estimates')||'[]');saved.unshift(obj);localStorage.setItem('rm_estimates',JSON.stringify(saved));renderOrders();historyStack.push('estimate');show('orders')}
+function renderOrders(){let list=document.getElementById('ordersList');if(!list)return;let saved=JSON.parse(localStorage.getItem('rm_estimates')||'[]');if(!saved.length){list.innerHTML='<div class="empty"><b>▤</b>Пока здесь пусто.<br>Сохраните предварительный расчёт или отправьте заявку мастеру.</div>';return}list.innerHTML=saved.map((s,i)=>'<div class="widecard"><strong>'+s.room+'</strong><small class="muted" style="display:block;margin:4px 0 8px">'+s.date+' · '+s.rows.length+' позиций</small>'+s.rows.map(r=>'<div class="calc-line"><span>'+r.name+' · '+r.qty+' '+r.unit+'</span><span>'+(r.price===null?'цена уточняется':money(r.qty*r.price))+'</span></div>').join('')+'<div class="notice">Предварительный расчёт. Окончательная стоимость согласовывается с мастером.</div></div>').join('')}
+function printEstimate(){if(!estimateRows.length){alert('Сначала добавьте работы в смету.');return}let w=window.open('','_blank');if(!w){alert('Разрешите открытие окна для печати PDF.');return}let rows=estimateRows.map(r=>'<tr><td>'+r.name+'</td><td>'+r.qty+' '+r.unit+'</td><td>'+(r.price===null?'уточняется':money(r.price))+'</td><td>'+(r.price===null?'уточняется':money(r.qty*r.price))+'</td></tr>').join('');w.document.write('<html><meta charset="utf-8"><title>Смета — РемонтМастер</title><body style="font:14px Arial;padding:30px"><h1>РемонтМастер</h1><h2>Предварительная смета</h2><p>'+document.getElementById('estimateRoom').value+'</p><table border="1" cellspacing="0" cellpadding="8" width="100%"><tr><th>Работа</th><th>Объём</th><th>Цена</th><th>Сумма</th></tr>'+rows+'</table><p>Предварительный расчёт. Окончательная стоимость согласовывается с мастером.</p></body></html>');w.document.close();w.print()}
+function filterList(id,q){document.querySelectorAll('#'+id+' .rowcard').forEach(x=>x.classList.toggle('hidden',!x.innerText.toLowerCase().includes(q.toLowerCase())))}
+function filterHome(q){document.querySelectorAll('#homeTiles .tile').forEach(x=>x.classList.toggle('hidden',!x.dataset.search.includes(q.toLowerCase())))}
+renderCatalog();renderEstimate();renderOrders();
+</script>
+</body></html>
