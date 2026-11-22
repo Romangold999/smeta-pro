@@ -45,48 +45,6 @@ jobs:
           cp remont-source/remont-master-site/work-catalog.js public/remont-master/work-catalog.js
           cp -R remont-source/remont-master-site/assets public/remont-master/assets
 
-      - name: Prepare local PDF library and embedded fonts
-        run: |
-          mkdir -p /tmp/remont-pdfmake
-          cd /tmp/remont-pdfmake
-          npm pack pdfmake@0.2.20 --silent
-          tar -xzf pdfmake-0.2.20.tgz
-          mkdir -p "$GITHUB_WORKSPACE/public/remont-master/vendor"
-          cp package/build/pdfmake.min.js "$GITHUB_WORKSPACE/public/remont-master/vendor/pdfmake.min.js"
-          cp package/build/vfs_fonts.js "$GITHUB_WORKSPACE/public/remont-master/vendor/vfs_fonts.js"
-          node - <<'NODE'
-          const fs = require('node:fs');
-          const vm = require('node:vm');
-          const source = fs.readFileSync('package/build/vfs_fonts.js', 'utf8');
-          const required = ['Roboto-Regular.ttf', 'Roboto-Medium.ttf', 'Roboto-Italic.ttf', 'Roboto-MediumItalic.ttf'];
-          let registered = null;
-          const window = { pdfMake: { addVirtualFileSystem(vfs) { registered = vfs; } } };
-          vm.runInNewContext(source, { window });
-          const keys = registered ? Object.keys(registered) : [];
-          const missing = required.filter(name => !keys.some(key => key.toLowerCase() === name.toLowerCase()));
-          if (!registered || missing.length) {
-            console.error('pdfMake VFS registration failed; missing fonts:', missing.join(', ') || 'VFS was not registered');
-            process.exit(1);
-          }
-          console.log('Verified pdfMake addVirtualFileSystem registration and embedded Roboto fonts:', required.join(', '));
-          NODE
-          test -s "$GITHUB_WORKSPACE/public/remont-master/vendor/pdfmake.min.js"
-          test -s "$GITHUB_WORKSPACE/public/remont-master/vendor/vfs_fonts.js"
-
-      - name: Inject temporary PDF gateway URL
-        env:
-          RM_PDF_API_URL: ${{ secrets.RM_PDF_API_URL }}
-        if: ${{ env.RM_PDF_API_URL != '' }}
-        run: |
-          python - <<'PY'
-          import os
-          from pathlib import Path
-          p = Path("public/remont-master/index.html")
-          content = p.read_text()
-          content = content.replace("__RM_PDF_API_URL__", os.environ["RM_PDF_API_URL"].rstrip("/"))
-          p.write_text(content)
-          PY
-
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
