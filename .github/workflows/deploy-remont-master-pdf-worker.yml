@@ -32,4 +32,4 @@ jobs:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
           test -n "$GH_RELEASE_TOKEN" || { echo "Missing GH_RELEASE_TOKEN secret"; exit 1; }
-          printf '%s' "$GH_RELEASE_TOKEN" | npx --yes wrangler@4 secret put GITHUB_TOKEN --name remont-master-pdf --account-id "$CF_ACCOUNT_ID"
+          printf '%s' "$GH_RELEASE_TOKEN" | npx --yes wrangler@4 secret put GITHUB_TOKEN --name remont-master-pdf --account-id "$CF_ACCOUNT_ID" --config remont-master-pdf-worker/wrangler.toml
