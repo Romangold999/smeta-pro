@@ -28,8 +28,8 @@ jobs:
       - name: Set GitHub release token in Worker
         env:
           GH_RELEASE_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
           test -n "$GH_RELEASE_TOKEN" || { echo "Missing GH_RELEASE_TOKEN secret"; exit 1; }
-          printf '%s' "$GH_RELEASE_TOKEN" | npx --yes wrangler@4 secret put GITHUB_TOKEN --name remont-master-pdf --account-id "$CF_ACCOUNT_ID" --config remont-master-pdf-worker/wrangler.toml
+          printf '%s' "$GH_RELEASE_TOKEN" | npx --yes wrangler@4 secret put GITHUB_TOKEN --name remont-master-pdf --account-id "$CLOUDFLARE_ACCOUNT_ID" --config remont-master-pdf-worker/wrangler.toml
