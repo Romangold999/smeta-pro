@@ -37,7 +37,7 @@ body.sheet-open{overflow:hidden}
 <body>
 <div class="app">
 <header class="top">
- <div class="brand"><div class="mark">РМ</div><div><strong>РЕМОНТМАСТЕР</strong><small>Роман Геннадьевич · Краснодар</small></div></div>
+ <div class="brand"><div class="mark">РМ</div><div><strong>РЕМОНТМАСТЕР</strong><small>Роман Геннадьевич · Краснодар и весь край</small></div></div>
  <div class="avatar">РГ</div>
 </header>
 
@@ -80,7 +80,7 @@ body.sheet-open{overflow:hidden}
 
 <section class="screen" id="detail">
  <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1 id="detailTitle">Направление</h1><p>Услуги и варианты исполнения</p></div></div>
- <div class="detail-visual"><span>РЕМОНТМАСТЕР · КРАСНОДАР</span></div>
+ <div class="detail-visual"><span>РЕМОНТМАСТЕР · КРАСНОДАР И КРАЙ</span></div>
  <p id="detailText" class="muted" style="font-size:13px"></p>
  <div class="sectionhead"><h2 id="serviceWorkHeading">Работы этого направления</h2><button class="link" onclick="go('estimate')">Весь каталог →</button></div>
  <div id="serviceWorkList"></div>
@@ -132,10 +132,10 @@ body.sheet-open{overflow:hidden}
 
 <section class="screen" id="profile">
  <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Профиль мастера</h1><p>Контакты и информация</p></div></div>
- <div class="profilebox"><div class="profilepic">РГ</div><h2>Роман Геннадьевич</h2><p>Мастер по ремонту и отделке · Краснодар</p><div class="twocol" style="margin-top:17px"><div class="mini experience-card"><strong>Опыт работы</strong><div class="experience-main" id="experienceYears">10 лет</div><div class="experience-time" id="experienceRemainder">00 дн. · 00 ч. · 00 мин. · 00 сек.</div><small class="experience-caption">Опыт, который говорит сам за себя</small></div><div class="mini"><strong>Краснодар</strong><small>Регион работы</small></div></div></div>
+ <div class="profilebox"><div class="profilepic">РГ</div><h2>Роман Геннадьевич</h2><p>Мастер по ремонту и отделке · Краснодар и Краснодарский край</p><div class="twocol" style="margin-top:17px"><div class="mini experience-card"><strong>Опыт работы</strong><div class="experience-main" id="experienceYears">10 лет</div><div class="experience-time" id="experienceRemainder">00 дн. · 00 ч. · 00 мин. · 00 сек.</div><small class="experience-caption">Опыт, который говорит сам за себя</small></div><div class="mini"><strong>Краснодар и край</strong><small>Регион работы</small></div></div></div>
  <div class="sectionhead"><h2>Связаться</h2></div>
  <a class="rowcard" href="tel:+79284088087" style="text-decoration:none" aria-label="Позвонить по телефону +7 928 408 80 87"><span class="rowico">☎</span><span><strong>Позвонить</strong><small>+7 928 408-80-87</small></span><span class="arrow">›</span></a>
- <div class="notice">Для связи через MAX добавим отдельную кнопку после получения ссылки на твой профиль.</div>
+ <a class="rowcard" href="https://max.ru/u/f9LHodD0cOJrL1sbt7XHsE8fD04Pk98IJpR_ELur1SZytCMkqTjKE-hdmTQ" target="_blank" rel="noopener noreferrer" style="text-decoration:none" aria-label="Открыть профиль в MAX"><span class="rowico">✉</span><span><strong>Написать в MAX</strong><small>Открыть чат с мастером</small></span><span class="arrow">›</span></a>
  <button class="rowcard" onclick="go('estimate')"><span class="rowico">₽</span><span><strong>Рассчитать стоимость</strong><small>Перейти к калькулятору</small></span><span class="arrow">›</span></button>
  <button class="rowcard" onclick="go('portfolio')"><span class="rowico">▧</span><span><strong>Посмотреть портфолио</strong><small>Направления работ</small></span><span class="arrow">›</span></button>
 </section>
@@ -176,25 +176,25 @@ function closeEstimateSheet(){const sheet=document.getElementById('estimateSheet
 let toastTimer;
 function showToast(message){const el=document.getElementById('workToast');if(!el)return;el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),1700)}
 const workCatalog=[
-{id:'w1',cat:'walls',name:'Грунтовка стен',unit:'м²',price:null},
-{id:'w2',cat:'walls',name:'Штукатурка стен по маякам',unit:'м²',price:null},
-{id:'w3',cat:'walls',name:'Шпаклёвка стен под обои',unit:'м²',price:null},
-{id:'w4',cat:'walls',name:'Шпаклёвка стен под покраску',unit:'м²',price:null},
-{id:'w5',cat:'walls',name:'Шлифовка стен',unit:'м²',price:null},
-{id:'w6',cat:'walls',name:'Покраска стен',unit:'м²',price:null},
-{id:'c1',cat:'ceilings',name:'Штукатурка потолка',unit:'м²',price:null},
-{id:'c2',cat:'ceilings',name:'Шпаклёвка потолка',unit:'м²',price:null},
-{id:'c3',cat:'ceilings',name:'Монтаж конструкции ГКЛ',unit:'м²',price:null},
-{id:'f1',cat:'floors',name:'Цементно-песчаная стяжка',unit:'м²',price:null},
-{id:'f2',cat:'floors',name:'Наливной пол',unit:'м²',price:null},
-{id:'f3',cat:'floors',name:'Укладка ламината',unit:'м²',price:null},
-{id:'t1',cat:'tile',name:'Укладка плитки на стены',unit:'м²',price:null},
-{id:'t2',cat:'tile',name:'Укладка керамогранита',unit:'м²',price:null},
-{id:'t3',cat:'tile',name:'Затирка швов',unit:'м²',price:null},
-{id:'d1',cat:'decor',name:'Декоративная штукатурка',unit:'м²',price:null},
+{id:'w1',cat:'walls',name:'Грунтовка стен',unit:'м²',price:300},
+{id:'w2',cat:'walls',name:'Штукатурка стен по маякам',unit:'м²',price:1000},
+{id:'w3',cat:'walls',name:'Шпаклёвка стен под обои',unit:'м²',price:650},
+{id:'w4',cat:'walls',name:'Шпаклёвка стен под покраску',unit:'м²',price:850},
+{id:'w5',cat:'walls',name:'Шлифовка стен',unit:'м²',price:500},
+{id:'w6',cat:'walls',name:'Покраска стен',unit:'м²',price:600},
+{id:'c1',cat:'ceilings',name:'Штукатурка потолка',unit:'м²',price:1200},
+{id:'c2',cat:'ceilings',name:'Шпаклёвка потолка',unit:'м²',price:1100},
+{id:'c3',cat:'ceilings',name:'Монтаж конструкции ГКЛ',unit:'м²',price:1500},
+{id:'f1',cat:'floors',name:'Цементно-песчаная стяжка',unit:'м²',price:1500},
+{id:'f2',cat:'floors',name:'Наливной пол',unit:'м²',price:1000},
+{id:'f3',cat:'floors',name:'Укладка ламината',unit:'м²',price:800},
+{id:'t1',cat:'tile',name:'Укладка плитки на стены',unit:'м²',price:2500},
+{id:'t2',cat:'tile',name:'Укладка керамогранита',unit:'м²',price:2500},
+{id:'t3',cat:'tile',name:'Затирка швов',unit:'м²',price:420},
+{id:'d1',cat:'decor',name:'Декоративная штукатурка',unit:'м²',price:1900},
 {id:'d2',cat:'decor',name:'Декоративное покрытие «Замша / Нубук»',unit:'м²',price:null},
-{id:'o1',cat:'other',name:'Монтаж розетки / выключателя',unit:'шт.',price:null},
-{id:'o2',cat:'other',name:'Монтаж плинтуса',unit:'пог. м',price:null}
+{id:'o1',cat:'other',name:'Монтаж розетки / выключателя',unit:'шт.',price:450},
+{id:'o2',cat:'other',name:'Монтаж плинтуса',unit:'пог. м',price:450}
 ];
 workCatalog.push(...extraWorkCatalog);
 let estimateRows=[];
