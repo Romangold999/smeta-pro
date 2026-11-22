@@ -56,14 +56,19 @@ jobs:
           cp package/build/vfs_fonts.js "$GITHUB_WORKSPACE/public/remont-master/vendor/vfs_fonts.js"
           node - <<'NODE'
           const fs = require('node:fs');
-          const vfs = fs.readFileSync('package/build/vfs_fonts.js', 'utf8');
+          const vm = require('node:vm');
+          const source = fs.readFileSync('package/build/vfs_fonts.js', 'utf8');
           const required = ['Roboto-Regular.ttf', 'Roboto-Medium.ttf', 'Roboto-Italic.ttf', 'Roboto-MediumItalic.ttf'];
-          const missing = required.filter(name => !vfs.includes(name));
-          if (missing.length) {
-            console.error('pdfMake VFS is missing required fonts:', missing.join(', '));
+          let registered = null;
+          const window = { pdfMake: { addVirtualFileSystem(vfs) { registered = vfs; } } };
+          vm.runInNewContext(source, { window });
+          const keys = registered ? Object.keys(registered) : [];
+          const missing = required.filter(name => !keys.some(key => key.toLowerCase() === name.toLowerCase()));
+          if (!registered || missing.length) {
+            console.error('pdfMake VFS registration failed; missing fonts:', missing.join(', ') || 'VFS was not registered');
             process.exit(1);
           }
-          console.log('Verified embedded Roboto fonts:', required.join(', '));
+          console.log('Verified pdfMake addVirtualFileSystem registration and embedded Roboto fonts:', required.join(', '));
           NODE
           test -s "$GITHUB_WORKSPACE/public/remont-master/vendor/pdfmake.min.js"
           test -s "$GITHUB_WORKSPACE/public/remont-master/vendor/vfs_fonts.js"
