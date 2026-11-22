@@ -75,7 +75,7 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 .product-card>*{position:relative}
 .product-card strong{font-size:13px;text-shadow:0 2px 6px #000}
 .product-card small{font-size:10px;color:#f1e5cf;text-shadow:0 1px 5px #000}
-.concrete-hero{min-height:190px;border-radius:19px;padding:17px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(180deg,#100d0910,#100d09e8),url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1100&q=85') center/cover;border:1px solid #a7834d;box-shadow:inset 1px 1px 0 #ffffff25,0 10px 24px #0009}
+.concrete-hero{min-height:190px;border-radius:19px;padding:17px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(180deg,#100d0910,#100d09e8),url('assets/icons/plaster.webp') center/cover;border:1px solid #a7834d;box-shadow:inset 1px 1px 0 #ffffff25,0 10px 24px #0009}
 .concrete-hero h2{font-size:21px;margin:0 0 5px;text-shadow:0 2px 8px #000}
 .concrete-hero p{font-size:11px;color:#f1e6d2;margin:0;max-width:290px;text-shadow:0 1px 5px #000}
 @media(max-width:370px){.tile{min-height:128px;padding:11px}.tile strong{font-size:12px}.product-card{min-height:132px}}
@@ -96,13 +96,23 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 .home-result.concrete-result>b{font-size:10px;color:#f0d49a;white-space:nowrap}
 .home-search-empty,.home-search-count{margin:5px;padding:8px;font-size:11px;color:#c7b99e}
 
+
+.avatar{overflow:hidden;padding:0;background:#211b12}
+.avatar img{width:100%;height:100%;display:block;object-fit:cover;border-radius:50%}
+.profilepic{overflow:hidden;padding:0;background:#211b12}
+.profilepic img{width:100%;height:100%;display:block;object-fit:cover;border-radius:50%}
+.rowico{overflow:hidden;padding:0;background:#302719}
+.rowico img{width:100%;height:100%;display:block;object-fit:cover;border-radius:inherit}
+.profile-region{min-height:125px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.profile-region-map{width:100%;height:92px;display:block;object-fit:contain;margin-top:5px}
+
 </style>
 </head>
 <body>
 <div class="app">
 <header class="top">
  <div class="brand"><div class="mark">РМ</div><div><strong>РЕМОНТМАСТЕР</strong><small>Роман Геннадьевич · Краснодар и весь край</small></div></div>
- <div class="avatar">РГ</div>
+ <div class="avatar"><img src="assets/avatar.webp" alt="Фото мастера" width="37" height="37" fetchpriority="high"></div>
 </header>
 
 <main>
@@ -112,18 +122,18 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
  <div id="homeSearchResults" class="home-search-results" aria-live="polite" hidden></div>
  <div class="sectionhead"><h2>Направления работ</h2><button class="link" onclick="go('services')">Все услуги →</button></div>
  <div class="grid" id="homeTiles">
-  <button class="tile" data-search="штукатурка стены" style="background-image:url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=82')" onclick="detail('Штукатурные работы','Выравнивание стен и потолков, штукатурка по маякам и подготовка основания.','plaster')"><span class="ico">◩</span><strong>Штукатурка</strong><small>Стены и геометрия</small></button>
-  <button class="tile" data-search="декоративная отделка" style="background-image:url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=82')" onclick="detail('Декоративная отделка','Декоративные штукатурки, фактуры, эффекты и декоративные стеновые покрытия.','decor')"><span class="ico">✧</span><strong>Декоративная отделка</strong><small>Фактуры и покрытия</small></button>
-  <button class="tile" data-search="плитка керамогранит" style="background-image:url('https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=900&q=82')" onclick="detail('Плиточные работы','Укладка плитки, керамогранита, мозаики, затирка и обработка примыканий.','tile')"><span class="ico">▦</span><strong>Плиточные работы</strong><small>Керамогранит и мозаика</small></button>
-  <button class="tile" data-search="гипсокартон потолки" style="background-image:url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=82')" onclick="detail('Гипсокартон и потолки','Перегородки, обшивка, короба, ниши и потолочные конструкции.','drywall')"><span class="ico">▱</span><strong>ГКЛ и потолки</strong><small>Конструкции и формы</small></button>
+  <button class="tile" data-search="штукатурка стены" style="background-image:url('assets/icons/venetian-decor.webp')" onclick="detail('Штукатурные работы','Выравнивание стен и потолков, штукатурка по маякам и подготовка основания.','plaster')"><span class="ico">◩</span><strong>Штукатурка</strong><small>Стены и геометрия</small></button>
+  <button class="tile" data-search="декоративная отделка" style="background-image:url('assets/icons/tile.webp')" onclick="detail('Декоративная отделка','Декоративные штукатурки, фактуры, эффекты и декоративные стеновые покрытия.','decor')"><span class="ico">✧</span><strong>Декоративная отделка</strong><small>Фактуры и покрытия</small></button>
+  <button class="tile" data-search="плитка керамогранит" style="background-image:url('assets/icons/drywall.webp')" onclick="detail('Плиточные работы','Укладка плитки, керамогранита, мозаики, затирка и обработка примыканий.','tile')"><span class="ico">▦</span><strong>Плиточные работы</strong><small>Керамогранит и мозаика</small></button>
+  <button class="tile" data-search="гипсокартон потолки" style="background-image:url('assets/icons/concrete-table.webp')" onclick="detail('Гипсокартон и потолки','Перегородки, обшивка, короба, ниши и потолочные конструкции.','drywall')"><span class="ico">▱</span><strong>ГКЛ и потолки</strong><small>Конструкции и формы</small></button>
  </div>
- <button class="tile feature-tile" style="background-image:url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1100&q=85')" onclick="go('concrete')"><span class="ico">⬡</span><strong>Архитектурный бетон</strong><small>Столешницы · подоконники · ступени · изделия на заказ</small></button>
+ <button class="tile feature-tile" style="background-image:url('assets/icons/venetian-decor.webp')" onclick="go('concrete')"><span class="ico">⬡</span><strong>Архитектурный бетон</strong><small>Столешницы · подоконники · ступени · изделия на заказ</small></button>
  <div class="sectionhead"><h2>Быстрый доступ</h2></div>
  <div class="grid">
-  <button class="tile" style="background-image:url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=82')" onclick="go('portfolio')"><span class="ico">▧</span><strong>Портфолио</strong><small>Примеры направлений</small></button>
-  <button class="tile" style="background-image:url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=82')" onclick="go('materials')"><span class="ico">◈</span><strong>Материалы</strong><small>Подбор и решения</small></button>
-  <button class="tile" style="background-image:url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=900&q=82')" onclick="go('diy')"><span class="ico">▶</span><strong>Сделай сам <span class="tag">БЕТА</span></strong><small>Рецептуры и инструкции</small></button>
-  <button class="tile" style="background-image:url('https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=900&q=82')" onclick="go('orders')"><span class="ico">▤</span><strong>Мои заказы</strong><small>Заявки и расчёты</small></button>
+  <button class="tile" style="background-image:url('assets/icons/materials-samples.webp')" onclick="go('portfolio')"><span class="ico">▧</span><strong>Портфолио</strong><small>Примеры направлений</small></button>
+  <button class="tile" style="background-image:url('assets/icons/dry-mixes.webp')" onclick="go('materials')"><span class="ico">◈</span><strong>Материалы</strong><small>Подбор и решения</small></button>
+  <button class="tile" style="background-image:url('assets/icons/orders-checklist.webp')" onclick="go('diy')"><span class="ico">▶</span><strong>Сделай сам <span class="tag">БЕТА</span></strong><small>Рецептуры и инструкции</small></button>
+  <button class="tile" style="background-image:url('assets/icons/concrete-countertop.webp')" onclick="go('orders')"><span class="ico">▤</span><strong>Мои заказы</strong><small>Заявки и расчёты</small></button>
  </div>
  <div class="widecard"><div class="eyebrow">Персональный подход</div><h3 style="margin:7px 0 5px;font-size:15px">Нужна консультация?</h3><p class="muted" style="font-size:11px;margin:0 0 12px">Обсудим задачу, подберём технологию и составим предварительную смету.</p><button class="ghostbtn" onclick="go('profile')">Связаться с мастером →</button></div>
 </section>
@@ -134,12 +144,12 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
  <div class="concrete-hero"><span class="eyebrow">Изготовление на заказ</span><h2>Форма. Фактура. Характер.</h2><p>Создаём выразительные изделия из архитектурного бетона под размеры и задумку вашего пространства.</p></div>
  <div class="sectionhead"><h2>Что можно изготовить</h2></div>
  <div class="product-grid">
-  <div class="product-card" style="background-image:url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=82')"><strong>Столешницы</strong><small>Кухня, ванная, барная зона</small></div>
-  <div class="product-card" style="background-image:url('https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=800&q=82')"><strong>Раковины и умывальники</strong><small>Монолитные формы и чаши</small></div>
-  <div class="product-card" style="background-image:url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=800&q=82')"><strong>Подоконники</strong><small>По размерам и конфигурации</small></div>
-  <div class="product-card" style="background-image:url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=82')"><strong>Ступени и лестницы</strong><small>Отдельные элементы и комплекты</small></div>
-  <div class="product-card" style="background-image:url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=800&q=82')"><strong>Декоративные панели</strong><small>Рельеф, цвет и фактура</small></div>
-  <div class="product-card" style="background-image:url('https://images.unsplash.com/photo-1600607687644-c7171b42498f?auto=format&fit=crop&w=800&q=82')"><strong>Столы и предметы интерьера</strong><small>Авторские изделия по эскизу</small></div>
+  <div class="product-card" style="background-image:url('assets/icons/concrete-basin.webp')"><strong>Столешницы</strong><small>Кухня, ванная, барная зона</small></div>
+  <div class="product-card" style="background-image:url('assets/icons/concrete-windowsill.webp')"><strong>Раковины и умывальники</strong><small>Монолитные формы и чаши</small></div>
+  <div class="product-card" style="background-image:url('assets/icons/concrete-steps-panels.webp')"><strong>Подоконники</strong><small>По размерам и конфигурации</small></div>
+  <div class="product-card" style="background-image:url('assets/icons/decorative-panels.webp')"><strong>Ступени и лестницы</strong><small>Отдельные элементы и комплекты</small></div>
+  <div class="product-card" style="background-image:url('assets/icons/concrete-table.webp')"><strong>Декоративные панели</strong><small>Рельеф, цвет и фактура</small></div>
+  <div class="product-card" style="background-image:url('assets/icons/concrete-wall-finish.webp')"><strong>Столы и предметы интерьера</strong><small>Авторские изделия по эскизу</small></div>
  </div>
  <div class="widecard" style="margin-top:14px"><div class="eyebrow">Индивидуальный проект</div><h3 style="margin:7px 0 5px;font-size:15px">Есть своя идея?</h3><p class="muted" style="font-size:11px;margin:0 0 12px">Обсудим размеры, форму, оттенок, фактуру и способ финишной обработки. Стоимость рассчитывается после согласования параметров.</p><button class="goldbtn" style="width:100%" onclick="go('profile')">Обсудить изделие с мастером ↗</button></div>
  <div class="notice">Изображения в этом разделе — визуальные примеры направления, а не фотографии выполненных нами заказов.</div>
@@ -149,15 +159,15 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
  <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Услуги</h1><p>Выберите направление работ</p></div></div>
  <div class="search">⌕ <input placeholder="Поиск по услугам..." oninput="filterList('serviceList',this.value)"></div>
  <div id="serviceList">
-  <button class="rowcard" onclick="detail('Штукатурные работы','Выравнивание стен, маячная штукатурка и подготовка основания.','plaster')"><span class="rowico">◩</span><span><strong>Штукатурные работы</strong><small>Выравнивание стен и углов</small></span><span class="arrow">›</span></button>
-  <button class="rowcard" onclick="detail('Декоративная отделка','Декоративные штукатурки, фактуры, эффекты и декоративные стеновые покрытия.','decor')"><span class="rowico">✧</span><span><strong>Декоративная отделка</strong><small>Замша, нубук, фактуры и покрытия</small></span><span class="arrow">›</span></button>
-  <button class="rowcard" onclick="detail('Плиточные работы','Укладка плитки, керамогранита, мозаики, затирка и примыкания.','tile')"><span class="rowico">▦</span><span><strong>Плиточные работы</strong><small>Плитка, керамогранит, мозаика</small></span><span class="arrow">›</span></button>
-  <button class="rowcard" onclick="detail('Гипсокартон и потолки','Перегородки, короба, ниши, радиусные элементы и потолочные конструкции.','drywall')"><span class="rowico">▱</span><span><strong>Гипсокартон и потолки</strong><small>Перегородки, ниши, сложные формы</small></span><span class="arrow">›</span></button>
-  <button class="rowcard" onclick="detail('Полы и стяжки','Стяжки, выравнивание основания и укладка напольных покрытий.','floors')"><span class="rowico">▤</span><span><strong>Полы и стяжки</strong><small>Стяжка, ламинат, покрытия</small></span><span class="arrow">›</span></button>
-  <button class="rowcard" onclick="detail('Покраска и обои','Шпаклевание, шлифование, окраска и оклейка обоями.','painting')"><span class="rowico">▨</span><span><strong>Покраска и обои</strong><small>Подготовка и финишная отделка</small></span><span class="arrow">›</span></button>
-  <button class="rowcard" onclick="detail('Электрика и сантехника','Прокладка коммуникаций, монтаж электрики и сантехнического оборудования.','utilities')"><span class="rowico">⌁</span><span><strong>Электрика и сантехника</strong><small>Коммуникации и оборудование</small></span><span class="arrow">›</span></button>
-  <button class="rowcard" onclick="detail('Стеновые панели и облицовка','Монтаж декоративных панелей, реек, шпона и облицовка стен.','walls')"><span class="rowico">▧</span><span><strong>Стеновые панели и облицовка</strong><small>Панели, рейки, шпон и облицовка</small></span><span class="arrow">›</span></button>
-  <button class="rowcard" onclick="go('concrete')"><span class="rowico">⬡</span><span><strong>Архитектурный бетон</strong><small>Столешницы, раковины, ступени и изделия на заказ</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Штукатурные работы','Выравнивание стен, маячная штукатурка и подготовка основания.','plaster')"><span class="rowico"><img src="assets/icons/plaster.webp" alt="" loading="lazy"></span><span><strong>Штукатурные работы</strong><small>Выравнивание стен и углов</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Декоративная отделка','Декоративные штукатурки, фактуры, эффекты и декоративные стеновые покрытия.','decor')"><span class="rowico"><img src="assets/icons/venetian-decor.webp" alt="" loading="lazy"></span><span><strong>Декоративная отделка</strong><small>Замша, нубук, фактуры и покрытия</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Плиточные работы','Укладка плитки, керамогранита, мозаики, затирка и примыкания.','tile')"><span class="rowico"><img src="assets/icons/tile.webp" alt="" loading="lazy"></span><span><strong>Плиточные работы</strong><small>Плитка, керамогранит, мозаика</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Гипсокартон и потолки','Перегородки, короба, ниши, радиусные элементы и потолочные конструкции.','drywall')"><span class="rowico"><img src="assets/icons/drywall.webp" alt="" loading="lazy"></span><span><strong>Гипсокартон и потолки</strong><small>Перегородки, ниши, сложные формы</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Полы и стяжки','Стяжки, выравнивание основания и укладка напольных покрытий.','floors')"><span class="rowico"><img src="assets/icons/flooring.webp" alt="" loading="lazy"></span><span><strong>Полы и стяжки</strong><small>Стяжка, ламинат, покрытия</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Покраска и обои','Шпаклевание, шлифование, окраска и оклейка обоями.','painting')"><span class="rowico"><img src="assets/icons/paint-wallpaper.webp" alt="" loading="lazy"></span><span><strong>Покраска и обои</strong><small>Подготовка и финишная отделка</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Электрика и сантехника','Прокладка коммуникаций, монтаж электрики и сантехнического оборудования.','utilities')"><span class="rowico"><img src="assets/icons/electrical.webp" alt="" loading="lazy"></span><span><strong>Электрика и сантехника</strong><small>Коммуникации и оборудование</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="detail('Стеновые панели и облицовка','Монтаж декоративных панелей, реек, шпона и облицовка стен.','walls')"><span class="rowico"><img src="assets/icons/wall-slats.webp" alt="" loading="lazy"></span><span><strong>Стеновые панели и облицовка</strong><small>Панели, рейки, шпон и облицовка</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="go('concrete')"><span class="rowico"><img src="assets/icons/concrete-basin.webp" alt="" loading="lazy"></span><span><strong>Архитектурный бетон</strong><small>Столешницы, раковины, ступени и изделия на заказ</small></span><span class="arrow">›</span></button>
  </div>
 </section>
 
@@ -183,10 +193,10 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 
 <section class="screen" id="materials">
  <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Материалы</h1><p>Подбор решений под вашу задачу</p></div></div>
- <button class="rowcard" onclick="detail('Декоративные покрытия','Подбор декоративных штукатурок, красок и защитных составов под интерьер и условия эксплуатации.')"><span class="rowico">✧</span><span><strong>Декоративные покрытия</strong><small>Фактуры, краски, защитные составы</small></span><span class="arrow">›</span></button>
- <button class="rowcard" onclick="detail('Сухие строительные смеси','Штукатурки, шпаклёвки, клеи, затирки и составы для подготовки основания.')"><span class="rowico">▧</span><span><strong>Сухие смеси</strong><small>Штукатурки, шпаклёвки, клеи</small></span><span class="arrow">›</span></button>
- <button class="rowcard" onclick="detail('Материалы для пола','Составы для стяжки, грунты, наливные смеси и напольные покрытия.')"><span class="rowico">▤</span><span><strong>Материалы для пола</strong><small>Стяжки, грунты, покрытия</small></span><span class="arrow">›</span></button>
- <button class="rowcard" onclick="detail('Архитектурный бетон','Цементные системы, пигменты, наполнители, армирование и защитные пропитки.')"><span class="rowico">⬡</span><span><strong>Архитектурный бетон</strong><small>Составы и компоненты</small></span><span class="arrow">›</span></button>
+ <button class="rowcard" onclick="detail('Декоративные покрытия','Подбор декоративных штукатурок, красок и защитных составов под интерьер и условия эксплуатации.')"><span class="rowico"><img src="assets/icons/orders-checklist.webp" alt="" loading="lazy"></span><span><strong>Декоративные покрытия</strong><small>Фактуры, краски, защитные составы</small></span><span class="arrow">›</span></button>
+ <button class="rowcard" onclick="detail('Сухие строительные смеси','Штукатурки, шпаклёвки, клеи, затирки и составы для подготовки основания.')"><span class="rowico"><img src="assets/icons/orders-checklist.webp" alt="" loading="lazy"></span><span><strong>Сухие смеси</strong><small>Штукатурки, шпаклёвки, клеи</small></span><span class="arrow">›</span></button>
+ <button class="rowcard" onclick="detail('Материалы для пола','Составы для стяжки, грунты, наливные смеси и напольные покрытия.')"><span class="rowico"><img src="assets/icons/orders-checklist.webp" alt="" loading="lazy"></span><span><strong>Материалы для пола</strong><small>Стяжки, грунты, покрытия</small></span><span class="arrow">›</span></button>
+ <button class="rowcard" onclick="detail('Архитектурный бетон','Цементные системы, пигменты, наполнители, армирование и защитные пропитки.')"><span class="rowico"><img src="assets/icons/orders-checklist.webp" alt="" loading="lazy"></span><span><strong>Архитектурный бетон</strong><small>Составы и компоненты</small></span><span class="arrow">›</span></button>
  <div class="notice">Каталог и конкретные рекомендации по брендам и компонентам будут добавляться после проверки характеристик и доступности.</div>
 </section>
 
@@ -199,12 +209,11 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 <section class="screen" id="portfolio">
  <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Портфолио</h1><p>Примеры направлений и фактур</p></div></div>
  <div class="grid">
-  <div class="tile" style="min-height:150px;background:linear-gradient(145deg,#78654c,#292b29)"><span class="ico">✧</span><strong>Декоративные стены</strong><small>Фото работ добавим позже</small></div>
-  <div class="tile" style="min-height:150px;background:linear-gradient(145deg,#555b5b,#222729)"><span class="ico">▦</span><strong>Плитка и керамогранит</strong><small>Фото работ добавим позже</small></div>
-  <div class="tile" style="min-height:150px;background:linear-gradient(145deg,#645b50,#252729)"><span class="ico">⬡</span><strong>Архитектурный бетон</strong><small>Фото изделий добавим позже</small></div>
-  <div class="tile" style="min-height:150px;background:linear-gradient(145deg,#3e4b4a,#202729)"><span class="ico">▱</span><strong>Сложные конструкции</strong><small>Фото работ добавим позже</small></div>
+  <div class="tile" style="min-height:150px;background-image:url('assets/icons/venetian-decor.webp')"><strong>Декоративные стены</strong></div>
+  <div class="tile" style="min-height:150px;background-image:url('assets/icons/tile.webp')"><strong>Плитка и керамогранит</strong></div>
+  <div class="tile" style="min-height:150px;background-image:url('assets/icons/concrete-basin.webp')"><strong>Архитектурный бетон</strong></div>
+  <div class="tile" style="min-height:150px;background-image:url('assets/icons/drywall-arched-niche.webp')"><strong>Сложные конструкции</strong></div>
  </div>
- <div class="notice">Это демонстрационные карточки категорий, не фотографии выполненных объектов. Реальные работы добавим отдельно.</div>
 </section>
 
 <section class="screen" id="orders">
@@ -215,12 +224,12 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 
 <section class="screen" id="profile">
  <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Профиль мастера</h1><p>Контакты и информация</p></div></div>
- <div class="profilebox"><div class="profilepic">РГ</div><h2>Роман Геннадьевич</h2><p>Мастер по ремонту и отделке · Краснодар и Краснодарский край</p><div class="twocol" style="margin-top:17px"><div class="mini experience-card"><strong>Опыт работы</strong><div class="experience-main" id="experienceYears">10 лет</div><div class="experience-time" id="experienceRemainder">00 дн. · 00 ч. · 00 мин. · 00 сек.</div><small class="experience-caption">Опыт, который говорит сам за себя</small></div><div class="mini"><strong>Краснодар и край</strong><small>Регион работы</small></div></div></div>
+ <div class="profilebox"><div class="profilepic"><img src="assets/avatar.webp" alt="Фото мастера" width="74" height="74" fetchpriority="high"></div><h2>Роман Геннадьевич</h2><p>Мастер по ремонту и отделке · Краснодар и Краснодарский край</p><div class="twocol" style="margin-top:17px"><div class="mini experience-card"><strong>Опыт работы</strong><div class="experience-main" id="experienceYears">10 лет</div><div class="experience-time" id="experienceRemainder">00 дн. · 00 ч. · 00 мин. · 00 сек.</div><small class="experience-caption">Опыт, который говорит сам за себя</small></div><div class="mini profile-region"><strong>Краснодар и край</strong><small>Регион работы</small><img class="profile-region-map" src="assets/krasnodar-krai.svg" alt="Карта Краснодарского края с отметкой Краснодара" loading="lazy"></div></div></div>
  <div class="sectionhead"><h2>Связаться</h2></div>
- <a class="rowcard" href="tel:+79284088087" style="text-decoration:none" aria-label="Позвонить по телефону +7 928 408 80 87"><span class="rowico">☎</span><span><strong>Позвонить</strong><small>+7 928 408-80-87</small></span><span class="arrow">›</span></a>
- <a class="rowcard" href="https://max.ru/u/f9LHodD0cOJrL1sbt7XHsE8fD04Pk98IJpR_ELur1SZytCMkqTjKE-hdmTQ" target="_blank" rel="noopener noreferrer" style="text-decoration:none" aria-label="Открыть профиль в MAX"><span class="rowico">✉</span><span><strong>Написать в MAX</strong><small>Открыть чат с мастером</small></span><span class="arrow">›</span></a>
- <button class="rowcard" onclick="go('estimate')"><span class="rowico">₽</span><span><strong>Рассчитать стоимость</strong><small>Перейти к калькулятору</small></span><span class="arrow">›</span></button>
- <button class="rowcard" onclick="go('portfolio')"><span class="rowico">▧</span><span><strong>Посмотреть портфолио</strong><small>Направления работ</small></span><span class="arrow">›</span></button>
+ <a class="rowcard" href="tel:+79284088087" style="text-decoration:none" aria-label="Позвонить по телефону +7 928 408 80 87"><span class="rowico"><img src="assets/icons/orders-checklist.webp" alt="" loading="lazy"></span><span><strong>Позвонить</strong><small>+7 928 408-80-87</small></span><span class="arrow">›</span></a>
+ <a class="rowcard" href="https://max.ru/u/f9LHodD0cOJrL1sbt7XHsE8fD04Pk98IJpR_ELur1SZytCMkqTjKE-hdmTQ" target="_blank" rel="noopener noreferrer" style="text-decoration:none" aria-label="Открыть профиль в MAX"><span class="rowico"><img src="assets/icons/orders-checklist.webp" alt="" loading="lazy"></span><span><strong>Написать в MAX</strong><small>Открыть чат с мастером</small></span><span class="arrow">›</span></a>
+ <button class="rowcard" onclick="go('estimate')"><span class="rowico"><img src="assets/icons/orders-checklist.webp" alt="" loading="lazy"></span><span><strong>Рассчитать стоимость</strong><small>Перейти к калькулятору</small></span><span class="arrow">›</span></button>
+ <button class="rowcard" onclick="go('portfolio')"><span class="rowico"><img src="assets/icons/orders-checklist.webp" alt="" loading="lazy"></span><span><strong>Посмотреть портфолио</strong><small>Направления работ</small></span><span class="arrow">›</span></button>
 </section>
 </main>
 
