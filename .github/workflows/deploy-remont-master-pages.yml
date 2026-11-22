@@ -73,6 +73,19 @@ jobs:
           test -s "$GITHUB_WORKSPACE/public/remont-master/vendor/pdfmake.min.js"
           test -s "$GITHUB_WORKSPACE/public/remont-master/vendor/vfs_fonts.js"
 
+      - name: Inject temporary PDF gateway URL
+        if: ${{ secrets.RM_PDF_API_URL != '' }}
+        env:
+          RM_PDF_API_URL: ${{ secrets.RM_PDF_API_URL }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("public/remont-master/index.html")
+          s = p.read_text()
+          s = s.replace("__RM_PDF_API_URL__", "${RM_PDF_API_URL}")
+          p.write_text(s)
+          PY
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
