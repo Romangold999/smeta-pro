@@ -32,6 +32,54 @@ body.sheet-open{overflow:hidden}
 .toast.show{opacity:1;transform:translate(-50%,0)}.app{padding-bottom:155px}
 @media(max-height:620px){.estimate-sheet{max-height:92dvh}}
 
+
+/* PREMIUM DARK GOLD · layered 3D interface */
+:root{--bg:#100f0d;--panel:#1b1915;--panel2:#242019;--line:#51432d;--gold:#cda45d;--gold2:#f0d49a;--muted:#aaa397;--text:#f5f0e6;--gold-shadow:#6f5126}
+body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#100f0d}
+.app{background:linear-gradient(180deg,#1b1813 0,#12110f 42%,#100f0d 100%);box-shadow:0 0 70px #000b,inset 0 1px #ffffff08}
+.top{background:linear-gradient(180deg,#211d16f5,#171511f2);border-bottom:1px solid #cda45d30;box-shadow:0 5px 22px #0006}
+.mark{background:linear-gradient(145deg,#3a2d1c,#171512);box-shadow:inset 2px 2px 4px #ffffff20,inset -3px -4px 7px #000b,0 4px 10px #0008,0 0 0 1px #cda45d30}
+.avatar,.profilepic{box-shadow:inset 3px 3px 7px #ffffff25,inset -5px -6px 10px #0009,0 5px 14px #0008}
+.hero{background:radial-gradient(ellipse at 85% 5%,#a77d3833,transparent 45%),linear-gradient(145deg,#383022,#1d1a15 72%);border-color:#cda45d66;box-shadow:inset 1px 1px 0 #ffffff15,inset -2px -3px 8px #0008,0 12px 28px #0007}
+.goldbtn{background:linear-gradient(145deg,#ffe2a5 0%,#d7ad62 42%,#a97935 100%);border:1px solid #f3d49a;color:#21180d;box-shadow:inset 1px 1px 1px #fff9,inset -2px -3px 5px #80551f99,0 5px 0 #765020,0 10px 20px #0008;transition:transform .16s,box-shadow .16s,filter .16s}
+.goldbtn:active{transform:translateY(4px);box-shadow:inset 1px 1px 2px #fff7,inset -2px -3px 5px #80551f99,0 1px 0 #765020,0 4px 10px #0008}
+.ghostbtn,.back,.sheet-close{background:linear-gradient(145deg,#343027,#1d1b17);border:1px solid #74603d;box-shadow:inset 1px 1px 0 #ffffff18,inset -2px -3px 5px #0008,0 4px 10px #0007;transition:transform .16s,box-shadow .16s}
+.ghostbtn:active,.back:active,.sheet-close:active{transform:translateY(2px);box-shadow:inset 2px 2px 5px #0009,0 1px 3px #0008}
+.tile{display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:3px;min-height:142px;padding:14px;background-color:#29241b;background-size:cover;background-position:center;border:1px solid #a7834d88;border-radius:17px;box-shadow:inset 1px 1px 0 #ffffff30,inset -2px -3px 8px #0009,0 5px 0 #17130e,0 10px 18px #0008;transition:transform .18s,box-shadow .18s;isolation:isolate}
+.tile:before{content:"";position:absolute;inset:0;z-index:0;border-radius:inherit;background:linear-gradient(180deg,#100d0960 0%,#100d091c 30%,#100d09d9 100%);pointer-events:none}
+.tile:after{content:"";position:absolute;inset:1px;border-radius:inherit;border:1px solid #ffffff13;z-index:0;pointer-events:none}
+.tile>*{position:relative;z-index:1}
+.tile .ico{display:none}
+.tile strong{font-size:14px;line-height:1.2;color:#fff8e9;text-shadow:0 2px 7px #000d;letter-spacing:.1px}
+.tile small{font-size:10px;color:#f4ead6;text-shadow:0 1px 5px #000d}
+.tile:active,.rowcard:active{transform:translateY(3px) scale(.99);box-shadow:inset 2px 3px 7px #0009,0 2px 0 #17130e,0 4px 9px #0008}
+.tile.light-copy:before{background:linear-gradient(180deg,#f4e8d380 0%,#f4e8d31c 28%,#f4e8d3e8 100%)}
+.tile.light-copy strong,.tile.light-copy small{color:#211a10;text-shadow:0 1px 2px #fff8}
+.feature-tile{width:100%;min-height:166px;margin-top:12px;text-align:left}
+.feature-tile strong{font-size:18px}
+.rowcard{background:linear-gradient(145deg,#2b271f,#1a1915);border-color:#5e4b2d;box-shadow:inset 1px 1px 0 #ffffff12,inset -2px -3px 7px #0009,0 4px 0 #100e0b,0 8px 14px #0007;transition:transform .16s,box-shadow .16s}
+.rowico{background:linear-gradient(145deg,#826338,#3a2a17);border:1px solid #b58b4e;color:#f5d99e;box-shadow:inset 2px 2px 4px #fff4,inset -3px -4px 6px #24170c,0 4px 8px #0008}
+.nav{border-radius:11px;margin:0 2px;background:linear-gradient(145deg,#29251e,#171511);box-shadow:inset 1px 1px 0 #ffffff0d,inset -2px -3px 5px #0009,0 3px 7px #0007}
+.nav.active{color:#f3d28e;border:1px solid #9b783f;background:linear-gradient(145deg,#4a3921,#211b12);box-shadow:inset 1px 1px 0 #fff3,0 0 13px #cda45d20,0 3px 8px #0008}
+.bottom{background:linear-gradient(180deg,#201c16f5,#14120ff7);border-top:1px solid #a9854c55;box-shadow:0 -8px 25px #0008}
+.widecard,.profilebox,.mini,.estimateitem{background:linear-gradient(145deg,#29251e,#191815);border-color:#51432d;box-shadow:inset 1px 1px 0 #ffffff12,inset -2px -3px 7px #0008,0 6px 14px #0006}
+.search,.field input,.field select,.itemcontrols input,.itemcontrols select{background:linear-gradient(145deg,#151410,#242019);border-color:#51432d;box-shadow:inset 3px 3px 7px #000a,inset -1px -1px 2px #ffffff0a}
+.chip,.addbtn,.tag{background:linear-gradient(145deg,#342b1d,#1d1913);border-color:#85683a;box-shadow:inset 1px 1px 0 #ffffff12,0 3px 7px #0006}
+.addbtn{color:#f0d49a}
+.estimate-dock button{background:linear-gradient(145deg,#3b3020,#1c1914);border-color:#a7834d;box-shadow:inset 1px 1px 0 #ffffff20,inset -2px -3px 5px #0009,0 5px 0 #100e0b,0 9px 18px #0008}
+.estimate-sheet{background:linear-gradient(160deg,#28231b,#15130f);border-color:#80643a;box-shadow:0 -18px 55px #000b,inset 0 1px #ffffff15}
+.detail-visual{box-shadow:inset 1px 1px 0 #ffffff1a,inset -3px -5px 10px #0009,0 8px 18px #0007}
+.product-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.product-card{min-height:148px;border:1px solid #9b7848;border-radius:16px;padding:13px;display:flex;flex-direction:column;justify-content:flex-end;text-align:left;color:#fff5e1;background-size:cover;background-position:center;position:relative;overflow:hidden;box-shadow:inset 1px 1px 0 #ffffff22,inset -2px -3px 8px #0009,0 5px 0 #17130e,0 10px 18px #0008}
+.product-card:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#100d0920,#100d09df)}
+.product-card>*{position:relative}
+.product-card strong{font-size:13px;text-shadow:0 2px 6px #000}
+.product-card small{font-size:10px;color:#f1e5cf;text-shadow:0 1px 5px #000}
+.concrete-hero{min-height:190px;border-radius:19px;padding:17px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(180deg,#100d0910,#100d09e8),url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1100&q=85') center/cover;border:1px solid #a7834d;box-shadow:inset 1px 1px 0 #ffffff25,0 10px 24px #0009}
+.concrete-hero h2{font-size:21px;margin:0 0 5px;text-shadow:0 2px 8px #000}
+.concrete-hero p{font-size:11px;color:#f1e6d2;margin:0;max-width:290px;text-shadow:0 1px 5px #000}
+@media(max-width:370px){.tile{min-height:128px;padding:11px}.tile strong{font-size:12px}.product-card{min-height:132px}}
+
 </style>
 </head>
 <body>
@@ -47,19 +95,37 @@ body.sheet-open{overflow:hidden}
  <div class="search">⌕ <input id="homeSearch" placeholder="Найти услугу или материал..." oninput="filterHome(this.value)"></div>
  <div class="sectionhead"><h2>Направления работ</h2><button class="link" onclick="go('services')">Все услуги →</button></div>
  <div class="grid" id="homeTiles">
-  <button class="tile" data-search="штукатурка стены" onclick="detail('Штукатурные работы','Выравнивание стен и потолков, штукатурка по маякам и подготовка основания.','plaster')"><span class="ico">◩</span><strong>Штукатурка</strong><small>Стены и геометрия</small></button>
-  <button class="tile" data-search="декоративная отделка" onclick="detail('Декоративная отделка','Декоративные штукатурки, фактуры, эффекты и декоративные стеновые покрытия.','decor')"><span class="ico">✧</span><strong>Декоративная отделка</strong><small>Фактуры и покрытия</small></button>
-  <button class="tile" data-search="плитка керамогранит" onclick="detail('Плиточные работы','Укладка плитки, керамогранита, мозаики, затирка и обработка примыканий.','tile')"><span class="ico">▦</span><strong>Плиточные работы</strong><small>Керамогранит и мозаика</small></button>
-  <button class="tile" data-search="гипсокартон потолки" onclick="detail('Гипсокартон и потолки','Перегородки, обшивка, короба, ниши и потолочные конструкции.','drywall')"><span class="ico">▱</span><strong>ГКЛ и потолки</strong><small>Конструкции и формы</small></button>
+  <button class="tile" data-search="штукатурка стены" style="background-image:url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=82')" onclick="detail('Штукатурные работы','Выравнивание стен и потолков, штукатурка по маякам и подготовка основания.','plaster')"><span class="ico">◩</span><strong>Штукатурка</strong><small>Стены и геометрия</small></button>
+  <button class="tile" data-search="декоративная отделка" style="background-image:url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=82')" onclick="detail('Декоративная отделка','Декоративные штукатурки, фактуры, эффекты и декоративные стеновые покрытия.','decor')"><span class="ico">✧</span><strong>Декоративная отделка</strong><small>Фактуры и покрытия</small></button>
+  <button class="tile" data-search="плитка керамогранит" style="background-image:url('https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=900&q=82')" onclick="detail('Плиточные работы','Укладка плитки, керамогранита, мозаики, затирка и обработка примыканий.','tile')"><span class="ico">▦</span><strong>Плиточные работы</strong><small>Керамогранит и мозаика</small></button>
+  <button class="tile" data-search="гипсокартон потолки" style="background-image:url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=82')" onclick="detail('Гипсокартон и потолки','Перегородки, обшивка, короба, ниши и потолочные конструкции.','drywall')"><span class="ico">▱</span><strong>ГКЛ и потолки</strong><small>Конструкции и формы</small></button>
  </div>
+ <button class="tile feature-tile" style="background-image:url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1100&q=85')" onclick="go('concrete')"><span class="ico">⬡</span><strong>Архитектурный бетон</strong><small>Столешницы · подоконники · ступени · изделия на заказ</small></button>
  <div class="sectionhead"><h2>Быстрый доступ</h2></div>
  <div class="grid">
-  <button class="tile" onclick="go('portfolio')"><span class="ico">▧</span><strong>Портфолио</strong><small>Примеры работ</small></button>
-  <button class="tile" onclick="go('materials')"><span class="ico">◈</span><strong>Материалы</strong><small>Подбор и решения</small></button>
-  <button class="tile" onclick="go('diy')"><span class="ico">▶</span><strong>Сделай сам <span class="tag">БЕТА</span></strong><small>Рецептуры и инструкции</small></button>
-  <button class="tile" onclick="go('orders')"><span class="ico">▤</span><strong>Мои заказы</strong><small>Заявки и расчёты</small></button>
+  <button class="tile" style="background-image:url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=82')" onclick="go('portfolio')"><span class="ico">▧</span><strong>Портфолио</strong><small>Примеры направлений</small></button>
+  <button class="tile" style="background-image:url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=82')" onclick="go('materials')"><span class="ico">◈</span><strong>Материалы</strong><small>Подбор и решения</small></button>
+  <button class="tile" style="background-image:url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=900&q=82')" onclick="go('diy')"><span class="ico">▶</span><strong>Сделай сам <span class="tag">БЕТА</span></strong><small>Рецептуры и инструкции</small></button>
+  <button class="tile" style="background-image:url('https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=900&q=82')" onclick="go('orders')"><span class="ico">▤</span><strong>Мои заказы</strong><small>Заявки и расчёты</small></button>
  </div>
  <div class="widecard"><div class="eyebrow">Персональный подход</div><h3 style="margin:7px 0 5px;font-size:15px">Нужна консультация?</h3><p class="muted" style="font-size:11px;margin:0 0 12px">Обсудим задачу, подберём технологию и составим предварительную смету.</p><button class="ghostbtn" onclick="go('profile')">Связаться с мастером →</button></div>
+</section>
+
+
+<section class="screen" id="concrete">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Архитектурный бетон</h1><p>Индивидуальные изделия и интерьерные решения</p></div></div>
+ <div class="concrete-hero"><span class="eyebrow">Изготовление на заказ</span><h2>Форма. Фактура. Характер.</h2><p>Создаём выразительные изделия из архитектурного бетона под размеры и задумку вашего пространства.</p></div>
+ <div class="sectionhead"><h2>Что можно изготовить</h2></div>
+ <div class="product-grid">
+  <div class="product-card" style="background-image:url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=82')"><strong>Столешницы</strong><small>Кухня, ванная, барная зона</small></div>
+  <div class="product-card" style="background-image:url('https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=800&q=82')"><strong>Раковины и умывальники</strong><small>Монолитные формы и чаши</small></div>
+  <div class="product-card" style="background-image:url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=800&q=82')"><strong>Подоконники</strong><small>По размерам и конфигурации</small></div>
+  <div class="product-card" style="background-image:url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=82')"><strong>Ступени и лестницы</strong><small>Отдельные элементы и комплекты</small></div>
+  <div class="product-card" style="background-image:url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=800&q=82')"><strong>Декоративные панели</strong><small>Рельеф, цвет и фактура</small></div>
+  <div class="product-card" style="background-image:url('https://images.unsplash.com/photo-1600607687644-c7171b42498f?auto=format&fit=crop&w=800&q=82')"><strong>Столы и предметы интерьера</strong><small>Авторские изделия по эскизу</small></div>
+ </div>
+ <div class="widecard" style="margin-top:14px"><div class="eyebrow">Индивидуальный проект</div><h3 style="margin:7px 0 5px;font-size:15px">Есть своя идея?</h3><p class="muted" style="font-size:11px;margin:0 0 12px">Обсудим размеры, форму, оттенок, фактуру и способ финишной обработки. Стоимость рассчитывается после согласования параметров.</p><button class="goldbtn" style="width:100%" onclick="go('profile')">Обсудить изделие с мастером ↗</button></div>
+ <div class="notice">Изображения в этом разделе — визуальные примеры направления, а не фотографии выполненных нами заказов.</div>
 </section>
 
 <section class="screen" id="services">
@@ -74,7 +140,7 @@ body.sheet-open{overflow:hidden}
   <button class="rowcard" onclick="detail('Покраска и обои','Шпаклевание, шлифование, окраска и оклейка обоями.','painting')"><span class="rowico">▨</span><span><strong>Покраска и обои</strong><small>Подготовка и финишная отделка</small></span><span class="arrow">›</span></button>
   <button class="rowcard" onclick="detail('Электрика и сантехника','Прокладка коммуникаций, монтаж электрики и сантехнического оборудования.','utilities')"><span class="rowico">⌁</span><span><strong>Электрика и сантехника</strong><small>Коммуникации и оборудование</small></span><span class="arrow">›</span></button>
   <button class="rowcard" onclick="detail('Стеновые панели и облицовка','Монтаж декоративных панелей, реек, шпона и облицовка стен.','walls')"><span class="rowico">▧</span><span><strong>Стеновые панели и облицовка</strong><small>Панели, рейки, шпон и облицовка</small></span><span class="arrow">›</span></button>
-  <button class="rowcard" onclick="detail('Изделия из архитектурного бетона','Столешницы, раковины, подоконники, ступени, панели и изделия по эскизу.','concrete')"><span class="rowico">⬡</span><span><strong>Архитектурный бетон</strong><small>Изделия по индивидуальному проекту</small></span><span class="arrow">›</span></button>
+  <button class="rowcard" onclick="go('concrete')"><span class="rowico">⬡</span><span><strong>Архитектурный бетон</strong><small>Столешницы, раковины, ступени и изделия на заказ</small></span><span class="arrow">›</span></button>
  </div>
 </section>
 
@@ -230,8 +296,29 @@ function saveEstimate(){if(!estimateRows.length){alert('Сначала доба�
 function renderOrders(){let list=document.getElementById('ordersList');if(!list)return;let saved=JSON.parse(localStorage.getItem('rm_estimates')||'[]');if(!saved.length){list.innerHTML='<div class="empty"><b>▤</b>Пока здесь пусто.<br>Сохраните предварительный расчёт или отправьте заявку мастеру.</div>';return}list.innerHTML=saved.map((s,i)=>'<div class="widecard"><strong>'+s.room+'</strong><small class="muted" style="display:block;margin:4px 0 8px">'+s.date+' · '+s.rows.length+' позиций</small>'+s.rows.map(r=>'<div class="calc-line"><span>'+r.name+' · '+r.qty+' '+r.unit+'</span><span>'+(r.price===null?'цена уточняется':money(r.qty*r.price))+'</span></div>').join('')+'<div class="notice">Предварительный расчёт. Окончательная стоимость согласовывается с мастером.</div></div>').join('')}
 function printEstimate(){if(!estimateRows.length){alert('Сначала добавьте работы в смету.');return}let w=window.open('','_blank');if(!w){alert('Разрешите открытие окна для печати PDF.');return}let rows=estimateRows.map(r=>'<tr><td>'+r.name+'</td><td>'+r.qty+' '+r.unit+'</td><td>'+(r.price===null?'уточняется':money(r.price))+'</td><td>'+(r.price===null?'уточняется':money(r.qty*r.price))+'</td></tr>').join('');w.document.write('<html><meta charset="utf-8"><title>Смета — РемонтМастер</title><body style="font:14px Arial;padding:30px"><h1>РемонтМастер</h1><h2>Предварительная смета</h2><p>'+document.getElementById('estimateRoom').value+'</p><table border="1" cellspacing="0" cellpadding="8" width="100%"><tr><th>Работа</th><th>Объём</th><th>Цена</th><th>Сумма</th></tr>'+rows+'</table><p>Предварительный расчёт. Окончательная стоимость согласовывается с мастером.</p></body></html>');w.document.close();w.print()}
 function filterList(id,q){document.querySelectorAll('#'+id+' .rowcard').forEach(x=>x.classList.toggle('hidden',!x.innerText.toLowerCase().includes(q.toLowerCase())))}
+
+function applyTileContrast(){
+ document.querySelectorAll('.tile[style*="background-image"]').forEach(tile=>{
+  if(tile.dataset.contrastChecked)return;
+  tile.dataset.contrastChecked='1';
+  const match=getComputedStyle(tile).backgroundImage.match(/url\(["']?(.*?)["']?\)/);
+  if(!match||!match[1])return;
+  const img=new Image();img.crossOrigin='anonymous';
+  img.onload=()=>{
+   try{
+    const c=document.createElement('canvas'),ctx=c.getContext('2d',{willReadFrequently:true});
+    c.width=24;c.height=24;ctx.drawImage(img,0,0,24,24);
+    const pixels=ctx.getImageData(2,14,20,8).data;let total=0,count=0;
+    for(let i=0;i<pixels.length;i+=4){total+=(pixels[i]*.2126+pixels[i+1]*.7152+pixels[i+2]*.0722);count++}
+    tile.classList.toggle('light-copy',total/count>158);
+   }catch(e){tile.classList.remove('light-copy')}
+  };
+  img.src=match[1];
+ });
+}
+
 function filterHome(q){document.querySelectorAll('#homeTiles .tile').forEach(x=>x.classList.toggle('hidden',!x.dataset.search.includes(q.toLowerCase())))}
-renderCatalog();renderEstimate();renderOrders();
+renderCatalog();renderEstimate();renderOrders();applyTileContrast();
 </script>
 </body></html>
 <!-- восстановленная публикация исходной сборки; функциональный код не изменён -->
