@@ -374,14 +374,19 @@ async function printEstimate(){
  try{
   const html2pdf=await rmLoadPdfLibrary();
   try{await rmLoadPdfFont()}catch(fontError){console.warn("PDF font fallback:",fontError)}
+  if(document.fonts&&document.fonts.ready){try{await document.fonts.ready}catch(e){}}
   root=rmPdfDocument();
-  root.style.position="absolute";
+  root.style.position="fixed";
   root.style.left="0";
   root.style.top="0";
-  root.style.zIndex="-1";
+  root.style.zIndex="2147483647";
   root.style.pointerEvents="none";
+  root.style.display="block";
+  root.style.visibility="visible";
+  root.style.opacity="1";
   document.body.appendChild(root);
-  const pdfData=await html2pdf().set({margin:[8,8,8,8],image:{type:"jpeg",quality:.96},html2canvas:{scale:2,useCORS:true,backgroundColor:"#11100e",logging:false,windowWidth:900,scrollX:0,scrollY:0},jsPDF:{unit:"mm",format:"a4",orientation:"portrait",compress:true},pagebreak:{mode:["css","legacy"]}}).from(root).toPdf().outputPdf("arraybuffer");
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  const pdfData=await html2pdf().set({margin:[8,8,8,8],image:{type:"jpeg",quality:1},html2canvas:{scale:2,useCORS:true,backgroundColor:"#11100e",logging:false,windowWidth:900,windowHeight:Math.max(window.innerHeight,root.scrollHeight),scrollX:0,scrollY:0},jsPDF:{unit:"mm",format:"a4",orientation:"portrait",compress:true},pagebreak:{mode:["css","legacy"]}}).from(root).toPdf().outputPdf("arraybuffer");
   if(!(pdfData instanceof ArrayBuffer)||pdfData.byteLength<500)throw new Error("PDF не сформирован: получены пустые данные");
   const pdfBytes=new Uint8Array(pdfData);
   const pdfHeader=String.fromCharCode(...pdfBytes.slice(0,5));
