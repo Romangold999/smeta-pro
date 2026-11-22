@@ -323,9 +323,9 @@ function renderOrders(){let list=document.getElementById('ordersList');if(!list)
 <!-- PDF library and embedded fonts are served from the local vendor folder. -->
 <!-- PDF bundle version: 0.2.20. -->
 let rmPdfLibraryPromise=null;
+let rmPdfFontsLoaded=false;
 function rmLoadPdfLibrary(){
- const hasRoboto=()=>!!(window.pdfMake&&window.pdfMake.vfs&&Object.keys(window.pdfMake.vfs).some(name=>name.toLowerCase()==="roboto-regular.ttf"));
- if(window.pdfMake&&typeof window.pdfMake.createPdf==="function"&&hasRoboto())return Promise.resolve(window.pdfMake);
+ if(window.pdfMake&&typeof window.pdfMake.createPdf==="function"&&rmPdfFontsLoaded)return Promise.resolve(window.pdfMake);
  if(rmPdfLibraryPromise)return rmPdfLibraryPromise;
  rmPdfLibraryPromise=(async()=>{
   const loadScript=(url)=>new Promise((resolve,reject)=>{
@@ -337,12 +337,26 @@ function rmLoadPdfLibrary(){
   });
   if(!window.pdfMake||typeof window.pdfMake.createPdf!=="function")await loadScript("vendor/pdfmake.min.js");
   if(!window.pdfMake||typeof window.pdfMake.createPdf!=="function")throw new Error("Локальная библиотека pdfMake не инициализировалась");
-  if(!hasRoboto())await loadScript("vendor/vfs_fonts.js");
-  const fonts=window.pdfMake&&window.pdfMake.vfs;
-  const required=["Roboto-Regular.ttf","Roboto-Medium.ttf","Roboto-Italic.ttf","Roboto-MediumItalic.ttf"];
-  const keys=fonts?Object.keys(fonts):[];
-  const missing=required.filter(name=>!keys.some(key=>key.toLowerCase()===name.toLowerCase()));
-  if(missing.length)throw new Error("В локальном VFS отсутствуют шрифты: "+missing.join(", "));
+  if(typeof window.pdfMake.addVirtualFileSystem!=="function")throw new Error("Эта сборка pdfMake не поддерживает подключение локального VFS");
+  if(!rmPdfFontsLoaded){
+   const originalAddVfs=window.pdfMake.addVirtualFileSystem;
+   let registeredVfs=null;
+   window.pdfMake.addVirtualFileSystem=function(vfs){
+    registeredVfs=vfs;
+    return originalAddVfs.call(this,vfs);
+   };
+   try{
+    await loadScript("vendor/vfs_fonts.js");
+   }finally{
+    window.pdfMake.addVirtualFileSystem=originalAddVfs;
+   }
+   const required=["Roboto-Regular.ttf","Roboto-Medium.ttf","Roboto-Italic.ttf","Roboto-MediumItalic.ttf"];
+   const keys=registeredVfs?Object.keys(registeredVfs):[];
+   const missing=required.filter(name=>!keys.some(key=>key.toLowerCase()===name.toLowerCase()));
+   if(!registeredVfs)throw new Error("Файл шрифтов загрузился, но pdfMake не получил виртуальную файловую систему");
+   if(missing.length)throw new Error("В локальном VFS отсутствуют шрифты: "+missing.join(", "));
+   rmPdfFontsLoaded=true;
+  }
   window.pdfMake.fonts={Roboto:{normal:"Roboto-Regular.ttf",bold:"Roboto-Medium.ttf",italics:"Roboto-Italic.ttf",bolditalics:"Roboto-MediumItalic.ttf"}};
   return window.pdfMake;
  })().catch(error=>{rmPdfLibraryPromise=null;throw error});
