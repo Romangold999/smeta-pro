@@ -1,0 +1,11 @@
+name = "remont-master-pdf"
+main = "worker.js"
+compatibility_date = "2026-11-22"
+workers_dev = true
+
+[vars]
+GH_REPO = "Romangold999/smeta-pro"
+RELEASE_TAG = "remontmaster-temp-pdf"
+
+[triggers]
+crons = ["*/15 * * * *"]
