@@ -322,7 +322,7 @@ function saveEstimate(){if(!estimateRows.length){alert('Сначала доба�
 function renderOrders(){let list=document.getElementById('ordersList');if(!list)return;let saved=JSON.parse(localStorage.getItem('rm_estimates')||'[]');if(!saved.length){list.innerHTML='<div class="empty"><b>▤</b>Пока здесь пусто.<br>Сохраните предварительный расчёт или отправьте заявку мастеру.</div>';return}list.innerHTML=saved.map((s,i)=>'<div class="widecard"><strong>'+s.room+'</strong><small class="muted" style="display:block;margin:4px 0 8px">'+s.date+' · '+s.rows.length+' позиций</small>'+s.rows.map(r=>'<div class="calc-line"><span>'+r.name+' · '+r.qty+' '+r.unit+'</span><span>'+(r.price===null?'цена уточняется':money(r.qty*r.price))+'</span></div>').join('')+'<div class="notice">Предварительный расчёт. Окончательная стоимость согласовывается с мастером.</div></div>').join('')}
 let rmPdfLibraryPromise=null;
 function rmLoadPdfLibrary(){
- if(window.pdfMake&&typeof window.pdfMake.createPdf==="function"&&window.pdfMake.vfs&&Object.keys(window.pdfMake.vfs).some(name=>/Roboto-Regular\\.ttf$/i.test(name)))return Promise.resolve(window.pdfMake);
+ if(window.pdfMake&&typeof window.pdfMake.createPdf==="function"&&window.pdfMake.vfs&&Object.keys(window.pdfMake.vfs).some(name=>name.endsWith("Roboto-Regular.ttf")))return Promise.resolve(window.pdfMake);
  if(rmPdfLibraryPromise)return rmPdfLibraryPromise;
  rmPdfLibraryPromise=(async()=>{
   const loadScript=(url)=>new Promise((resolve,reject)=>{
@@ -334,9 +334,9 @@ function rmLoadPdfLibrary(){
   });
   if(!window.pdfMake||typeof window.pdfMake.createPdf!=="function")await loadScript("vendor/pdfmake.min.js");
   if(!window.pdfMake||typeof window.pdfMake.createPdf!=="function")throw new Error("Локальная библиотека pdfMake не инициализировалась");
-  if(!window.pdfMake.vfs||!Object.keys(window.pdfMake.vfs).some(name=>/Roboto-Regular\\.ttf$/i.test(name)))await loadScript("vendor/vfs_fonts.js");
+  if(!window.pdfMake.vfs||!Object.keys(window.pdfMake.vfs).some(name=>name.endsWith("Roboto-Regular.ttf")))await loadScript("vendor/vfs_fonts.js");
   const fonts=window.pdfMake&&window.pdfMake.vfs;
-  if(!fonts||!Object.keys(fonts).some(name=>/Roboto-Regular\\.ttf$/i.test(name)))throw new Error("В локальном файле шрифтов отсутствует Roboto-Regular.ttf");
+  if(!fonts||!Object.keys(fonts).some(name=>name.endsWith("Roboto-Regular.ttf")))throw new Error("В локальном файле шрифтов отсутствует Roboto-Regular.ttf");
   window.pdfMake.fonts={Roboto:{normal:"Roboto-Regular.ttf",bold:"Roboto-Medium.ttf",italics:"Roboto-Italic.ttf",bolditalics:"Roboto-MediumItalic.ttf"}};
   return window.pdfMake;
  })().catch(error=>{rmPdfLibraryPromise=null;throw error});
