@@ -374,9 +374,20 @@ async function printEstimate(){
  try{
   const html2pdf=await rmLoadPdfLibrary();
   try{await rmLoadPdfFont()}catch(fontError){console.warn("PDF font fallback:",fontError)}
-  root=rmPdfDocument();root.style.position="fixed";root.style.left="-10000px";root.style.top="0";document.body.appendChild(root);
-  const blob=await html2pdf().set({margin:[8,8,8,8],image:{type:"jpeg",quality:.96},html2canvas:{scale:2,useCORS:true,backgroundColor:"#11100e",logging:false},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"]}}).from(root).outputPdf("blob");
-  if(!blob||blob.size<100)throw new Error("PDF получился пустым");
+  root=rmPdfDocument();
+  root.style.position="absolute";
+  root.style.left="0";
+  root.style.top="0";
+  root.style.zIndex="-1";
+  root.style.pointerEvents="none";
+  document.body.appendChild(root);
+  const pdfData=await html2pdf().set({margin:[8,8,8,8],image:{type:"jpeg",quality:.96},html2canvas:{scale:2,useCORS:true,backgroundColor:"#11100e",logging:false,windowWidth:900,scrollX:0,scrollY:0},jsPDF:{unit:"mm",format:"a4",orientation:"portrait",compress:true},pagebreak:{mode:["css","legacy"]}}).from(root).toPdf().outputPdf("arraybuffer");
+  if(!(pdfData instanceof ArrayBuffer)||pdfData.byteLength<500)throw new Error("PDF не сформирован: получены пустые данные");
+  const pdfBytes=new Uint8Array(pdfData);
+  const pdfHeader=String.fromCharCode(...pdfBytes.slice(0,5));
+  const pdfTail=String.fromCharCode(...pdfBytes.slice(Math.max(0,pdfBytes.length-1024)));
+  if(pdfHeader!=="%PDF-"||!pdfTail.includes("%%EOF"))throw new Error("Ошибка структуры PDF: файл не прошёл проверку");
+  const blob=new Blob([pdfData],{type:"application/pdf"});
   const date=new Date().toISOString().slice(0,10);
   const fileName="RemontMaster-smeta-"+date+".pdf";
   const file=new File([blob],fileName,{type:"application/pdf"});
