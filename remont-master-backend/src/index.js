@@ -25,7 +25,7 @@ const defaults = {
 };
 function cors(req, env) {
   const origin=req.headers.get("Origin"), allowed=env.ALLOWED_ORIGIN||"";
-  if(origin && allowed && origin!==allowed) return null;
+  if(origin && allowed && origin!==allowed && origin!==new URL(req.url).origin) return null;
   return origin ? {"access-control-allow-origin":origin,"vary":"Origin","access-control-allow-headers":"content-type,authorization","access-control-allow-methods":"GET,POST,PUT,PATCH,DELETE,OPTIONS"} : {};
 }
 async function limit(req, env) {
