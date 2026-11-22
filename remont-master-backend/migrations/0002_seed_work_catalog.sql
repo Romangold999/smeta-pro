@@ -315,4 +315,4 @@ INSERT OR IGNORE INTO work_catalog(id,category,name,unit,price,sort_order,is_act
 INSERT OR IGNORE INTO work_catalog(id,category,name,unit,price,sort_order,is_active) VALUES('x296','other','Комплексная отделка кухни под ключ','м²',10500,313,1);
 INSERT OR IGNORE INTO work_catalog(id,category,name,unit,price,sort_order,is_active) VALUES('x297','other','Комплексная отделка комнаты под ключ','м²',8500,314,1);
 INSERT OR IGNORE INTO work_catalog(id,category,name,unit,price,sort_order,is_active) VALUES('x298','other','Комплексная отделка коридора под ключ','м²',9000,315,1);
-INSERT OR IGNORE INTO work_catalog(id,category,name,unit,price,sort_order,is_active) VALUES('x299','other','Комплексная отделка лоджии под ключ','м²',9500,316,1);
+INSERT OR IGNORE INTO work_catalog(id,category,name,unit,price,sort_order,is_active) VALUES('x299-lodgia','other','Комплексная отделка лоджии под ключ','м²',9500,316,1);
