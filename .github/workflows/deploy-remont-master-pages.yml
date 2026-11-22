@@ -79,11 +79,12 @@ jobs:
           RM_PDF_API_URL: ${{ secrets.RM_PDF_API_URL }}
         run: |
           python - <<'PY'
+          import os
           from pathlib import Path
           p = Path("public/remont-master/index.html")
-          s = p.read_text()
-          s = s.replace("__RM_PDF_API_URL__", "${RM_PDF_API_URL}")
-          p.write_text(s)
+          content = p.read_text()
+          content = content.replace("__RM_PDF_API_URL__", os.environ["RM_PDF_API_URL"].rstrip("/"))
+          p.write_text(content)
           PY
 
       - name: Configure Pages
