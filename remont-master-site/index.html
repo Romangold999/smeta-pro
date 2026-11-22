@@ -329,12 +329,12 @@ async function copyEstimate(){
  const lines=estimateRows.map((r,i)=>{
   const priceKnown=r.price!==null&&r.price!==undefined;
   return (i+1)+". "+r.name+
-   "\\nКоличество: "+r.qty+" "+r.unit+
-   (priceKnown?"\\nЦена: "+money(r.price)+" за "+r.unit+"\\nСумма: "+money(Number(r.qty||0)*Number(r.price||0)):"\\nСтоимость: уточняется");
+   "\nКоличество: "+r.qty+" "+r.unit+
+   (priceKnown?"\nЦена: "+money(r.price)+" за "+r.unit+"\nСумма: "+money(Number(r.qty||0)*Number(r.price||0)):"\nСтоимость: уточняется");
  });
- const textToCopy="РЕМОНТМАСТЕР\\nСмета: "+room+"\\nДата: "+date+"\\n\\n"+
-  lines.join("\\n\\n")+"\\n\\nИТОГО: "+(allPricesKnown?money(total):"цены уточняются")+
-  "\\n\\nПредварительный расчёт. Окончательная стоимость согласовывается с мастером. Материалы учитываются отдельно, если не указано иное.";
+ const textToCopy="РЕМОНТМАСТЕР\nСмета: "+room+"\nДата: "+date+"\n\n"+
+  lines.join("\n\n")+"\n\nИТОГО: "+(allPricesKnown?money(total):"цены уточняются")+
+  "\n\nПредварительный расчёт. Окончательная стоимость согласовывается с мастером. Материалы учитываются отдельно, если не указано иное.";
  try{
   if(navigator.clipboard&&typeof navigator.clipboard.writeText==="function"){
    await navigator.clipboard.writeText(textToCopy);
