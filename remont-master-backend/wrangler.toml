@@ -10,7 +10,7 @@ run_worker_first = ["/api/*", "/media/*"]
 [[d1_databases]]
 binding = "DB"
 database_name = "remont-master-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "26fca462-5980-4181-b55e-9547dee0afe6"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
