@@ -321,78 +321,85 @@ function clearEstimate(){if(!estimateRows.length)return;if(!confirm('Очист�
 function saveEstimate(){if(!estimateRows.length){alert('Сначала добавьте хотя бы одну работу.');return}let obj={room:document.getElementById('estimateRoom').value,rows:estimateRows.map(r=>({...r})),date:new Date().toLocaleDateString('ru-RU')};let saved=JSON.parse(localStorage.getItem('rm_estimates')||'[]');saved.unshift(obj);localStorage.setItem('rm_estimates',JSON.stringify(saved));renderOrders();closeEstimateSheet();historyStack.push(current);show('orders')}
 function renderOrders(){let list=document.getElementById('ordersList');if(!list)return;let saved=JSON.parse(localStorage.getItem('rm_estimates')||'[]');if(!saved.length){list.innerHTML='<div class="empty"><b>▤</b>Пока здесь пусто.<br>Сохраните предварительный расчёт или отправьте заявку мастеру.</div>';return}list.innerHTML=saved.map((s,i)=>'<div class="widecard"><strong>'+s.room+'</strong><small class="muted" style="display:block;margin:4px 0 8px">'+s.date+' · '+s.rows.length+' позиций</small>'+s.rows.map(r=>'<div class="calc-line"><span>'+r.name+' · '+r.qty+' '+r.unit+'</span><span>'+(r.price===null?'цена уточняется':money(r.qty*r.price))+'</span></div>').join('')+'<div class="notice">Предварительный расчёт. Окончательная стоимость согласовывается с мастером.</div></div>').join('')}
 let rmPdfLibraryPromise=null;
-function rmEscapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
 function rmLoadPdfLibrary(){
- if(window.html2pdf)return Promise.resolve(window.html2pdf);
+ if(window.pdfMake&&window.pdfMake.vfs)return Promise.resolve(window.pdfMake);
  if(rmPdfLibraryPromise)return rmPdfLibraryPromise;
  rmPdfLibraryPromise=new Promise((resolve,reject)=>{
-  const script=document.createElement("script");
-  script.src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-  script.onload=()=>window.html2pdf?resolve(window.html2pdf):reject(new Error("Библиотека PDF не загрузилась"));
-  script.onerror=()=>reject(new Error("Не удалось загрузить библиотеку PDF. Проверьте интернет-соединение."));
-  document.head.appendChild(script);
+  const load=(url)=>new Promise((ok,no)=>{
+   const script=document.createElement("script");
+   script.src=url;script.onload=ok;script.onerror=()=>no(new Error("Не удалось загрузить компонент PDF"));
+   document.head.appendChild(script);
+  });
+  load("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.20/pdfmake.min.js")
+   .then(()=>load("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.20/vfs_fonts.js"))
+   .then(()=>window.pdfMake&&window.pdfMake.vfs?resolve(window.pdfMake):reject(new Error("Шрифты PDF не загрузились")))
+   .catch(reject);
  });
  return rmPdfLibraryPromise;
 }
-function rmLoadPdfFont(){
- const id="rm-pdf-playfair-font";
- let link=document.getElementById(id);
- if(!link){link=document.createElement("link");link.id=id;link.rel="stylesheet";link.href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap";document.head.appendChild(link)}
- return new Promise((resolve,reject)=>{
-  if(document.fonts&&document.fonts.check('600 28px "Playfair Display"')){resolve();return}
-  link.addEventListener("load",()=>document.fonts.load('600 28px "Playfair Display"').then(resolve,reject),{once:true});
-  link.addEventListener("error",()=>reject(new Error("Не удалось загрузить шрифт PDF")),{once:true});
-  if(link.sheet)document.fonts.load('600 28px "Playfair Display"').then(resolve,reject);
- });
-}
-function rmPdfDocument(){
- const rows=estimateRows.map((r,i)=>'<tr><td class="num">'+(i+1)+'</td><td><b>'+rmEscapeHtml(r.name)+'</b></td><td>'+rmEscapeHtml(r.qty+' '+r.unit)+'</td><td>'+(r.price===null?'Уточняется':rmEscapeHtml(money(r.price)))+'</td><td class="sum">'+(r.price===null?'—':rmEscapeHtml(money(r.qty*r.price)))+'</td></tr>').join("");
- const total=estimateRows.reduce((sum,r)=>sum+(r.price===null?0:r.qty*r.price),0);
+function rmPdfDocumentDefinition(){
+ const rows=estimateRows.map((r,i)=>[
+  {text:String(i+1),style:"numberCell",alignment:"center"},
+  {text:String(r.name||""),style:"bodyCell"},
+  {text:String(r.qty)+" "+String(r.unit||""),style:"bodyCell",alignment:"center"},
+  {text:r.price===null?"Уточняется":money(r.price),style:"bodyCell",alignment:"right"},
+  {text:r.price===null?"—":money(r.qty*r.price),style:"sumCell",alignment:"right"}
+ ]);
+ const total=estimateRows.reduce((sum,r)=>sum+(r.price===null?0:Number(r.qty||0)*Number(r.price||0)),0);
  const allPricesKnown=estimateRows.every(r=>r.price!==null);
- const root=document.createElement("div");
- root.style.cssText="width:760px;padding:38px;background:#11100e;color:#f5f0e6;font-family:Arial,sans-serif;box-sizing:border-box";
- root.innerHTML='<div style="border:1px solid #8c6b39;border-radius:18px;padding:26px;background:linear-gradient(145deg,#292319,#171512)">'+
-  '<div style="font-family:\'Playfair Display\',Georgia,serif;font-size:18px;letter-spacing:2px;color:#e4c17f;font-weight:600">РЕМОНТМАСТЕР</div>'+
-  '<div style="font-family:\'Playfair Display\',Georgia,serif;font-size:31px;font-weight:600;line-height:1.15;margin-top:15px;color:#fff5df">Предварительная смета</div>'+
-  '<div style="margin-top:8px;color:#c4b99f;font-size:13px">Расчёт стоимости ремонтных и отделочных работ</div>'+
-  '<div style="margin-top:24px;padding:15px 17px;border-radius:12px;background:#171511;border:1px solid #5c482b"><div style="font-size:10px;color:#c7a96e;letter-spacing:1.5px;text-transform:uppercase">Объект / помещение</div><div style="font-size:17px;font-weight:bold;margin-top:6px">'+rmEscapeHtml(document.getElementById("estimateRoom")?.value||"Без названия")+'</div><div style="font-size:11px;color:#aaa08e;margin-top:7px">Дата составления: '+new Date().toLocaleDateString("ru-RU")+'</div></div>'+
-  '<table style="width:100%;border-collapse:collapse;margin-top:25px;font-size:12px"><thead><tr style="background:#3a2d1c;color:#f3d99f"><th style="padding:12px 8px;text-align:center">№</th><th style="padding:12px 8px;text-align:left">Наименование работ</th><th style="padding:12px 8px;text-align:left">Объём</th><th style="padding:12px 8px;text-align:right">Цена</th><th style="padding:12px 8px;text-align:right">Сумма</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-  '<div style="margin-top:22px;padding:19px;border-radius:14px;border:1px solid #a47d42;background:linear-gradient(120deg,#3a2d1c,#211a12);display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:10px;letter-spacing:1.5px;color:#d9bb7d">ИТОГО ПО РАБОТАМ</div><div style="font-size:11px;color:#bdb19a;margin-top:5px">'+estimateRows.length+' позиций</div></div><div style="font-family:\'Playfair Display\',Georgia,serif;font-size:27px;font-weight:600;color:#f5d99b;text-align:right">'+(allPricesKnown?rmEscapeHtml(money(total)):"Цены уточняются")+'</div></div>'+
-  '<div style="margin-top:20px;padding-top:14px;border-top:1px solid #55452d;color:#bcb3a3;font-size:10px;line-height:1.6">Предварительный расчёт. Окончательная стоимость согласовывается с мастером. Материалы учитываются отдельно, если не указано иное.</div>'+
-  '<div style="margin-top:17px;text-align:right;color:#9f8b67;font-size:9px;letter-spacing:1.2px">РЕМОНТМАСТЕР · КАЧЕСТВО В ДЕТАЛЯХ</div></div>';
- const style=document.createElement("style");
- style.textContent="table td{padding:11px 8px;border-bottom:1px solid #403729;color:#eee7d9;vertical-align:top}table td.num{text-align:center;color:#c9aa70}table td.sum{text-align:right;color:#f0d49a;font-weight:bold}table td:nth-child(3){white-space:nowrap}table td:nth-child(4){text-align:right;white-space:nowrap}";
- root.prepend(style);
- return root;
+ const room=document.getElementById("estimateRoom")?.value||"Без названия";
+ const date=new Date().toLocaleDateString("ru-RU");
+ return {
+  pageSize:"A4",pageMargins:[38,48,38,48],defaultStyle:{font:"Roboto",fontSize:9,color:"#eee7d9",lineHeight:1.25},
+  background:(currentPage,pageSize)=>[{canvas:[{type:"rect",x:0,y:0,w:pageSize.width,h:pageSize.height,color:"#11100e"}]}],
+  content:[
+   {text:"РЕМОНТМАСТЕР",fontSize:13,bold:true,color:"#e4c17f",characterSpacing:2,margin:[0,0,0,18]},
+   {text:"Предварительная смета",fontSize:25,bold:true,color:"#fff5df",margin:[0,0,0,5]},
+   {text:"Расчёт стоимости ремонтных и отделочных работ",fontSize:9,color:"#c4b99f",margin:[0,0,0,22]},
+   {table:{widths:["*"],body:[[{stack:[
+    {text:"ОБЪЕКТ / ПОМЕЩЕНИЕ",fontSize:8,bold:true,color:"#c7a96e",characterSpacing:1.2,margin:[0,0,0,6]},
+    {text:room,fontSize:13,bold:true,color:"#fff5df",margin:[0,0,0,6]},
+    {text:"Дата составления: "+date,fontSize:8,color:"#aaa08e"}
+   ],fillColor:"#1b1813",margin:[13,12,13,12]}]]},layout:{hLineWidth:()=>0,vLineWidth:()=>0},margin:[0,0,0,20]},
+   {table:{headerRows:1,keepWithHeaderRows:1,widths:[25,"*",58,65,70],body:[
+    [{text:"№",style:"tableHead",alignment:"center"},{text:"Наименование работ",style:"tableHead"},{text:"Объём",style:"tableHead",alignment:"center"},{text:"Цена",style:"tableHead",alignment:"right"},{text:"Сумма",style:"tableHead",alignment:"right"}],
+    ...rows
+   ]},layout:{
+    fillColor:(row)=>row===0?"#3a2d1c":(row%2===0?"#191713":"#211d17"),
+    hLineColor:()=>"#51432d",vLineColor:()=>"#51432d",hLineWidth:()=>0.5,vLineWidth:()=>0.35,
+    paddingLeft:()=>7,paddingRight:()=>7,paddingTop:()=>8,paddingBottom:()=>8
+   }},
+   {table:{widths:["*",170],body:[[
+    {stack:[{text:"ИТОГО ПО РАБОТАМ",fontSize:8,bold:true,color:"#d9bb7d",characterSpacing:1.2},{text:estimateRows.length+" позиций",fontSize:8,color:"#bdb19a",margin:[0,5,0,0]}],fillColor:"#302416",margin:[12,12,8,12]},
+    {text:allPricesKnown?money(total):"Цены уточняются",fontSize:17,bold:true,color:"#f5d99b,alignment:"right",fillColor:"#302416",margin:[8,17,12,17]}
+   ]]},layout:{hLineColor:() => "#a47d42",vLineColor:() => "#a47d42",hLineWidth:()=>0.8,vLineWidth:()=>0.8},margin:[0,20,0,0]},
+   {text:"Предварительный расчёт. Окончательная стоимость согласовывается с мастером. Материалы учитываются отдельно, если не указано иное.",fontSize:7.5,color:"#bcb3a3",margin:[0,18,0,0],lineHeight:1.35}
+  ],
+  styles:{
+   tableHead:{fontSize:8,bold:true,color:"#f3d99f",fillColor:"#3a2d1c"},
+   bodyCell:{fontSize:8.5,color:"#eee7d9"},
+   numberCell:{fontSize:8,color:"#c9aa70"},
+   sumCell:{fontSize:8.5,bold:true,color:"#f0d49a"}
+  },
+  footer:(page,pages)=>({columns:[{text:"РЕМОНТМАСТЕР · КАЧЕСТВО В ДЕТАЛЯХ",fontSize:7,color:"#9f8b67",characterSpacing:1},{text:page+" / "+pages,alignment:"right",fontSize:7,color:"#9f8b67"}],margin:[38,18,38,0]})
+ };
 }
 async function printEstimate(){
  if(!estimateRows.length){showToast("Сначала добавьте работы в смету");return}
  const button=document.querySelector('.sheet-actions button[onclick="printEstimate()"]');
  if(button){button.disabled=true;button.textContent="Формируем PDF…"}
- showToast("Формируем красивую PDF-смету…");
- let root,blobUrl;
+ showToast("Создаём PDF-смету…");
  try{
-  const html2pdf=await rmLoadPdfLibrary();
-  try{await rmLoadPdfFont()}catch(fontError){console.warn("PDF font fallback:",fontError)}
-  if(document.fonts&&document.fonts.ready){try{await document.fonts.ready}catch(e){}}
-  root=rmPdfDocument();
-  root.style.position="fixed";
-  root.style.left="0";
-  root.style.top="0";
-  root.style.zIndex="2147483647";
-  root.style.pointerEvents="none";
-  root.style.display="block";
-  root.style.visibility="visible";
-  root.style.opacity="1";
-  document.body.appendChild(root);
-  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-  const pdfData=await html2pdf().set({margin:[8,8,8,8],image:{type:"jpeg",quality:1},html2canvas:{scale:2,useCORS:true,backgroundColor:"#11100e",logging:false,windowWidth:900,windowHeight:Math.max(window.innerHeight,root.scrollHeight),scrollX:0,scrollY:0},jsPDF:{unit:"mm",format:"a4",orientation:"portrait",compress:true},pagebreak:{mode:["css","legacy"]}}).from(root).toPdf().outputPdf("arraybuffer");
-  if(!(pdfData instanceof ArrayBuffer)||pdfData.byteLength<500)throw new Error("PDF не сформирован: получены пустые данные");
-  const pdfBytes=new Uint8Array(pdfData);
-  const pdfHeader=String.fromCharCode(...pdfBytes.slice(0,5));
-  const pdfTail=String.fromCharCode(...pdfBytes.slice(Math.max(0,pdfBytes.length-1024)));
-  if(pdfHeader!=="%PDF-"||!pdfTail.includes("%%EOF"))throw new Error("Ошибка структуры PDF: файл не прошёл проверку");
-  const blob=new Blob([pdfData],{type:"application/pdf"});
+  const pdfMake=await rmLoadPdfLibrary();
+  const doc=pdfMake.createPdf(rmPdfDocumentDefinition());
+  const blob=await new Promise((resolve,reject)=>{
+   try{doc.getBlob(resolve)}catch(error){reject(error)}
+  });
+  if(!(blob instanceof Blob)||blob.size<1500)throw new Error("PDF получился пустым или слишком маленьким");
+  const head=new Uint8Array(await blob.slice(0,8).arrayBuffer());
+  if(String.fromCharCode(...head.slice(0,5))!=="%PDF-")throw new Error("Созданный файл не является PDF");
+  const tail=new TextDecoder().decode(await blob.slice(Math.max(0,blob.size-2048)).arrayBuffer());
+  if(!tail.includes("%%EOF"))throw new Error("PDF не прошёл проверку целостности");
   const date=new Date().toISOString().slice(0,10);
   const fileName="RemontMaster-smeta-"+date+".pdf";
   const file=new File([blob],fileName,{type:"application/pdf"});
@@ -405,8 +412,9 @@ async function printEstimate(){
     throw shareError;
    }
   }else{
-   blobUrl=URL.createObjectURL(blob);
-   const a=document.createElement("a");a.href=blobUrl;a.download=fileName;a.rel="noopener";a.style.display="none";document.body.appendChild(a);a.click();a.remove();
+   const url=URL.createObjectURL(blob);
+   const a=document.createElement("a");a.href=url;a.download=fileName;a.rel="noopener";a.style.position="fixed";a.style.left="-9999px";document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),60000);
    showToast("PDF сформирован");
   }
  }catch(error){
@@ -414,8 +422,6 @@ async function printEstimate(){
   showToast(error?.message||"Не удалось создать PDF");
   alert("Не удалось создать или сохранить PDF. "+(error?.message||"Попробуйте ещё раз."));
  }finally{
-  if(root)root.remove();
-  if(blobUrl)setTimeout(()=>URL.revokeObjectURL(blobUrl),60000);
   if(button){button.disabled=false;button.textContent="Печать / PDF"}
  }
 }
