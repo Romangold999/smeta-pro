@@ -1,0 +1,35 @@
+name: Deploy temporary PDF gateway
+
+on:
+  push:
+    branches:
+      - remont-master-pages
+    paths:
+      - "remont-master-pdf-worker/**"
+      - ".github/workflows/deploy-remont-master-pdf-worker.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: remont-master-pages
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: remont-master-pdf-worker
+          command: deploy
+      - name: Set GitHub release token in Worker
+        env:
+          GH_RELEASE_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          test -n "$GH_RELEASE_TOKEN" || { echo "Missing GH_RELEASE_TOKEN secret"; exit 1; }
+          printf '%s' "$GH_RELEASE_TOKEN" | npx --yes wrangler@4 secret put GITHUB_TOKEN --name remont-master-pdf --account-id "$CF_ACCOUNT_ID"
