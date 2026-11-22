@@ -322,19 +322,36 @@ function saveEstimate(){if(!estimateRows.length){alert('Сначала доба�
 function renderOrders(){let list=document.getElementById('ordersList');if(!list)return;let saved=JSON.parse(localStorage.getItem('rm_estimates')||'[]');if(!saved.length){list.innerHTML='<div class="empty"><b>▤</b>Пока здесь пусто.<br>Сохраните предварительный расчёт или отправьте заявку мастеру.</div>';return}list.innerHTML=saved.map((s,i)=>'<div class="widecard"><strong>'+s.room+'</strong><small class="muted" style="display:block;margin:4px 0 8px">'+s.date+' · '+s.rows.length+' позиций</small>'+s.rows.map(r=>'<div class="calc-line"><span>'+r.name+' · '+r.qty+' '+r.unit+'</span><span>'+(r.price===null?'цена уточняется':money(r.qty*r.price))+'</span></div>').join('')+'<div class="notice">Предварительный расчёт. Окончательная стоимость согласовывается с мастером.</div></div>').join('')}
 let rmPdfLibraryPromise=null;
 function rmLoadPdfLibrary(){
- if(window.pdfMake&&window.pdfMake.vfs)return Promise.resolve(window.pdfMake);
+ if(window.pdfMake&&window.pdfMake.vfs&&Object.keys(window.pdfMake.vfs).some(name=>/Roboto-Regular\\.ttf$/i.test(name)))return Promise.resolve(window.pdfMake);
  if(rmPdfLibraryPromise)return rmPdfLibraryPromise;
- rmPdfLibraryPromise=new Promise((resolve,reject)=>{
-  const load=(url)=>new Promise((ok,no)=>{
+ rmPdfLibraryPromise=(async()=>{
+  const sources=[
+   {name:"cdnjs",base:"https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.20/"},
+   {name:"jsDelivr",base:"https://cdn.jsdelivr.net/npm/pdfmake@0.2.20/build/"}
+  ];
+  const loadScript=(url)=>new Promise((resolve,reject)=>{
    const script=document.createElement("script");
-   script.src=url;script.onload=ok;script.onerror=()=>no(new Error("Не удалось загрузить компонент PDF"));
+   script.src=url;script.async=true;
+   script.onload=()=>resolve();
+   script.onerror=()=>{script.remove();reject(new Error("Не удалось загрузить "+url))};
    document.head.appendChild(script);
   });
-  load("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.20/pdfmake.min.js")
-   .then(()=>load("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.20/vfs_fonts.js"))
-   .then(()=>window.pdfMake&&window.pdfMake.vfs?resolve(window.pdfMake):reject(new Error("Шрифты PDF не загрузились")))
-   .catch(reject);
- });
+  const errors=[];
+  for(const source of sources){
+   try{
+    if(!window.pdfMake||typeof window.pdfMake.createPdf!=="function")await loadScript(source.base+"pdfmake.min.js");
+    if(!window.pdfMake||typeof window.pdfMake.createPdf!=="function")throw new Error("Библиотека pdfMake не инициализировалась");
+    if(!window.pdfMake.vfs||!Object.keys(window.pdfMake.vfs).some(name=>/Roboto-Regular\\.ttf$/i.test(name))){
+     await loadScript(source.base+"vfs_fonts.js");
+    }
+    const fonts=window.pdfMake&&window.pdfMake.vfs;
+    if(!fonts||!Object.keys(fonts).some(name=>/Roboto-Regular\\.ttf$/i.test(name)))throw new Error("Файл шрифтов загрузился, но Roboto-Regular.ttf отсутствует");
+    window.pdfMake.fonts={Roboto:{normal:"Roboto-Regular.ttf",bold:"Roboto-Medium.ttf",italics:"Roboto-Italic.ttf",bolditalics:"Roboto-MediumItalic.ttf"}};
+    return window.pdfMake;
+   }catch(error){errors.push(source.name+": "+(error?.message||String(error)))}
+  }
+  throw new Error("Не удалось загрузить библиотеку PDF или кириллические шрифты. "+errors.join(" | "));
+ })().catch(error=>{rmPdfLibraryPromise=null;throw error});
  return rmPdfLibraryPromise;
 }
 function rmPdfDocumentDefinition(){
