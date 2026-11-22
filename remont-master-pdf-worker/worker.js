@@ -69,14 +69,17 @@ async function upload(request, env) {
   const rawName = request.headers.get("X-File-Name") || "RemontMaster-smeta.pdf";
   const safeName = rawName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 90) || "estimate.pdf";
   const assetName = crypto.randomUUID() + "-" + safeName;
-  const uploadUrl = release.upload_url.replace(/\{\?name,label\}$/, "") + "?name=" + encodeURIComponent(assetName);
+  // GitHub Releases are public in a public repository: encrypt each PDF before it is stored there.
+  const key = await crypto.subtle.importKey("raw", await crypto.subtle.digest("SHA-256", new TextEncoder().encode(env.GITHUB_TOKEN)), { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, bytes));
+  const stored = new Uint8Array(iv.length + encrypted.length);
+  stored.set(iv, 0); stored.set(encrypted, iv.length);
+  const uploadUrl = release.upload_url.replace(/\{\?name,label\}$/, "") + "?name=" + encodeURIComponent(assetName + ".enc");
   const result = await fetch(uploadUrl, {
     method: "POST",
-    headers: {
-      ...githubHeaders(env, "application/vnd.github+json"),
-      "Content-Type": "application/pdf",
-    },
-    body: bytes
+    headers: { ...githubHeaders(env), "Content-Type": "application/octet-stream" },
+    body: stored
   });
   if (!result.ok) throw new Error("GitHub asset upload failed: " + result.status + " " + (await result.text()).slice(0, 300));
   const asset = await result.json();
@@ -101,18 +104,22 @@ async function download(request, env, ctx, assetId, token) {
     headers: githubHeaders(env, "application/octet-stream")
   });
   if (!r.ok || !r.body) return new Response("PDF not found", { status: r.status === 404 ? 404 : 502 });
-  const disposition = r.headers.get("Content-Disposition") || 'attachment; filename="estimate.pdf"';
-  const { readable, writable } = new TransformStream({
-    transform(chunk, controller) { controller.enqueue(chunk); },
-    async flush() { await removeAsset(env, assetId); }
-  });
-  r.body.pipeTo(writable).catch(async error => {
-    console.error("PDF stream interrupted; cleanup will retry:", error);
-  });
-  return new Response(readable, {
+  const encrypted = new Uint8Array(await r.arrayBuffer());
+  if (encrypted.length < 29) { await removeAsset(env, assetId); return new Response("Invalid encrypted PDF", { status: 502 }); }
+  const key = await crypto.subtle.importKey("raw", await crypto.subtle.digest("SHA-256", new TextEncoder().encode(env.GITHUB_TOKEN)), { name: "AES-GCM" }, false, ["decrypt"]);
+  let pdf;
+  try {
+    pdf = await crypto.subtle.decrypt({ name: "AES-GCM", iv: encrypted.slice(0, 12) }, key, encrypted.slice(12));
+  } catch (error) {
+    await removeAsset(env, assetId);
+    throw new Error("Temporary PDF could not be decrypted");
+  }
+  // Remove the GitHub asset immediately after the encrypted bytes have been retrieved and decrypted.
+  await removeAsset(env, assetId);
+  return new Response(pdf, {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": disposition,
+      "Content-Disposition": 'attachment; filename="RemontMaster-smeta.pdf"',
       "Cache-Control": "no-store, no-cache, must-revalidate",
       "X-Content-Type-Options": "nosniff",
       "Access-Control-Allow-Origin": "*"
