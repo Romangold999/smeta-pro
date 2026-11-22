@@ -57,6 +57,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# Fresh deployment run after the previous run's duplicate artifact retry.
 
-# Fresh deployment run after the previous run's duplicate artifact retry.
