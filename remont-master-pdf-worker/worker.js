@@ -75,7 +75,6 @@ async function upload(request, env) {
     headers: {
       ...githubHeaders(env, "application/vnd.github+json"),
       "Content-Type": "application/pdf",
-      "Content-Length": String(bytes.byteLength)
     },
     body: bytes
   });
