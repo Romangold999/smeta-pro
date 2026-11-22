@@ -210,7 +210,7 @@ const extraWorkCatalog = [
 {id:'x209',cat:'decor',name:'Создание декоративных панно',unit:'м²',price:3500},
 {id:'x210',cat:'decor',name:'Декоративное покрытие с эффектом металлик',unit:'м²',price:2200},
 {id:'x211',cat:'decor',name:'Нанесение микроцемента на стены',unit:'м²',price:2800},
-{id:'x212',cat:'decor',name:'Нанесение микроцемента на пол',unit:'м²',price:3500},
+{id:'x212',cat:'floors',name:'Нанесение микроцемента на пол',unit:'м²',price:3500},
 {id:'x213',cat:'decor',name:'Декоративная отделка ниш и порталов',unit:'м²',price:2500},
 {id:'x214',cat:'decor',name:'Многоцветная декоративная окраска',unit:'м²',price:1800},
 {id:'x215',cat:'tile',name:'Облицовка ступеней с подступенками',unit:'компл.',price:8500},
