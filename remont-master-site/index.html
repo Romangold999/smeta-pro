@@ -80,6 +80,22 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 .concrete-hero p{font-size:11px;color:#f1e6d2;margin:0;max-width:290px;text-shadow:0 1px 5px #000}
 @media(max-width:370px){.tile{min-height:128px;padding:11px}.tile strong{font-size:12px}.product-card{min-height:132px}}
 
+
+/* Search the complete work catalog from the home screen */
+.home-search{margin-top:12px}
+.home-search input{min-width:0}
+.home-search-results{margin:8px 0 14px;padding:8px;border:1px solid #725a35;border-radius:15px;background:linear-gradient(145deg,#28231b,#171511);box-shadow:inset 1px 1px 0 #ffffff12,0 8px 18px #0008}
+.home-search-results[hidden]{display:none}
+.home-result{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 8px;border-bottom:1px solid #ffffff12;color:#f5f0e6}
+.home-result:last-of-type{border-bottom:0}
+.home-result span{display:flex;flex-direction:column;gap:4px;min-width:0}
+.home-result strong{font-size:12px;line-height:1.3}
+.home-result small{font-size:10px;color:#c7b99e}
+.home-result .addbtn{flex-shrink:0}
+.home-result.concrete-result{width:100%;text-align:left;background:linear-gradient(145deg,#3b3020,#211a12);border:1px solid #a7834d;border-radius:10px;margin-bottom:5px}
+.home-result.concrete-result>b{font-size:10px;color:#f0d49a;white-space:nowrap}
+.home-search-empty,.home-search-count{margin:5px;padding:8px;font-size:11px;color:#c7b99e}
+
 </style>
 </head>
 <body>
@@ -92,7 +108,8 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 <main>
 <section class="screen active" id="home">
  <div class="hero"><div class="eyebrow">Ремонт · отделка · интерьер</div><h1>Качество, которое видно в деталях</h1><p>Профессиональный подход к ремонту и отделке. От идеи до готового результата.</p><button class="goldbtn" onclick="go('estimate')">Рассчитать стоимость ↗</button></div>
- <div class="search">⌕ <input id="homeSearch" placeholder="Найти услугу или материал..." oninput="filterHome(this.value)"></div>
+ <div class="search home-search">⌕ <input id="homeSearch" type="search" autocomplete="off" placeholder="Поиск работ: штукатурка, плитка..." oninput="filterHome(this.value)" aria-label="Поиск работ"></div>
+ <div id="homeSearchResults" class="home-search-results" aria-live="polite" hidden></div>
  <div class="sectionhead"><h2>Направления работ</h2><button class="link" onclick="go('services')">Все услуги →</button></div>
  <div class="grid" id="homeTiles">
   <button class="tile" data-search="штукатурка стены" style="background-image:url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=82')" onclick="detail('Штукатурные работы','Выравнивание стен и потолков, штукатурка по маякам и подготовка основания.','plaster')"><span class="ico">◩</span><strong>Штукатурка</strong><small>Стены и геометрия</small></button>
@@ -317,7 +334,23 @@ function applyTileContrast(){
  });
 }
 
-function filterHome(q){document.querySelectorAll('#homeTiles .tile').forEach(x=>x.classList.toggle('hidden',!x.dataset.search.includes(q.toLowerCase())))}
+function normalizeSearchText(value){return String(value||'').toLocaleLowerCase('ru-RU').replace(/ё/g,'е').replace(/[^a-zа-я0-9]+/gi,' ').trim()}
+function filterHome(q){
+ const query=normalizeSearchText(q),tiles=document.querySelectorAll('#homeTiles .tile'),results=document.getElementById('homeSearchResults');
+ if(!results)return;
+ if(!query){tiles.forEach(x=>x.classList.remove('hidden'));results.hidden=true;results.innerHTML='';return}
+ tiles.forEach(x=>x.classList.add('hidden'));
+ const words=query.split(/\s+/).filter(Boolean);
+ const found=workCatalog.filter(w=>{const hay=normalizeSearchText(w.name+' '+w.cat+' '+w.unit);return words.every(word=>hay.includes(word))});
+ const concreteTerms=['архитектурный бетон','столешница','подоконник','раковина','ступени','барная стойка','бетонная'];
+ const concreteMatch=concreteTerms.some(term=>normalizeSearchText(term).includes(query)||query.includes(normalizeSearchText(term)));
+ let html='';
+ if(concreteMatch)html+=`<button class="home-result concrete-result" onclick="go('concrete')"><span><strong>Архитектурный бетон</strong><small>Столешницы, подоконники, раковины, ступени и изделия на заказ</small></span><b>Открыть ›</b></button>`;
+ if(found.length)html+=found.slice(0,15).map(w=>`<div class="home-result"><span><strong>${w.name}</strong><small>${w.price===null?'Цена согласовывается':money(w.price)+' за '+w.unit}</small></span><button class="addbtn" onclick="addWork('${w.id}')">＋ Добавить</button></div>`).join('');
+ if(!html)html='<p class="home-search-empty">По этому запросу работы не найдены. Попробуй другое название.</p>';
+ else if(found.length>15)html+=`<p class="home-search-count">Показаны первые 15 из ${found.length} работ. Уточни запрос, чтобы сузить поиск.</p>`;
+ results.innerHTML=html;results.hidden=false;
+}
 renderCatalog();renderEstimate();renderOrders();applyTileContrast();
 </script>
 </body></html>
