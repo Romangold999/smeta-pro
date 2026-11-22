@@ -74,9 +74,9 @@ jobs:
           test -s "$GITHUB_WORKSPACE/public/remont-master/vendor/vfs_fonts.js"
 
       - name: Inject temporary PDF gateway URL
-        if: ${{ secrets.RM_PDF_API_URL != '' }}
         env:
           RM_PDF_API_URL: ${{ secrets.RM_PDF_API_URL }}
+        if: ${{ env.RM_PDF_API_URL != '' }}
         run: |
           python - <<'PY'
           import os
