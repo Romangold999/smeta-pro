@@ -106,6 +106,7 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 .profile-region{min-height:125px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
 .profile-region-map{width:100%;height:92px;display:block;object-fit:contain;margin-top:5px}
 
+.portfolio-grid{align-items:start}.portfolio-category{min-width:0}.portfolio-category>.tile{width:100%}.portfolio-gallery{display:grid;gap:9px;margin-top:9px}.portfolio-gallery .widecard{margin:0;padding:9px}.portfolio-gallery img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px}.portfolio-gallery p{font-size:11px;margin:7px 2px 2px;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -208,12 +209,13 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 
 <section class="screen" id="portfolio">
  <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Портфолио</h1><p>Примеры направлений и фактур</p></div></div>
- <div class="grid">
-  <div class="tile" style="min-height:150px;background-image:url('assets/icons/venetian-decor.webp')"><strong>Декоративные стены</strong></div>
-  <div class="tile" style="min-height:150px;background-image:url('assets/icons/tile.webp')"><strong>Плитка и керамогранит</strong></div>
-  <div class="tile" style="min-height:150px;background-image:url('assets/icons/concrete-basin.webp')"><strong>Архитектурный бетон</strong></div>
-  <div class="tile" style="min-height:150px;background-image:url('assets/icons/drywall-arched-niche.webp')"><strong>Сложные конструкции</strong></div>
+ <div class="grid portfolio-grid">
+  <div class="portfolio-category"><div class="tile" style="min-height:150px;background-image:url('assets/icons/venetian-decor.webp')"><strong>Декоративные стены</strong></div><div id="portfolio-decorative-walls"></div></div>
+  <div class="portfolio-category"><div class="tile" style="min-height:150px;background-image:url('assets/icons/tile.webp')"><strong>Плитка и керамогранит</strong></div><div id="portfolio-tile"></div></div>
+  <div class="portfolio-category"><div class="tile" style="min-height:150px;background-image:url('assets/icons/concrete-basin.webp')"><strong>Архитектурный бетон</strong></div><div id="portfolio-concrete"></div></div>
+  <div class="portfolio-category"><div class="tile" style="min-height:150px;background-image:url('assets/icons/drywall-arched-niche.webp')"><strong>Сложные конструкции</strong></div><div id="portfolio-complex-structures"></div></div>
  </div>
+ <div id="portfolio-unassigned"></div>
 </section>
 
 <section class="screen" id="orders">
