@@ -43,6 +43,8 @@ jobs:
           cp existing-site/index.html public/index.html
           cp remont-source/remont-master-site/index.html public/remont-master/index.html
           cp remont-source/remont-master-site/work-catalog.js public/remont-master/work-catalog.js
+          cp remont-source/remont-master-site/client-api.js public/remont-master/client-api.js
+          cp remont-source/remont-master-site/api-config.js public/remont-master/api-config.js
           cp -R remont-source/remont-master-site/assets public/remont-master/assets
 
       - name: Configure Pages
