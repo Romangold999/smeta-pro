@@ -1,0 +1,22 @@
+name = "remont-master-backend"
+main = "src/index.js"
+compatibility_date = "2026-11-22"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*", "/media/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "remont-master-db"
+database_id = "26fca462-5980-4181-b55e-9547dee0afe6"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "remont-master-media"
+
+[vars]
+APP_NAME = "РемонтМастер"
+ALLOWED_ORIGIN = "https://romangold999.github.io"
