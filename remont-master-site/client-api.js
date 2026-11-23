@@ -212,6 +212,19 @@
       target.innerHTML = items.length ? '<div class="sectionhead"><h2>Мои работы</h2></div><div class="grid">' + items.map(x => '<article class="widecard"><img loading="lazy" src="' + API + '/media/' + encodeURIComponent(x.key) + '" alt="' + esc(x.alt_text || x.title || 'Фото работы') + '" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px"><p>' + esc(x.title || '') + '</p></article>').join('') + '</div>' : '';
     } catch (error) { console.warn('Portfolio media sync skipped:', error); }
   }
+  async function loadSectionMedia(type, sectionId, targetId, heading) {
+    try {
+      const response=await fetch(API+"/api/media?related_type="+encodeURIComponent(type),{cache:"no-store"});
+      if(!response.ok)throw new Error("media API "+response.status);
+      const payload=await response.json(),section=document.getElementById(sectionId);
+      if(!section)return;
+      let target=document.getElementById(targetId);
+      if(!target){target=document.createElement("div");target.id=targetId;section.appendChild(target);}
+      const items=Array.isArray(payload.items)?payload.items:[];
+      target.innerHTML=items.length?'<div class="sectionhead"><h2>'+esc(heading)+'</h2></div><div class="grid">'+items.map(x=>'<article class="widecard"><img loading="lazy" src="'+API+'/media/'+encodeURIComponent(x.key)+'" alt="'+esc(x.alt_text||x.title||"Фото")+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px"><p>'+esc(x.title||"")+'</p></article>').join("")+'</div>':"";
+    } catch(error){console.warn("Assigned media sync skipped:",error);}
+  }
+
   function trackPageView() {
     const active = document.querySelector(".screen.active");
     const path = active ? "/" + active.id : location.pathname;
@@ -291,7 +304,9 @@
   loadRemoteCatalog();
   loadRemoteCategories();
   loadDiy();
+  loadSectionMedia('diy','diy','remoteDiyMedia','Фотографии и примеры');
   loadConcrete();
+  loadSectionMedia('concrete','concrete','remoteConcreteMedia','Фотографии изделий');
   loadPortfolioMedia();
   addLeadForm();
 })();
