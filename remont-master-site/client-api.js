@@ -7,6 +7,44 @@
     if (node && typeof value === "string" && value.trim()) node.textContent = value;
   };
 
+  function mediaSource(value) {
+    const v=String(value||"").trim();
+    if(!v)return "";
+    if(/^https?:\/\//i.test(v))return v;
+    if(v.startsWith("/media/"))return API+v;
+    return API+"/media/"+encodeURIComponent(v);
+  }
+
+  function renderContentCollections(content) {
+    const services=Array.isArray(content.services)?content.services:[];
+    if(services.length) {
+      const home=document.getElementById("homeTiles"),list=document.getElementById("serviceList");
+      const make=(item,i,homeMode)=>'<button class="'+(homeMode?"tile":"rowcard")+'" data-remote-service="'+i+'">'+(homeMode?'<span class="ico">✧</span>':'<span class="rowico">✧</span>')+'<span><strong>'+esc(item.title||item.name||"Услуга")+'</strong><small>'+esc(item.description||"")+'</small></span>'+(homeMode?"":'<span class="arrow">›</span>')+'</button>';
+      if(home){home.innerHTML=services.map((x,i)=>make(x,i,true)).join("");home.querySelectorAll("[data-remote-service]").forEach(b=>b.addEventListener("click",()=>{const x=services[Number(b.dataset.remoteService)];detail(x.title||x.name||"Услуга",x.description||"",x.key||x.category||"other");}));}
+      if(list){list.innerHTML=services.map((x,i)=>make(x,i,false)).join("");list.querySelectorAll("[data-remote-service]").forEach(b=>b.addEventListener("click",()=>{const x=services[Number(b.dataset.remoteService)];detail(x.title||x.name||"Услуга",x.description||"",x.key||x.category||"other");}));}
+    }
+    const materials=Array.isArray(content.materials)?content.materials:[];
+    if(materials.length) {
+      const section=document.getElementById("materials");
+      if(section) {
+        section.querySelectorAll(".rowcard").forEach(x=>x.remove());
+        let target=document.getElementById("remoteMaterials");
+        if(!target){target=document.createElement("div");target.id="remoteMaterials";const notice=section.querySelector(".notice");if(notice)notice.before(target);else section.appendChild(target);}
+        target.innerHTML=materials.map((x,i)=>'<button class="rowcard" data-remote-material="'+i+'"><span class="rowico">◈</span><span><strong>'+esc(x.title||x.name||"Материал")+'</strong><small>'+esc(x.description||"")+'</small></span><span class="arrow">›</span></button>').join("");
+        target.querySelectorAll("[data-remote-material]").forEach(b=>b.addEventListener("click",()=>{const x=materials[Number(b.dataset.remoteMaterial)];detail(x.title||x.name||"Материал",x.description||"",x.category||x.key||"other");}));
+      }
+    }
+    const portfolio=Array.isArray(content.portfolio)?content.portfolio:[];
+    if(portfolio.length) {
+      const section=document.getElementById("portfolio");
+      if(section) {
+        let target=document.getElementById("remotePortfolioContent");
+        if(!target){target=document.createElement("div");target.id="remotePortfolioContent";section.appendChild(target);}
+        target.innerHTML=portfolio.map(x=>{const src=mediaSource(x.image||x.photo||x.media_key);return '<article class="widecard">'+(src?'<img loading="lazy" src="'+esc(src)+'" alt="'+esc(x.title||"Работа")+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px">':'')+'<h3>'+esc(x.title||x.name||"Работа")+'</h3><p class="muted">'+esc(x.description||"")+'</p></article>';}).join("");
+      }
+    }
+  }
+
   async function loadRemoteContent() {
     try {
       const response = await fetch(API + "/api/content", { cache: "no-store" });
@@ -16,6 +54,7 @@
       const home = c.home || {};
       const profile = c.profile || {};
       const concrete = c.concrete || {};
+      renderContentCollections(c);
 
       text("#home .hero .eyebrow", home.eyebrow);
       text("#home .hero h1", home.title);
