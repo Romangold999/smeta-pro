@@ -200,16 +200,27 @@
   }
 
   async function loadPortfolioMedia() {
+    const categories = [
+      {key:"decorative-walls",id:"portfolio-decorative-walls",title:"Декоративные стены"},
+      {key:"tile",id:"portfolio-tile",title:"Плитка и керамогранит"},
+      {key:"concrete",id:"portfolio-concrete",title:"Архитектурный бетон"},
+      {key:"complex-structures",id:"portfolio-complex-structures",title:"Сложные конструкции"}
+    ];
     try {
       const response = await fetch(API + '/api/media?related_type=portfolio', {cache:'no-store'});
       if (!response.ok) throw new Error('media API ' + response.status);
       const payload = await response.json();
-      const section = document.getElementById('portfolio');
-      if (!section) return;
-      let target = document.getElementById('remotePortfolioMedia');
-      if (!target) { target = document.createElement('div'); target.id = 'remotePortfolioMedia'; section.appendChild(target); }
       const items = Array.isArray(payload.items) ? payload.items : [];
-      target.innerHTML = items.length ? '<div class="sectionhead"><h2>Мои работы</h2></div><div class="grid">' + items.map(x => '<article class="widecard"><img loading="lazy" src="' + API + '/media/' + encodeURIComponent(x.key) + '" alt="' + esc(x.alt_text || x.title || 'Фото работы') + '" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px"><p>' + esc(x.title || '') + '</p></article>').join('') + '</div>' : '';
+      const card = x => '<article class="widecard"><img loading="lazy" src="' + API + '/media/' + encodeURIComponent(x.key) + '" alt="' + esc(x.alt_text || x.title || 'Фото работы') + '"><p>' + esc(x.title || '') + '</p></article>';
+      categories.forEach(category => {
+        const target = document.getElementById(category.id);
+        if (!target) return;
+        const rows = items.filter(x => String(x.category || '').toLowerCase() === category.key);
+        target.innerHTML = rows.length ? '<div class="portfolio-gallery">' + rows.map(card).join('') + '</div>' : '';
+      });
+      const unassigned = items.filter(x => !categories.some(c => c.key === String(x.category || '').toLowerCase()));
+      const fallback = document.getElementById('portfolio-unassigned');
+      if (fallback) fallback.innerHTML = unassigned.length ? '<div class="sectionhead"><h2>Фотографии без категории</h2></div><div class="portfolio-gallery">' + unassigned.map(card).join('') + '</div>' : '';
     } catch (error) { console.warn('Portfolio media sync skipped:', error); }
   }
   async function loadSectionMedia(type, sectionId, targetId, heading) {
