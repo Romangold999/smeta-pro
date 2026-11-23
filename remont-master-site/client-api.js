@@ -71,15 +71,16 @@
   function videoCard(raw,title) {
     try {
       const u=new URL(String(raw||'').trim());
+      if(u.protocol!=='https:'&&u.protocol!=='http:')return '';
       const host=u.hostname.toLowerCase().replace(/^www\./,'');
       let src='';
-      if(host==='youtu.be'||host.indexOf('youtube.com')>=0) {
+      if(host==='youtu.be'||host==='youtube.com'||host==='m.youtube.com'||host==='music.youtube.com') {
         const id=host==='youtu.be'?u.pathname.split('/').filter(Boolean)[0]:(u.searchParams.get('v')||u.pathname.split('/').filter(Boolean).pop());
         if(id&&/^[a-zA-Z0-9_-]{6,20}$/.test(id))src='https://www.youtube-nocookie.com/embed/'+id+'?rel=0';
-      } else if(host.indexOf('rutube.ru')>=0) {
+      } else if(host==='rutube.ru'||host.endsWith('.rutube.ru')) {
         const p=u.pathname.split('/').filter(Boolean);const id=p[p.length-1]||'';
         if(p.indexOf('video')>=0||p.indexOf('embed')>=0)src='https://rutube.ru/play/embed/'+id;
-      } else if(host.indexOf('vk.com')>=0||host.indexOf('vkvideo.ru')>=0||host==='vk.ru') {
+      } else if(host==='vk.com'||host.endsWith('.vk.com')||host==='vkvideo.ru'||host.endsWith('.vkvideo.ru')||host==='vk.ru') {
         const p=u.pathname.split('/').filter(Boolean).pop()||'';const pair=p.replace('video','').split('_');
         const oid=u.searchParams.get('oid')||pair[0],id=u.searchParams.get('id')||pair[1],hash=u.searchParams.get('hash');
         if(oid&&id)src='https://vk.com/video_ext.php?oid='+encodeURIComponent(oid)+'&id='+encodeURIComponent(id)+(hash?'&hash='+encodeURIComponent(hash):'');
