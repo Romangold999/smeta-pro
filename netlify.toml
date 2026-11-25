@@ -1,0 +1,6 @@
+[build]
+  publish = "max-bot/public"
+  functions = "max-bot/netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
