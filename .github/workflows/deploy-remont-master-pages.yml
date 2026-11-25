@@ -1,5 +1,5 @@
 name: Deploy RemontMaster Git-only preview
-# A main-branch workflow update refreshes only /remont-master-preview/; production stays copied from remont-master-pages.
+# Preview deployments are restricted to the configured Pages branch.
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
         run: echo "Workflow dispatch is registered. Actual Pages deployments run from remont-master-pages."
 
   deploy:
-    if: github.ref == 'refs/heads/remont-master-pages' || github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/remont-master-pages'
     concurrency:
       group: "pages"
       cancel-in-progress: true
