@@ -1,4 +1,5 @@
 name: Deploy RemontMaster preview to GitHub Pages
+# Preview source is remont-master-admin-git; production remains copied from this branch.
 
 on:
   push:
