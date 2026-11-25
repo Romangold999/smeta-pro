@@ -209,7 +209,7 @@ async function save(){
   await req("git/refs/heads/"+BRANCH,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({sha:c.sha,force:false})});
   const v=await req("git/ref/heads/"+BRANCH);if(v.object?.sha!==c.sha)throw Error("GitHub не подтвердил запись.");
   const read=await req("git/trees/"+commitTree+"?recursive=1"),map=new Map((read.tree||[]).map(x=>[x.path,x.sha]));for(const [p,s] of expected)if(map.get(p)!==s)throw Error("Проверка чтением не пройдена: "+p);
-  head=c.sha;pending.clear();committed=true;updateSave();status("Сохранено и проверено в main, commit "+c.sha.slice(0,7)+". Публикация запускается автоматически из этой же ветки.");
+  head=c.sha;pending.clear();committed=true;updateSave();status("Сохранено и проверено в "+BRANCH+", commit "+c.sha.slice(0,7)+". Публикация запускается автоматически из этой же ветки.");
  }catch(e){status((committed?"Данные записаны, но публикация не подтверждена: ":"Сохранение не выполнено: ")+e.message,true)}
  finally{busy=false;updateSave()}
 }
