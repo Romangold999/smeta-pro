@@ -1,76 +1,62 @@
 name: Deploy RemontMaster production
-# Production site and its admin panel are published from the same validated source.
-# Publish the connected admin build: save commits data to remont-master-admin-git and then writes a trigger commit to remont-master-pages.
-# Trigger main-site rebuild for catalog commit 452f3e650282abe125425779bf2277d602826563.
-# Publish inline editor and cache-busted admin script for all catalog positions.
 
 on:
   push:
     branches:
       - main
-      - remont-master-pages
     paths:
       - ".github/workflows/deploy-remont-master-pages.yml"
-      - "remont-master-site/admin/ADMIN-GUIDE.md"
-      - "remont-master-deploy-trigger.json"
+      - "remont-master-site/**"
   workflow_dispatch:
 
 permissions:
-  actions: read
   contents: read
   pages: write
   id-token: write
 
-jobs:
-  register-workflow:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Register workflow_dispatch on default branch
-        run: echo "Workflow dispatch is registered. Production deployments run from remont-master-pages."
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
+jobs:
   deploy:
-    if: github.ref == 'refs/heads/remont-master-pages'
-    concurrency:
-      group: "pages"
-      cancel-in-progress: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout deployment configuration and rollback source
+      - name: Checkout the single source of truth
         uses: actions/checkout@v4
         with:
-          ref: remont-master-pages
-          path: current-source/
+          ref: main
 
-      - name: Checkout live RemontMaster source and admin
-        uses: actions/checkout@v4
-        with:
-          ref: remont-master-admin-git
-          path: site-source/
-
-      - name: Checkout existing root site
-        uses: actions/checkout@v4
-        with:
-          ref: telegram-mini-app
-          path: existing-site/
-
-      - name: Assemble production site (single source, no preview copy)
+      - name: Assemble RemontMaster from main
         run: |
           mkdir -p public/remont-master
-          cp existing-site/index.html public/index.html
-          cp -R site-source/remont-master-site/. public/remont-master/
+          cp -R remont-master-site/. public/remont-master/
+          cat > public/index.html <<'HTML'
+          <!doctype html>
+          <html lang="ru">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <meta http-equiv="refresh" content="0; url=./remont-master/">
+            <title>РемонтМастер</title>
+          </head>
+          <body>
+            <p><a href="./remont-master/">Открыть сайт РемонтМастер</a></p>
+          </body>
+          </html>
+          HTML
 
       - name: Measure published Pages output
         run: |
           python - <<'PY'
           import os, json, datetime
           root = "public"
+          target = "public/remont-master/data/build-metrics.json"
           def total_bytes():
               return sum(os.path.getsize(os.path.join(base, name)) for base, _, names in os.walk(root) for name in names)
-          target = "public/remont-master/data/build-metrics.json"
           metrics = {"generatedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(), "pagesPublishedBytes": 0, "pagesLimitBytes": 1073741824}
           os.makedirs(os.path.dirname(target), exist_ok=True)
           for _ in range(3):
