@@ -18,5 +18,14 @@
       "title": "Сложные конструкции"
     }
   ],
-  "items": []
+  "items": [
+    {
+      "id": "portfolio-mwwleo5n-e2qwb",
+      "type": "image",
+      "title": "Венецианская штукатурка на фоне замши",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwwleo5n-e2qwb.jpg",
+      "sortOrder": 1
+    }
+  ]
 }
