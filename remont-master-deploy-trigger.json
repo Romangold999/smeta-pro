@@ -1,6 +1,6 @@
 {
-  "requestedAt": "2026-11-25T10:26:36.829Z",
+  "requestedAt": "2026-11-25T10:29:06.631Z",
   "sourceBranch": "remont-master-admin-rebuild",
-  "sourceCommit": "dae0f5de78b631ccec732bc888ab4f1c0f687ade",
-  "reason": "Publish clean admin controller with portfolio manager"
+  "sourceCommit": "b30188f4afdf486c32251b318f01259a7a81ea65",
+  "reason": "Publish validated clean admin with catalog and portfolio editing"
 }
