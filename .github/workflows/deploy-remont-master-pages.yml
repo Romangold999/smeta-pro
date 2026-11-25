@@ -1,11 +1,10 @@
-name: Deploy RemontMaster to GitHub Pages
+name: Deploy RemontMaster preview to GitHub Pages
 
 on:
   push:
     branches:
       - remont-master-pages
     paths:
-      - "remont-master-site/**"
       - ".github/workflows/deploy-remont-master-pages.yml"
   workflow_dispatch:
 
@@ -25,41 +24,63 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout RemontMaster source
+      - name: Checkout current RemontMaster site (rollback copy)
         uses: actions/checkout@v4
         with:
           ref: remont-master-pages
-          path: remont-source
+          path: current-source/
 
-      - name: Checkout current published site
+      - name: Checkout Git-only development version
+        uses: actions/checkout@v4
+        with:
+          ref: remont-master-admin-git
+          path: remont-source/
+
+      - name: Checkout existing root site
         uses: actions/checkout@v4
         with:
           ref: telegram-mini-app
-          path: existing-site
+          path: existing-site/
 
-      - name: Assemble website
+      - name: Assemble current production and isolated preview
         run: |
-          mkdir -p public/remont-master
+          mkdir -p public/remont-master public/remont-master-preview
           cp existing-site/index.html public/index.html
-          cp remont-source/remont-master-site/index.html public/remont-master/index.html
-          cp remont-source/remont-master-site/work-catalog.js public/remont-master/work-catalog.js
-          cp remont-source/remont-master-site/client-api.js public/remont-master/client-api.js
-          cp remont-source/remont-master-site/api-config.js public/remont-master/api-config.js
-          cp -R remont-source/remont-master-site/assets public/remont-master/assets
+          cp -R current-source/remont-master-site/. public/remont-master/
+          cp remont-source/remont-master-site/index.html public/remont-master-preview/index.html
+          cp remont-source/remont-master-site/work-catalog.js public/remont-master-preview/work-catalog.js
+          cp remont-source/remont-master-site/site-data.js public/remont-master-preview/site-data.js
+          cp -R remont-source/remont-master-site/data public/remont-master-preview/data
+          cp -R remont-source/remont-master-site/assets public/remont-master-preview/assets
+          cp -R remont-source/remont-master-site/admin public/remont-master-preview/admin
+
+      - name: Measure published Pages output
+        run: |
+          python - <<'PY'
+          import os, json, datetime
+          root = "public"
+          def total_bytes():
+              return sum(os.path.getsize(os.path.join(base, name)) for base, _, names in os.walk(root) for name in names)
+          target = "public/remont-master-preview/data/build-metrics.json"
+          metrics = {"generatedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(), "pagesPublishedBytes": 0, "pagesLimitBytes": 1073741824}
+          os.makedirs(os.path.dirname(target), exist_ok=True)
+          for _ in range(3):
+              with open(target, "w", encoding="utf-8") as f:
+                  json.dump(metrics, f, ensure_ascii=False, indent=2)
+              metrics["pagesPublishedBytes"] = total_bytes()
+          with open(target, "w", encoding="utf-8") as f:
+              json.dump(metrics, f, ensure_ascii=False, indent=2)
+          print("Pages published bytes:", total_bytes())
+          PY
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload website files
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: "./public"
-          name: "github-pages-${{ github.run_attempt }}"
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy preview without replacing current production site
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          artifact_name: "github-pages-${{ github.run_attempt }}"
-
-
