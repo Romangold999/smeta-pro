@@ -4,4 +4,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "SmetaPro"
-include(":app")
+include(":app", ":admin-app")
