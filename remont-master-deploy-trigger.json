@@ -1,6 +1,6 @@
 {
-  "requestedAt": "2026-11-25T10:30:39.960Z",
+  "requestedAt": "2026-11-25T18:59:59.202Z",
   "sourceBranch": "remont-master-admin-rebuild",
-  "sourceCommit": "be26baf2b56e3a6436979d4beae9e58e4d6ede78",
-  "reason": "Publish final validated clean RemontMaster admin"
+  "sourceCommit": "1e61e0f5584b2dfb0eb2c5bb7ef3dd91f807f106",
+  "reason": "Fix clean admin catalog binding regression"
 }
