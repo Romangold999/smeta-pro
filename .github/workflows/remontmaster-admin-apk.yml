@@ -1,0 +1,46 @@
+name: RemontMaster Admin APK
+
+on:
+  push:
+    branches: [remont-master-pages]
+    paths:
+      - "admin-app/**"
+      - "settings.gradle.kts"
+      - "build.gradle.kts"
+      - ".github/workflows/remontmaster-admin-apk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: remont-master-pages
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Build RemontMaster Admin APK
+        run: gradle :admin-app:assembleDebug --stacktrace
+      - name: Prepare APK
+        run: |
+          mkdir -p release
+          cp admin-app/build/outputs/apk/debug/admin-app-debug.apk release/RemontMaster-Admin.apk
+          test -s release/RemontMaster-Admin.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RemontMaster-Admin-APK
+          path: release/RemontMaster-Admin.apk
+          if-no-files-found: error
+          retention-days: 30
