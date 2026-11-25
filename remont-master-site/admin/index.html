@@ -310,28 +310,7 @@ function openEstimateSheet(){const sheet=document.getElementById('estimateSheet'
 function closeEstimateSheet(){const sheet=document.getElementById('estimateSheet'),backdrop=document.getElementById('estimateBackdrop');if(!sheet||!backdrop)return;sheet.classList.remove('open');backdrop.classList.remove('open');sheet.setAttribute('aria-hidden','true');document.body.classList.remove('sheet-open')}
 let toastTimer;
 function showToast(message){const el=document.getElementById('workToast');if(!el)return;el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),1700)}
-const workCatalog=[
-{id:'w1',cat:'walls',name:'Грунтовка стен',unit:'м²',price:300},
-{id:'w2',cat:'walls',name:'Штукатурка стен по маякам',unit:'м²',price:1000},
-{id:'w3',cat:'walls',name:'Шпаклёвка стен под обои',unit:'м²',price:650},
-{id:'w4',cat:'walls',name:'Шпаклёвка стен под покраску',unit:'м²',price:850},
-{id:'w5',cat:'walls',name:'Шлифовка стен',unit:'м²',price:500},
-{id:'w6',cat:'walls',name:'Покраска стен',unit:'м²',price:600},
-{id:'c1',cat:'ceilings',name:'Штукатурка потолка',unit:'м²',price:1200},
-{id:'c2',cat:'ceilings',name:'Шпаклёвка потолка',unit:'м²',price:1100},
-{id:'c3',cat:'ceilings',name:'Монтаж конструкции ГКЛ',unit:'м²',price:1500},
-{id:'f1',cat:'floors',name:'Цементно-песчаная стяжка',unit:'м²',price:1500},
-{id:'f2',cat:'floors',name:'Наливной пол',unit:'м²',price:1000},
-{id:'f3',cat:'floors',name:'Укладка ламината',unit:'м²',price:800},
-{id:'t1',cat:'tile',name:'Укладка плитки на стены',unit:'м²',price:2500},
-{id:'t2',cat:'tile',name:'Укладка керамогранита',unit:'м²',price:2500},
-{id:'t3',cat:'tile',name:'Затирка швов',unit:'м²',price:420},
-{id:'d1',cat:'decor',name:'Декоративная штукатурка',unit:'м²',price:1900},
-{id:'d2',cat:'decor',name:'Декоративное покрытие «Замша / Нубук»',unit:'м²',price:null},
-{id:'o1',cat:'other',name:'Монтаж розетки / выключателя',unit:'шт.',price:450},
-{id:'o2',cat:'other',name:'Монтаж плинтуса',unit:'пог. м',price:450}
-];
-workCatalog.push(...extraWorkCatalog);
+const workCatalog=[];
 let estimateRows=[];
 const serviceWorkMap={
  plaster:{cats:['plaster'],ids:['w1','w2','c1','x016','x017','x018','x020','x021','x022','x023','x024','x025','x195','x196','x197','x198']},
