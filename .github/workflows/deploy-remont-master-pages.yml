@@ -65,9 +65,6 @@ jobs:
         with:
           path: "./public"
 
-      - name: Wait for Pages artifact registration
-        run: sleep 8
-
       - name: Deploy production
         id: deployment
         uses: actions/deploy-pages@v4
