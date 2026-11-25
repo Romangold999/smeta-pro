@@ -14,42 +14,26 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
 jobs:
-  deploy:
+  publish:
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
-      - name: Checkout the single source of truth
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
 
-      - name: Assemble RemontMaster from main
+      - name: Assemble site
+        shell: bash
         run: |
           mkdir -p public/remont-master
           cp -R remont-master-site/. public/remont-master/
-          cat > public/index.html <<'HTML'
-          <!doctype html>
-          <html lang="ru">
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width,initial-scale=1">
-            <meta http-equiv="refresh" content="0; url=./remont-master/">
-            <title>РемонтМастер</title>
-          </head>
-          <body>
-            <p><a href="./remont-master/">Открыть сайт РемонтМастер</a></p>
-          </body>
-          </html>
-          HTML
+          printf '%s\n' '<!doctype html>' '<html lang="ru">' '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0; url=./remont-master/"><title>РемонтМастер</title></head>' '<body><p><a href="./remont-master/">Открыть сайт РемонтМастер</a></p></body></html>' > public/index.html
 
-      - name: Measure published Pages output
+      - name: Measure Pages output
+        shell: bash
         run: |
           python - <<'PY'
           import os, json, datetime
@@ -71,14 +55,11 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload production Pages artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: "./public"
 
-      - name: Wait for Pages artifact registration
-        run: sleep 8
-
-      - name: Deploy RemontMaster production site
+      - name: Deploy production
         id: deployment
         uses: actions/deploy-pages@v4
