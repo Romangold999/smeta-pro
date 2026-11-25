@@ -1,5 +1,6 @@
 name: Deploy RemontMaster isolated preview
 # The preview always takes the latest working branch; production stays pinned.
+# Refresh preview after contextual in-place admin editor updates.
 
 on:
   push:
