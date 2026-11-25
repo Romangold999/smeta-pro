@@ -1,5 +1,8 @@
-name: Deploy RemontMaster Git-only preview
-# Preview deployments are restricted to the configured Pages branch.
+name: Deploy RemontMaster production
+# Production site and its admin panel are published from the same validated source.
+# Publish the connected admin build: save commits data to remont-master-admin-git and then dispatches this workflow.
+# Trigger main-site rebuild for catalog commit 452f3e650282abe125425779bf2277d602826563.
+# Publish inline editor and cache-busted admin script for all catalog positions.
 
 on:
   push:
@@ -23,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Register workflow_dispatch on default branch
-        run: echo "Workflow dispatch is registered. Actual Pages deployments run from remont-master-pages."
+        run: echo "Workflow dispatch is registered. Production deployments run from remont-master-pages."
 
   deploy:
     if: github.ref == 'refs/heads/remont-master-pages'
@@ -35,17 +38,17 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout current RemontMaster site (rollback copy)
+      - name: Checkout deployment configuration and rollback source
         uses: actions/checkout@v4
         with:
           ref: remont-master-pages
           path: current-source/
 
-      - name: Checkout Git-only development version
+      - name: Checkout live RemontMaster source and admin
         uses: actions/checkout@v4
         with:
           ref: remont-master-admin-git
-          path: remont-source/
+          path: site-source/
 
       - name: Checkout existing root site
         uses: actions/checkout@v4
@@ -53,17 +56,11 @@ jobs:
           ref: telegram-mini-app
           path: existing-site/
 
-      - name: Assemble current production and isolated preview
+      - name: Assemble production site (single source, no preview copy)
         run: |
-          mkdir -p public/remont-master public/remont-master-preview
+          mkdir -p public/remont-master
           cp existing-site/index.html public/index.html
-          cp -R current-source/remont-master-site/. public/remont-master/
-          cp remont-source/remont-master-site/index.html public/remont-master-preview/index.html
-          cp remont-source/remont-master-site/work-catalog.js public/remont-master-preview/work-catalog.js
-          cp remont-source/remont-master-site/site-data.js public/remont-master-preview/site-data.js
-          cp -R remont-source/remont-master-site/data public/remont-master-preview/data
-          cp -R remont-source/remont-master-site/assets public/remont-master-preview/assets
-          cp -R remont-source/remont-master-site/admin public/remont-master-preview/admin
+          cp -R site-source/remont-master-site/. public/remont-master/
 
       - name: Measure published Pages output
         run: |
@@ -72,7 +69,7 @@ jobs:
           root = "public"
           def total_bytes():
               return sum(os.path.getsize(os.path.join(base, name)) for base, _, names in os.walk(root) for name in names)
-          target = "public/remont-master-preview/data/build-metrics.json"
+          target = "public/remont-master/data/build-metrics.json"
           metrics = {"generatedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(), "pagesPublishedBytes": 0, "pagesLimitBytes": 1073741824}
           os.makedirs(os.path.dirname(target), exist_ok=True)
           for _ in range(3):
@@ -87,7 +84,7 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload Pages artifact
+      - name: Upload production Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: "./public"
@@ -95,6 +92,6 @@ jobs:
       - name: Wait for Pages artifact registration
         run: sleep 8
 
-      - name: Deploy preview without replacing current production site
+      - name: Deploy RemontMaster production site
         id: deployment
         uses: actions/deploy-pages@v4
