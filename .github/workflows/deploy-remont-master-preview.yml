@@ -1,4 +1,5 @@
 name: Deploy RemontMaster isolated preview
+# The preview always takes the latest working branch; production stays pinned.
 
 on:
   push:
