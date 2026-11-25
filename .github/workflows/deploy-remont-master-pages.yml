@@ -1,5 +1,5 @@
 name: Deploy RemontMaster preview to GitHub Pages
-# Preview source is remont-master-admin-git; production remains copied from this branch. Sync latest admin UI, token guide and category picker.
+# Preview source is remont-master-admin-git; production remains copied from this branch. Sync latest admin UI, portfolio editing, Rutube preview and profile/concrete editors.
 
 on:
   push:
