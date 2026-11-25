@@ -1,6 +1,6 @@
 {
-  "requestedAt": "2026-11-25T10:29:06.631Z",
+  "requestedAt": "2026-11-25T10:30:39.960Z",
   "sourceBranch": "remont-master-admin-rebuild",
-  "sourceCommit": "b30188f4afdf486c32251b318f01259a7a81ea65",
-  "reason": "Publish validated clean admin with catalog and portfolio editing"
+  "sourceCommit": "be26baf2b56e3a6436979d4beae9e58e4d6ede78",
+  "reason": "Publish final validated clean RemontMaster admin"
 }
