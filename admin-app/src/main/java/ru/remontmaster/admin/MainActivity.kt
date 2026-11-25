@@ -71,7 +71,7 @@ class MainActivity : Activity() {
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                if (url?.startsWith(ADMIN_URL) == true) restoreLoginIfAvailable()
+                if (url?.startsWith(ADMIN_URL) == true) { installTokenObserver(); restoreLoginIfAvailable() }
             }
         }
 
@@ -103,6 +103,31 @@ class MainActivity : Activity() {
         web.loadUrl(ADMIN_URL)
     }
 
+    private fun installTokenObserver() {
+        val script = """
+            (function(){
+              if(window.__rmTokenObserverInstalled)return;
+              const input=document.getElementById('rmAdminToken');
+              const button=document.getElementById('rmAdminConnect');
+              const gate=document.getElementById('rmAdminGate');
+              if(!input||!button||!gate)return;
+              window.__rmTokenObserverInstalled=true;
+              let candidate='';
+              button.addEventListener('click',function(){candidate=input.value.trim();},true);
+              const check=function(){
+                if(!candidate)return;
+                const style=window.getComputedStyle(gate);
+                if(gate.hidden||style.display==='none'||style.visibility==='hidden'){
+                  try{RemontMasterNative.rememberAfterLogin(candidate);candidate='';}catch(e){}
+                }
+              };
+              new MutationObserver(check).observe(gate,{attributes:true,attributeFilter:['style','hidden','class']});
+              window.setInterval(check,400);
+            })();
+        """.trimIndent()
+        web.evaluateJavascript(script, null)
+    }
+
     private fun restoreLoginIfAvailable() {
         val token = readToken() ?: return
         val encoded = JSONObject.quote(token)
@@ -110,11 +135,9 @@ class MainActivity : Activity() {
             (function(){
               const input=document.getElementById('rmAdminToken');
               const button=document.getElementById('rmAdminConnect');
-              const gate=document.getElementById('rmAdminGate');
-              if(!input||!button||!gate||window.__rmNativeAutoLogin)return;
+              if(!input||!button||window.__rmNativeAutoLogin)return;
               window.__rmNativeAutoLogin=true;
               input.value=$encoded;
-              window.__rmNativeCandidate=$encoded;
               button.click();
             })();
         """.trimIndent()
