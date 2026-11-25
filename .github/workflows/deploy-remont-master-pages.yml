@@ -1,4 +1,5 @@
 name: Deploy RemontMaster Git-only preview
+# Synced portfolio category editor, contextual item editing and reliable inline price saving.
 
 on:
   push:
