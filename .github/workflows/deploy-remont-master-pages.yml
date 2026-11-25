@@ -15,10 +15,6 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
 jobs:
   register-workflow:
     if: github.ref == 'refs/heads/main'
@@ -29,6 +25,9 @@ jobs:
 
   deploy:
     if: github.ref == 'refs/heads/remont-master-pages'
+    concurrency:
+      group: "pages"
+      cancel-in-progress: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
