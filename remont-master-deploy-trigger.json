@@ -1,6 +1,6 @@
 {
-  "requestedAt": "2026-11-25T10:11:25.722Z",
+  "requestedAt": "2026-11-25T10:12:44.454Z",
   "sourceBranch": "remont-master-admin-git",
-  "sourceCommit": "aaac91bba4bd602348cf40003d25208291d80ff4",
-  "reason": "Publish cache-busted inline catalog editor"
+  "sourceCommit": "abe8fab85d15e23227718264ed8c10ec719253ae",
+  "reason": "Publish forced inline catalog editing"
 }
