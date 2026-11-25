@@ -3,6 +3,7 @@ name: Deploy RemontMaster production
 # Publish the connected admin build: save commits data to remont-master-admin-git and then dispatches this workflow.
 # Trigger main-site rebuild for catalog commit 452f3e650282abe125425779bf2277d602826563.
 # Publish inline editor and cache-busted admin script for all catalog positions.
+# Keep this workflow identical on main: admin save dispatches use the default-branch definition.
 
 on:
   push:
