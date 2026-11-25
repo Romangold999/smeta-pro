@@ -1,6 +1,6 @@
 {
-  "requestedAt": "2026-11-25T18:59:59.202Z",
+  "requestedAt": "2026-11-25T19:05:02.705Z",
   "sourceBranch": "remont-master-admin-rebuild",
-  "sourceCommit": "1e61e0f5584b2dfb0eb2c5bb7ef3dd91f807f106",
-  "reason": "Fix clean admin catalog binding regression"
+  "sourceCommit": "c0903833f683b355b38a565023cdea4f805a7a06",
+  "reason": "Fix Git tree response handling and add service detail item editor"
 }
