@@ -2,6 +2,7 @@ name: Deploy RemontMaster isolated preview
 # The preview always takes the latest working branch; production stays pinned.
 # Refresh preview after contextual in-place admin editor and media-manager updates.
 # Republish after fixing the modal activation and nested edit controls (845317d).
+# Admin saves dispatch this workflow on this Pages-enabled branch after committing to the working branch.
 # Include editable content for the materials screen.
 
 on:
