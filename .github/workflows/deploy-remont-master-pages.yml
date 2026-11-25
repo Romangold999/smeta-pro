@@ -46,10 +46,10 @@ jobs:
           ref: remont-master-pages
           path: current-source/
 
-      - name: Checkout live RemontMaster source and admin
+      - name: Checkout clean RemontMaster source and admin
         uses: actions/checkout@v4
         with:
-          ref: remont-master-admin-git
+          ref: remont-master-admin-rebuild
           path: site-source/
 
       - name: Checkout existing root site
