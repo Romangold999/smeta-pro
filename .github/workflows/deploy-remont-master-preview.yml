@@ -51,6 +51,26 @@ jobs:
           cp -R production-source/remont-master-site/. public/remont-master/
           cp -R preview-source/remont-master-site/. public/remont-master-preview/
 
+      - name: Verify isolated admin package
+        run: |
+          test -f public/remont-master-preview/admin/index.html
+          test -f public/remont-master-preview/admin/inline-admin.js
+          test -f public/remont-master-preview/data/catalog.json
+          node --check public/remont-master-preview/admin/inline-admin.js
+          node - <<'NODE'
+          const fs = require('fs');
+          const root = 'public/remont-master-preview/';
+          const html = fs.readFileSync(root + 'admin/index.html', 'utf8');
+          if (!html.includes('src="admin/inline-admin.js"')) throw new Error('Admin script is not connected');
+          if (html.includes('src="admin.js"')) throw new Error('Legacy admin script is still connected');
+          const catalog = JSON.parse(fs.readFileSync(root + 'data/catalog.json', 'utf8'));
+          const fields = ['id','category','name','unit','price'];
+          if (!Array.isArray(catalog.items) || catalog.items.length !== 317) throw new Error('Expected 317 catalog positions');
+          if (catalog.items.some(item => fields.some(field => !(field in item)))) throw new Error('Catalog entry is missing a required field');
+          if (new Set(catalog.items.map(item => String(item.id))).size !== 317) throw new Error('Catalog IDs are not unique');
+          console.log('Admin package verified; 317 catalog records retained.');
+          NODE
+
       - name: Measure both Pages routes
         run: |
           python - <<'PY'
