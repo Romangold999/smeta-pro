@@ -52,7 +52,6 @@ async function sendWelcome(update) {
 
   const dedupeKey = `${chatId}:${update.timestamp || "no-time"}`;
   if (seen.has(dedupeKey)) return;
-  seen.set(dedupeKey, Date.now());
   if (seen.size > 2000) {
     const cutoff = Date.now() - 6 * 60 * 60 * 1000;
     for (const [key, time] of seen) if (time < cutoff) seen.delete(key);
@@ -75,6 +74,7 @@ async function sendWelcome(update) {
       }]
     }
   });
+  seen.set(dedupeKey, Date.now());
   console.log("Welcome message sent", { chatId });
 }
 
