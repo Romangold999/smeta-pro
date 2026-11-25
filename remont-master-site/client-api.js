@@ -218,9 +218,8 @@
         const rows = items.filter(x => String(x.category || '').toLowerCase() === category.key);
         target.innerHTML = rows.length ? '<div class="portfolio-gallery">' + rows.map(card).join('') + '</div>' : '';
       });
-      const unassigned = items.filter(x => !categories.some(c => c.key === String(x.category || '').toLowerCase()));
-      const fallback = document.getElementById('portfolio-unassigned');
-      if (fallback) fallback.innerHTML = unassigned.length ? '<div class="sectionhead"><h2>Фотографии без категории</h2></div><div class="portfolio-gallery">' + unassigned.map(card).join('') + '</div>' : '';
+      // Do not render uncategorized media as a fifth public portfolio section.
+      // Only the four fixed portfolio categories are visible on the public site.
     } catch (error) { console.warn('Portfolio media sync skipped:', error); }
   }
   async function loadSectionMedia(type, sectionId, targetId, heading) {
