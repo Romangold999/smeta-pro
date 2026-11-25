@@ -5,7 +5,7 @@ const FILES=["catalog.json","categories.json","site-content.json","portfolio.jso
 const $=id=>document.getElementById(id), api=p=>"https://api.github.com/repos/"+OWNER+"/"+REPO+(p?"/"+p:"");
 let token="",head="",data={},pending=new Map(),busy=false;
 const headers=()=>({Authorization:"Bearer "+token,Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"});
-async function req(path,opts={}){const r=await fetch(api(path),{...opts,cache:"no-store",headers:{...headers(),"Cache-Control":"no-cache","Pragma":"no-cache",...(opts.headers||{})}}),j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.message||("GitHub API HTTP "+r.status));return j}
+async function req(path,opts={}){const r=await fetch(api(path),{...opts,cache:"no-store",headers:{...headers(),...(opts.headers||{})}}),j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.message||("GitHub API HTTP "+r.status));return j}
 const decode=s=>new TextDecoder().decode(Uint8Array.from(atob(String(s)),c=>c.charCodeAt(0)));
 const copy=x=>JSON.parse(JSON.stringify(x));
 function status(s,bad=false){const n=$("rmAdminStatus");if(n){n.textContent=s;n.style.color=bad?"#ffb4a8":"#e5c98e"}}
