@@ -145,14 +145,7 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
  <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Архитектурный бетон</h1><p>Индивидуальные изделия и интерьерные решения</p></div></div>
  <div class="concrete-hero"><span class="eyebrow">Изготовление на заказ</span><h2>Форма. Фактура. Характер.</h2><p>Создаём выразительные изделия из архитектурного бетона под размеры и задумку вашего пространства.</p></div>
  <div class="sectionhead"><h2>Что можно изготовить</h2></div>
- <div class="product-grid">
-  <div class="product-card" style="background-image:url('assets/icons/concrete-countertop.webp')"><strong>Столешницы</strong><small>Кухня, ванная, барная зона</small></div>
-  <div class="product-card" style="background-image:url('assets/icons/concrete-basin.webp')"><strong>Раковины и умывальники</strong><small>Монолитные формы и чаши</small></div>
-  <div class="product-card" style="background-image:url('assets/icons/concrete-windowsill.webp')"><strong>Подоконники</strong><small>По размерам и конфигурации</small></div>
-  <div class="product-card" style="background-image:url('assets/icons/concrete-steps-panels.webp')"><strong>Ступени и лестницы</strong><small>Отдельные элементы и комплекты</small></div>
-  <div class="product-card" style="background-image:url('assets/icons/decorative-panels.webp')"><strong>Декоративные панели</strong><small>Рельеф, цвет и фактура</small></div>
-  <div class="product-card" style="background-image:url('assets/icons/concrete-table.webp')"><strong>Столы и предметы интерьера</strong><small>Авторские изделия по эскизу</small></div>
- </div>
+ <div id="concreteProducts" class="product-grid"></div>>
  <div class="widecard" style="margin-top:14px"><div class="eyebrow">Индивидуальный проект</div><h3 style="margin:7px 0 5px;font-size:15px">Есть своя идея?</h3><p class="muted" style="font-size:11px;margin:0 0 12px">Обсудим размеры, форму, оттенок, фактуру и способ финишной обработки. Стоимость рассчитывается после согласования параметров.</p><button class="goldbtn" style="width:100%" onclick="go('profile')">Обсудить изделие с мастером ↗</button></div>
  <div class="notice">Изображения в этом разделе — визуальные примеры направления, а не фотографии выполненных нами заказов.</div>
 </section>
@@ -186,7 +179,8 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 <section class="screen" id="estimate">
  <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Каталог работ</h1><p>Выберите направление и добавьте нужные позиции</p></div></div>
  <div class="widecard">
-  <label class="field">Категория работ<select id="workCategory" onchange="renderCatalog()"><option value="all">Все работы</option><option value="walls">Стены и панели</option><option value="ceilings">Потолки и ГКЛ</option><option value="floors">Полы</option><option value="tile">Плиточные работы</option><option value="decor">Декоративная отделка</option><option value="other">Другое</option><option value="demolition">Демонтаж</option><option value="prep">Подготовка поверхностей</option><option value="plaster">Штукатурные работы</option><option value="painting">Малярные работы</option><option value="wallpaper">Поклейка обоев</option><option value="drywall">Гипсокартон</option></select></label>
+  <label class="field">Категория работ<select id="workCategory" onchange="renderCatalog()"><option value="all">Все работы</option><option value="walls">Стены и панели</option><option value="ceilings">Потолки и ГКЛ</option><option value="floors">Полы</option><option value="tile">Плиточные работы</option><option value="decor">Декоративная отделка</option><option value="other">Другое</option><option value="demolition">Демонтаж</option><option value="prep">Подготовка поверхностей</option><option value="plaster">Штукатурные работы</option><option value="painting">Малярные работы</option><option value="wallpaper">Поклейка обоев</option><option value="drywall">Гипсокартон</option></select></label
+  <small id="catalogCount" class="muted" aria-live="polite"></small>>
   <label class="field">Поиск работы<input id="workSearch" placeholder="Например: грунтовка, штукатурка..." oninput="renderCatalog()"></label>
   <div id="catalogList"></div>
  </div>
@@ -204,6 +198,7 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 
 <section class="screen" id="diy">
  <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Сделай сам</h1><p><span class="tag">БЕТА-ВЕРСИЯ</span></p></div></div>
+ <div id="diyMaterials"></div>
 </section>
 
 
@@ -211,10 +206,10 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 <section class="screen" id="portfolio">
  <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Портфолио</h1><p>Выберите направление, чтобы посмотреть выполненные работы</p></div></div>
  <div class="grid portfolio-grid">
-  <div class="portfolio-category"><button type="button" class="tile" style="width:100%;min-height:150px;background-image:url('assets/icons/venetian-decor.webp')" onclick="go('portfolioDecorativeWalls')"><strong>Декоративные стены</strong><small>Фактуры и отделка стен</small></button></div>
-  <div class="portfolio-category"><button type="button" class="tile" style="width:100%;min-height:150px;background-image:url('assets/icons/tile.webp')" onclick="go('portfolioTile')"><strong>Плитка и керамогранит</strong><small>Укладка и облицовка</small></button></div>
-  <div class="portfolio-category"><button type="button" class="tile" style="width:100%;min-height:150px;background-image:url('assets/icons/concrete-basin.webp')" onclick="go('portfolioConcrete')"><strong>Архитектурный бетон</strong><small>Изделия и поверхности</small></button></div>
-  <div class="portfolio-category"><button type="button" class="tile" style="width:100%;min-height:150px;background-image:url('assets/icons/drywall-arched-niche.webp')" onclick="go('portfolioComplexStructures')"><strong>Сложные конструкции</strong><small>Ниши, формы и конструкции</small></button></div>
+  <div class="portfolio-category"><button type="button" class="tile" data-category="decorative-walls" style="width:100%;min-height:150px;background-image:url('assets/icons/venetian-decor.webp')" onclick="go('portfolioDecorativeWalls')"><strong>Декоративные стены</strong><small>Фактуры и отделка стен</small></button></div>
+  <div class="portfolio-category"><button type="button" class="tile" data-category="tile" style="width:100%;min-height:150px;background-image:url('assets/icons/tile.webp')" onclick="go('portfolioTile')"><strong>Плитка и керамогранит</strong><small>Укладка и облицовка</small></button></div>
+  <div class="portfolio-category"><button type="button" class="tile" data-category="concrete" style="width:100%;min-height:150px;background-image:url('assets/icons/concrete-basin.webp')" onclick="go('portfolioConcrete')"><strong>Архитектурный бетон</strong><small>Изделия и поверхности</small></button></div>
+  <div class="portfolio-category"><button type="button" class="tile" data-category="complex-structures" style="width:100%;min-height:150px;background-image:url('assets/icons/drywall-arched-niche.webp')" onclick="go('portfolioComplexStructures')"><strong>Сложные конструкции</strong><small>Ниши, формы и конструкции</small></button></div>
  </div>
 </section>
 
@@ -247,6 +242,7 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
  <div class="sectionhead"><h2>Связаться</h2></div>
  <a class="rowcard" href="tel:+79284088087" style="text-decoration:none" aria-label="Позвонить по телефону +7 928 408 80 87"><span class="rowico">☎</span><span><strong>Позвонить</strong><small>+7 928 408-80-87</small></span><span class="arrow">›</span></a>
  <a class="rowcard" href="https://max.ru/u/f9LHodD0cOJrL1sbt7XHsE8fD04Pk98IJpR_ELur1SZytCMkqTjKE-hdmTQ" target="_blank" rel="noopener noreferrer" style="text-decoration:none" aria-label="Открыть профиль в MAX"><span class="rowico">✉</span><span><strong>Написать в MAX</strong><small>Открыть чат с мастером</small></span><span class="arrow">›</span></a>
+ <div id="extraProfileContacts"></div>
  <button class="rowcard" onclick="go('estimate')"><span class="rowico">₽</span><span><strong>Рассчитать стоимость</strong><small>Перейти к калькулятору</small></span><span class="arrow">›</span></button>
  <button class="rowcard" onclick="go('portfolio')"><span class="rowico">▧</span><span><strong>Посмотреть портфолио</strong><small>Направления работ</small></span><span class="arrow">›</span></button>
 </section>
@@ -323,8 +319,8 @@ const serviceWorkMap={
 };
 function money(v){return Number(v||0).toLocaleString('ru-RU')+' ₽'}
 function serviceWorks(key){const cfg=serviceWorkMap[key];if(!cfg)return[];return workCatalog.filter(w=>cfg.cats.includes(w.cat)||cfg.ids.includes(w.id))}
-function renderServiceWorks(){const box=document.getElementById('serviceWorkList');if(!box)return;const heading=document.getElementById('serviceWorkHeading');if(!activeService){if(heading)heading.textContent='Информация';box.innerHTML='<div class="notice">Информация по этому разделу будет дополнена.</div>';return}if(heading)heading.textContent='Работы этого направления';const rows=serviceWorks(activeService);box.innerHTML=rows.length?rows.map(x=>`<div class="catalogitem"><div class="ci"><strong>${x.name}</strong><small>${x.price===null?"Цена будет согласована":money(x.price)+" за "+x.unit}</small></div><button class="addbtn" onclick="addWork('${x.id}')">＋ Добавить</button></div>`).join(''):'<div class="empty">Для этого направления отдельные позиции пока не внесены в каталог. Состав работ можно согласовать отдельно.</div>'}
-function renderCatalog(){let cat=document.getElementById('workCategory')?.value||'all',q=(document.getElementById('workSearch')?.value||'').toLowerCase();let arr=workCatalog.filter(x=>(cat==='all'||x.cat===cat)&&x.name.toLowerCase().includes(q));let box=document.getElementById('catalogList');if(!box)return;box.innerHTML=arr.map(x=>`<div class="catalogitem"><div class="ci"><strong>${x.name}</strong><small>${x.price===null?"Цена будет согласована":money(x.price)+" за "+x.unit}</small></div><button class="addbtn" onclick="addWork('${x.id}')">＋ Добавить</button></div>`).join('')||'<p class="muted" style="font-size:11px">Ничего не найдено</p>'}
+function renderServiceWorks(){const box=document.getElementById('serviceWorkList');if(!box)return;const heading=document.getElementById('serviceWorkHeading');if(!activeService){if(heading)heading.textContent='Информация';box.innerHTML='<div class="notice">Информация по этому разделу будет дополнена.</div>';return}if(heading)heading.textContent='Работы этого направления';const rows=serviceWorks(activeService);box.innerHTML=rows.length?rows.map(x=>`<div class="catalogitem" data-work-id="${x.id}"><div class="ci"><strong>${x.name}</strong><small>${x.price===null?"Цена будет согласована":money(x.price)+" за "+x.unit}</small></div><button class="addbtn" onclick="addWork('${x.id}')">＋ Добавить</button></div>`).join(''):'<div class="empty">Для этого направления отдельные позиции пока не внесены в каталог. Состав работ можно согласовать отдельно.</div>'}
+function renderCatalog(){let cat=document.getElementById('workCategory')?.value||'all',q=(document.getElementById('workSearch')?.value||'').toLowerCase();let arr=workCatalog.filter(x=>(cat==='all'||x.cat===cat)&&x.name.toLowerCase().includes(q));let box=document.getElementById('catalogList');if(!box)return;const countNode=document.getElementById('catalogCount');if(countNode)countNode.textContent=workCatalog.length+' всего · показано '+arr.length;document.documentElement.dataset.catalogCount=String(workCatalog.length);document.documentElement.dataset.catalogRenderedCount=String(arr.length);box.innerHTML=arr.map(x=>`<div class="catalogitem" data-work-id="${x.id}"><div class="ci"><strong>${x.name}</strong><small>${x.price===null?"Цена будет согласована":money(x.price)+" за "+x.unit}</small></div><button class="addbtn" onclick="addWork('${x.id}')">＋ Добавить</button></div>`).join('')||'<p class="muted" style="font-size:11px">Ничего не найдено</p>'}
 function addWork(id){let w=workCatalog.find(x=>x.id===id);if(!w)return;estimateRows.push({id:Date.now()+Math.random(),workId:id,name:w.name,unit:w.unit,qty:1,price:w.price});renderEstimate();showToast('Работа добавлена в смету')}
 function renderEstimate(){let box=document.getElementById('estimateItems');if(box){if(!estimateRows.length){box.innerHTML='<div class="empty"><b>＋</b>Пока нет работ.<br>Добавьте позиции из каталога.</div>'}else{box.innerHTML=estimateRows.map(r=>`<div class="estimateitem"><div class="estimateitemhead"><strong>${r.name}</strong><button class="removeitem" onclick="removeWork(${r.id})">×</button></div><div class="itemcontrols"><label>Количество<input type="number" min="0" step="0.01" value="${r.qty}" onchange="updateRow(${r.id}, 'qty', this.value)"></label><label>Единица<select onchange="updateRow(${r.id}, 'unit', this.value)">${['м²','пог. м','шт.','компл.','м³','час'].map(u=>`<option ${u===r.unit?'selected':''}>${u}</option>`).join('')}</select></label><label>Цена за единицу, ₽<input type="number" min="0" placeholder="Ожидает утверждения" value="${r.price??''}" disabled></label><label>Сумма позиции<div class="itemamount">${r.price===null?'Цена не утверждена':money(r.qty*r.price)}</div></label></div></div>`).join('')}}
 const count=document.getElementById('itemCount'),totalEl=document.getElementById('estimateTotal'),dockCount=document.getElementById('dockCount'),dockTotal=document.getElementById('dockTotal');
@@ -419,7 +415,6 @@ function filterHome(q){
 }
 renderCatalog();renderEstimate();renderOrders();applyTileContrast();
 </script>
-<script src="api-config.js"></script>
-<script src="client-api.js"></script>
+<script src="site-data.js?v=20261125-clean2"></script>
 </body></html>
 <!-- восстановленная публикация исходной сборки; функциональный код не изменён -->

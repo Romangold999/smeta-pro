@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "decorative-walls",
+      "title": "Декоративные стены"
+    },
+    {
+      "id": "tile",
+      "title": "Плитка и керамогранит"
+    },
+    {
+      "id": "concrete",
+      "title": "Архитектурный бетон"
+    },
+    {
+      "id": "complex-structures",
+      "title": "Сложные конструкции"
+    }
+  ],
+  "items": []
+}

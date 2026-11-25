@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "plaster",
+      "title": "Штукатурные работы",
+      "subtitle": "Выравнивание стен и углов",
+      "description": "Выравнивание стен, маячная штукатурка и подготовка основания.",
+      "category": "plaster",
+      "icon": "assets/icons/plaster.webp",
+      "sortOrder": 10
+    },
+    {
+      "id": "decor",
+      "title": "Декоративная отделка",
+      "subtitle": "Замша, нубук, фактуры и покрытия",
+      "description": "Декоративные штукатурки, фактуры, эффекты и декоративные стеновые покрытия.",
+      "category": "decor",
+      "icon": "assets/icons/venetian-decor.webp",
+      "sortOrder": 20
+    },
+    {
+      "id": "tile",
+      "title": "Плиточные работы",
+      "subtitle": "Плитка, керамогранит, мозаика",
+      "description": "Укладка плитки, керамогранита, мозаики, затирка и примыкания.",
+      "category": "tile",
+      "icon": "assets/icons/tile.webp",
+      "sortOrder": 30
+    },
+    {
+      "id": "drywall",
+      "title": "Гипсокартон и потолки",
+      "subtitle": "Перегородки, ниши, сложные формы",
+      "description": "Перегородки, короба, ниши, радиусные элементы и потолочные конструкции.",
+      "category": "drywall",
+      "icon": "assets/icons/drywall.webp",
+      "sortOrder": 40
+    },
+    {
+      "id": "floors",
+      "title": "Полы и стяжки",
+      "subtitle": "Стяжка, ламинат, покрытия",
+      "description": "Стяжки, выравнивание основания и укладка напольных покрытий.",
+      "category": "floors",
+      "icon": "assets/icons/flooring.webp",
+      "sortOrder": 50
+    },
+    {
+      "id": "painting",
+      "title": "Покраска и обои",
+      "subtitle": "Подготовка и финишная отделка",
+      "description": "Шпаклевание, шлифование, окраска и оклейка обоями.",
+      "category": "painting",
+      "icon": "assets/icons/paint-wallpaper.webp",
+      "sortOrder": 60
+    },
+    {
+      "id": "utilities",
+      "title": "Электрика и сантехника",
+      "subtitle": "Коммуникации и оборудование",
+      "description": "Прокладка коммуникаций, монтаж электрики и сантехнического оборудования.",
+      "category": "utilities",
+      "icon": "assets/icons/electrical.webp",
+      "sortOrder": 70
+    },
+    {
+      "id": "walls",
+      "title": "Стеновые панели и облицовка",
+      "subtitle": "Панели, рейки, шпон и облицовка",
+      "description": "Монтаж декоративных панелей, реек, шпона и облицовка стен.",
+      "category": "walls",
+      "icon": "assets/icons/wall-slats.webp",
+      "sortOrder": 80
+    },
+    {
+      "id": "concrete",
+      "title": "Архитектурный бетон",
+      "subtitle": "Столешницы, раковины, ступени и изделия на заказ",
+      "description": "",
+      "icon": "assets/icons/concrete-basin.webp",
+      "screen": "concrete",
+      "sortOrder": 90
+    }
+  ]
+}
