@@ -3,7 +3,7 @@ name: Deploy RemontMaster production
 on:
   push:
     branches:
-      - main
+      - remont-master-pages
     paths:
       - ".github/workflows/deploy-remont-master-pages.yml"
       - "remont-master-site/**"
@@ -15,17 +15,22 @@ permissions:
   id-token: write
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
+  deploy:
+    if: github.ref == 'refs/heads/remont-master-pages'
+    concurrency:
+      group: pages
+      cancel-in-progress: true
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
+      - name: Checkout the single shared source branch
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: remont-master-pages
 
-      - name: Assemble site
+      - name: Assemble production from the same branch as the admin
         shell: bash
         run: |
           mkdir -p public/remont-master
@@ -59,6 +64,9 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: "./public"
+
+      - name: Wait for Pages artifact registration
+        run: sleep 8
 
       - name: Deploy production
         id: deployment
