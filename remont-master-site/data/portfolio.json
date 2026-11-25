@@ -50,6 +50,14 @@
       "category": "decorative-walls",
       "image": "assets/portfolio/portfolio-mwwnnoya-zt206.jpg",
       "sortOrder": 4
+    },
+    {
+      "id": "portfolio-video-mwwpgv1a",
+      "type": "video",
+      "title": "Тест",
+      "category": "tile",
+      "url": "https://rutube.ru/video/021744a7285e2926b3dc3223af3598ad/",
+      "sortOrder": 1
     }
   ]
 }
