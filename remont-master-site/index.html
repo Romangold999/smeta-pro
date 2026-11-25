@@ -107,6 +107,7 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 .profile-region-map{width:100%;height:92px;display:block;object-fit:contain;margin-top:5px}
 
 .portfolio-grid{align-items:start}.portfolio-category{min-width:0}.portfolio-category>.tile{width:100%}.portfolio-gallery{display:grid;gap:9px;margin-top:9px}.portfolio-gallery .widecard{margin:0;padding:9px}.portfolio-gallery img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px}.portfolio-gallery p{font-size:11px;margin:7px 2px 2px;overflow-wrap:anywhere}
+.portfolio-category>.tile{font:inherit;text-align:left;cursor:pointer}.portfolio-category>.tile:focus-visible{outline:2px solid var(--gold2);outline-offset:3px}.portfolio-empty{margin-top:12px}
 </style>
 </head>
 <body>
@@ -208,14 +209,30 @@ body{background:radial-gradient(ellipse at 50% -15%,#3b2d19 0,transparent 42%),#
 
 
 <section class="screen" id="portfolio">
- <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Портфолио</h1><p>Примеры направлений и фактур</p></div></div>
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Портфолио</h1><p>Выберите направление, чтобы посмотреть выполненные работы</p></div></div>
  <div class="grid portfolio-grid">
-  <div class="portfolio-category"><div class="tile" style="min-height:150px;background-image:url('assets/icons/venetian-decor.webp')"><strong>Декоративные стены</strong></div><div id="portfolio-decorative-walls"></div></div>
-  <div class="portfolio-category"><div class="tile" style="min-height:150px;background-image:url('assets/icons/tile.webp')"><strong>Плитка и керамогранит</strong></div><div id="portfolio-tile"></div></div>
-  <div class="portfolio-category"><div class="tile" style="min-height:150px;background-image:url('assets/icons/concrete-basin.webp')"><strong>Архитектурный бетон</strong></div><div id="portfolio-concrete"></div></div>
-  <div class="portfolio-category"><div class="tile" style="min-height:150px;background-image:url('assets/icons/drywall-arched-niche.webp')"><strong>Сложные конструкции</strong></div><div id="portfolio-complex-structures"></div></div>
+  <div class="portfolio-category"><button type="button" class="tile" style="width:100%;min-height:150px;background-image:url('assets/icons/venetian-decor.webp')" onclick="go('portfolioDecorativeWalls')"><strong>Декоративные стены</strong><small>Фактуры и отделка стен</small></button></div>
+  <div class="portfolio-category"><button type="button" class="tile" style="width:100%;min-height:150px;background-image:url('assets/icons/tile.webp')" onclick="go('portfolioTile')"><strong>Плитка и керамогранит</strong><small>Укладка и облицовка</small></button></div>
+  <div class="portfolio-category"><button type="button" class="tile" style="width:100%;min-height:150px;background-image:url('assets/icons/concrete-basin.webp')" onclick="go('portfolioConcrete')"><strong>Архитектурный бетон</strong><small>Изделия и поверхности</small></button></div>
+  <div class="portfolio-category"><button type="button" class="tile" style="width:100%;min-height:150px;background-image:url('assets/icons/drywall-arched-niche.webp')" onclick="go('portfolioComplexStructures')"><strong>Сложные конструкции</strong><small>Ниши, формы и конструкции</small></button></div>
  </div>
- <div id="portfolio-unassigned"></div>
+</section>
+
+<section class="screen" id="portfolioDecorativeWalls">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Декоративные стены</h1><p>Выполненные работы и фактуры</p></div></div>
+ <div id="portfolio-decorative-walls"></div>
+</section>
+<section class="screen" id="portfolioTile">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Плитка и керамогранит</h1><p>Выполненные работы</p></div></div>
+ <div id="portfolio-tile"></div>
+</section>
+<section class="screen" id="portfolioConcrete">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Архитектурный бетон</h1><p>Выполненные работы и изделия</p></div></div>
+ <div id="portfolio-concrete"></div>
+</section>
+<section class="screen" id="portfolioComplexStructures">
+ <div class="pagehead"><button class="back" onclick="back()">‹</button><div><h1>Сложные конструкции</h1><p>Выполненные работы</p></div></div>
+ <div id="portfolio-complex-structures"></div>
 </section>
 
 <section class="screen" id="orders">
