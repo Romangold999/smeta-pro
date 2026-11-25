@@ -2,7 +2,7 @@ name: Deploy RemontMaster production
 # Production site and its admin panel are published from the same validated source.
 # Publish the connected admin build: save commits data to remont-master-admin-git and then dispatches this workflow.
 # Trigger main-site rebuild for catalog commit 452f3e650282abe125425779bf2277d602826563.
-# Publish direct inline editing controls for all 317 catalog positions.
+# Publish inline editor and cache-busted admin script for all catalog positions.
 
 on:
   push:
