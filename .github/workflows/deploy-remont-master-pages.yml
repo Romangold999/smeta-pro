@@ -8,6 +8,7 @@ on:
       - remont-master-pages
     paths:
       - ".github/workflows/deploy-remont-master-pages.yml"
+      - "remont-master-site/admin/ADMIN-GUIDE.md"
   workflow_dispatch:
 
 permissions:
