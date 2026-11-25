@@ -50,6 +50,14 @@
       "category": "decorative-walls",
       "image": "assets/portfolio/portfolio-mwwnnoya-zt206.jpg",
       "sortOrder": 4
+    },
+    {
+      "id": "portfolio-mwws5z07-7misn",
+      "type": "image",
+      "title": "Бетонные полированные колпаки",
+      "category": "concrete",
+      "image": "assets/portfolio/portfolio-mwws5z07-7misn.jpg",
+      "sortOrder": 1
     }
   ]
 }
