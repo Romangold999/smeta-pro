@@ -4,46 +4,62 @@ This service is deliberately isolated from the RemontMaster Mini App, website an
 It only sends a welcome message when MAX delivers a `bot_started` event. The message has one
 native `open_app` button that launches the already-connected Mini App.
 
-## Required environment variables
+## Recommended hosting: Netlify Functions (serverless)
+
+No VPS, always-running Node process, database or customer-data storage is needed.
+The repository includes a Netlify Function at `/webhook`:
+
+- Netlify receives MAX's HTTPS webhook.
+- The function checks `X-Max-Bot-Api-Secret`.
+- It ignores every event except `bot_started`.
+- It sends one welcome message with the native `open_app` button.
+- It returns HTTP 200 after MAX accepts the message.
+
+The function is configured by the root `netlify.toml`. When importing this repository into
+Netlify, use branch `remontmaster-max-bot`; do not change the production branch.
+
+### Netlify environment variables
+
+Set these in the Netlify site settings, under environment variables, with Functions runtime scope:
 
 - `MAX_BOT_TOKEN` — secret token from MAX for Business. Never commit or send it in chat.
 - `MAX_BOT_USERNAME` — public username of this MAX bot, without the @ sign.
 - `MAX_WEBHOOK_SECRET` — random secret, 5–256 characters, letters/numbers/underscore/hyphen.
-- `MAX_WEBHOOK_URL` — public HTTPS URL ending in `/webhook`, used only by the registration script.
-- `MAX_API_CA_PEM` — optional PEM certificate text for the Russian Trusted Root CA, if the host's
-  Node trust store does not trust MAX API's certificate chain.
+- `MAX_API_CA_PEM` — full PEM text of the official Russian Trusted Root CA certificate.
 
-## Run
+The CA certificate is required because MAX's current API endpoint uses the Russian Trusted CA
+chain. Keep TLS verification enabled; never bypass certificate validation.
 
-Node.js 20.19+ is required.
+After the Netlify site is deployed, the webhook endpoint will be:
+
+`https://<your-netlify-site>.netlify.app/webhook`
+
+Register this URL with MAX using the existing `setup-webhook.mjs` script. It first checks existing
+subscriptions and refuses to replace a different webhook, so an existing integration is not
+silently disconnected. Run the script with `MAX_WEBHOOK_URL`, `MAX_BOT_TOKEN`,
+`MAX_WEBHOOK_SECRET`, and `MAX_API_CA_PEM` set in the local environment.
+
+Netlify's Free plan currently advertises 300 credits per month. This small event-driven handler
+uses no database and should have very low usage for a modest number of bot starts. Monitor usage
+in Netlify; free-plan limits and pricing can change.
+
+## Alternative: persistent Node.js server
+
+The original `server.mjs` remains available for a VPS or another persistent Node.js host.
+Node.js 20.19+ is required. Set the same secrets plus `PORT`, then run:
 
 ```sh
 npm start
 ```
 
-Health check: `GET /health`
+Health check: `GET /health`. Register the webhook only after the public HTTPS endpoint is live.
 
-Register the webhook only after deploying the service and confirming that `GET /health` returns
-HTTP 200 at the public HTTPS URL:
+## MAX requirements
 
-```sh
-npm run register-webhook
-```
-
-The registration script first reads existing MAX subscriptions. If a different webhook is
-already registered, it aborts without replacing it. This prevents accidentally disconnecting an
-existing integration.
-
-## Hosting requirements
-
-Use a persistent Node.js service with a public HTTPS domain on port 443. The hosting platform may
-terminate TLS and forward requests to the Node process on `PORT`. MAX requires a trusted TLS
-certificate, a successful webhook response within 30 seconds, and the secret header
-`X-Max-Bot-Api-Secret`.
-
-MAX API calls use `https://platform-api2.max.ru` and the raw token in the `Authorization`
-header. If Node reports an unknown issuer, configure `MAX_API_CA_PEM` with the official Russian
-Trusted Root CA certificate obtained from Gosuslugi. Never disable TLS verification.
+MAX delivers `bot_started` through Webhook. The endpoint must be public HTTPS on port 443,
+must validate the optional `X-Max-Bot-Api-Secret` header, and must return HTTP 200 within 30 seconds.
+The current API base is `https://platform-api2.max.ru`; authorization uses the raw token in the
+`Authorization` header.
 
 ## Current scope
 
