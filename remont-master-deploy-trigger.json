@@ -1,6 +1,6 @@
 {
-  "requestedAt": "2026-11-25T19:05:02.705Z",
+  "requestedAt": "2026-11-25T19:08:30Z",
   "sourceBranch": "remont-master-admin-rebuild",
-  "sourceCommit": "c0903833f683b355b38a565023cdea4f805a7a06",
-  "reason": "Fix Git tree response handling and add service detail item editor"
+  "sourceCommit": "d86f41df4d6477d93add2d4ec0e5ac97e9e9246d",
+  "reason": "Harden Git commit tree handling and improve save diagnostics"
 }
