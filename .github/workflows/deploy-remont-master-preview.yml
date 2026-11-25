@@ -1,6 +1,11 @@
 name: Deploy RemontMaster isolated preview
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy-remont-master-preview.yml"
   workflow_dispatch:
 
 permissions:
