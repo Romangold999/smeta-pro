@@ -199,7 +199,7 @@ async function save(){
   const parent=await req("git/commits/"+head),baseTree=parent.tree?.sha||parent.commit?.tree?.sha;
   if(!baseTree)throw Error("Сохранение: GitHub не вернул исходный коммит без SHA дерева (tree).");
   const changes=[],expected=new Map();
-  for(const [path,value] of pending){const binary=value&&value.__binary===true;const b=await req("git/blobs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content:binary?value.content:JSON.stringify(value,null,2)+"\\n",encoding:binary?"base64":"utf-8"})});changes.push({path,mode:"100644",type:"blob",sha:b.sha});expected.set(path,b.sha)}
+  for(const [path,value] of pending){const binary=value&&value.__binary===true;const b=await req("git/blobs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content:binary?value.content:JSON.stringify(value,null,2),encoding:binary?"base64":"utf-8"})});changes.push({path,mode:"100644",type:"blob",sha:b.sha});expected.set(path,b.sha)}
   const tree=await req("git/trees",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({base_tree:baseTree,tree:changes})});
   const created=await req("git/commits",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:"Admin rebuild: save prepared changes",tree:tree.sha,parents:[head]})});
   const c=created.tree?.sha?created:await req("git/commits/"+created.sha);
