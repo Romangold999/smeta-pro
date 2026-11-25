@@ -158,7 +158,7 @@
         target.id = "remoteDiyContent";
         section.appendChild(target);
       }
-      const items = Array.isArray(payload.items) ? payload.items : [];
+      const items = (Array.isArray(payload.items) ? payload.items : []).filter(x => x.key !== 'uploads/ce70c62b-5739-457a-8162-f45c4a98ccd9.webp');
       target.innerHTML = items.length ? items.map(item => {
         const body = item.body || {};
         const bodyText = typeof body === "string" ? body : (body.text || body.content || body.intro || "");
