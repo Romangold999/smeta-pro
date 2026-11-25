@@ -5,7 +5,7 @@ const FILES=["catalog.json","categories.json","site-content.json","portfolio.jso
 const $=id=>document.getElementById(id), api=p=>"https://api.github.com/repos/"+OWNER+"/"+REPO+(p?"/"+p:"");
 let token="",head="",data={},pending=new Map(),busy=false;
 const headers=()=>({Authorization:"Bearer "+token,Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"});
-async function req(path,opts={}){const r=await fetch(api(path),{...opts,headers:{...headers(),...(opts.headers||{})}}),j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.message||("GitHub API HTTP "+r.status));return j}
+async function req(path,opts={}){const r=await fetch(api(path),{...opts,cache:"no-store",headers:{...headers(),"Cache-Control":"no-cache","Pragma":"no-cache",...(opts.headers||{})}}),j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.message||("GitHub API HTTP "+r.status));return j}
 const decode=s=>new TextDecoder().decode(Uint8Array.from(atob(String(s)),c=>c.charCodeAt(0)));
 const copy=x=>JSON.parse(JSON.stringify(x));
 function status(s,bad=false){const n=$("rmAdminStatus");if(n){n.textContent=s;n.style.color=bad?"#ffb4a8":"#e5c98e"}}
@@ -195,22 +195,26 @@ async function load(){
 async function save(){
  if(busy||!pending.size)return;busy=true;updateSave();let committed=false;
  try{
-  const r=await req("git/ref/heads/"+BRANCH);if(r.object.sha!==head)throw Error("Рабочая ветка изменилась. Обнови страницу — чужие изменения не затронуты.");
+  const r=await req("git/ref/heads/"+BRANCH);if(r.object?.sha!==head)throw Error("Рабочая ветка действительно изменилась. Изменения в этой вкладке не отправлены; сначала обнови страницу и проверь данные.");
   const parent=await req("git/commits/"+head),baseTree=parent.tree?.sha||parent.commit?.tree?.sha;
-  if(!baseTree)throw Error("Сохранение: GitHub вернул исходный коммит без SHA дерева (tree).");
+  if(!baseTree)throw Error("Сохранение: GitHub не вернул исходный коммит без SHA дерева (tree).");
   const changes=[],expected=new Map();
-  for(const [path,value] of pending){const binary=value&&value.__binary===true;const b=await req("git/blobs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content:binary?value.content:JSON.stringify(value,null,2)+"\n",encoding:binary?"base64":"utf-8"})});changes.push({path,mode:"100644",type:"blob",sha:b.sha});expected.set(path,b.sha)}
+  for(const [path,value] of pending){const binary=value&&value.__binary===true;const b=await req("git/blobs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content:binary?value.content:JSON.stringify(value,null,2)+"\\n",encoding:binary?"base64":"utf-8"})});changes.push({path,mode:"100644",type:"blob",sha:b.sha});expected.set(path,b.sha)}
   const tree=await req("git/trees",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({base_tree:baseTree,tree:changes})});
   const created=await req("git/commits",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:"Admin rebuild: save prepared changes",tree:tree.sha,parents:[head]})});
   const c=created.tree?.sha?created:await req("git/commits/"+created.sha);
   if(!c.sha)throw Error("Сохранение: GitHub не вернул SHA созданного коммита.");
   const commitTree=c.tree?.sha||c.commit?.tree?.sha;
   if(!commitTree)throw Error("Сохранение: GitHub создал коммит, но не вернул SHA его дерева.");
-  await req("git/refs/heads/"+BRANCH,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({sha:c.sha,force:false})});
-  const v=await req("git/ref/heads/"+BRANCH);if(v.object?.sha!==c.sha)throw Error("GitHub не подтвердил запись.");
-  const read=await req("git/trees/"+commitTree+"?recursive=1"),map=new Map((read.tree||[]).map(x=>[x.path,x.sha]));for(const [p,s] of expected)if(map.get(p)!==s)throw Error("Проверка чтением не пройдена: "+p);
-  head=c.sha;pending.clear();committed=true;updateSave();status("Сохранено и проверено в "+BRANCH+", commit "+c.sha.slice(0,7)+". Публикация запускается автоматически из этой же ветки.");
- }catch(e){status((committed?"Данные записаны, но публикация не подтверждена: ":"Сохранение не выполнено: ")+e.message,true)}
+  const moved=await req("git/refs/heads/"+BRANCH,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({sha:c.sha,force:false})});
+  if(moved.object?.sha&&moved.object.sha!==c.sha)throw Error("GitHub вернул неожиданный SHA ветки после записи.");
+  head=c.sha;committed=true;pending.clear();updateSave();
+  const read=await req("git/trees/"+commitTree+"?recursive=1"),map=new Map((read.tree||[]).map(x=>[x.path,x.sha]));
+  for(const [p,s] of expected)if(map.get(p)!==s)throw Error("Коммит создан, но контрольное чтение не совпало для файла: "+p);
+  status("Сохранено и проверено в "+BRANCH+", commit "+c.sha.slice(0,7)+". GitHub подтвердил перемещение ветки; публикация запускается автоматически.");
+ }catch(e){
+  status((committed?"Изменения уже записаны в GitHub (commit "+head.slice(0,7)+"), но дополнительная проверка не завершилась: ":"Сохранение не выполнено: ")+e.message,true)
+ }
  finally{busy=false;updateSave()}
 }
 $("rmAdminConnect")?.addEventListener("click",async()=>{const input=$("rmAdminToken");token=input?.value.trim()||"";if(!token){$("rmAdminGateStatus").textContent="Вставь GitHub token.";return}$("rmAdminGateStatus").textContent="Проверяю доступ…";try{await load();if(input)input.value=""}catch(e){$("rmAdminGateStatus").textContent="Ошибка: "+e.message;token=""}});
