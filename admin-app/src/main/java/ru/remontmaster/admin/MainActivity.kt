@@ -2,7 +2,6 @@ package ru.remontmaster.admin
 
 import android.app.Activity
 import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -13,12 +12,13 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
-import android.widget.TextView
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -34,7 +34,7 @@ private const val KEY_ALIAS = "remontmaster_admin_token_v1"
 
 class MainActivity : Activity() {
     private lateinit var web: WebView
-    private lateinit var root: FrameLayout
+    private lateinit var root: LinearLayout
     private var fileCallback: android.webkit.ValueCallback<Array<Uri>>? = null
     private val pickerCode = 7214
 
@@ -42,13 +42,72 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         window.statusBarColor = Color.rgb(25, 22, 17)
         window.navigationBarColor = Color.rgb(16, 15, 13)
-        root = FrameLayout(this)
-        web = WebView(this)
-        web.layoutParams = FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
+
+        root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.rgb(16, 15, 13))
+        }
+
+        val toolbar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), 0, dp(12), 0)
+            setBackgroundColor(Color.rgb(25, 22, 17))
+        }
+
+        val appTitle = TextView(this).apply {
+            text = "RemontMaster"
+            setTextColor(Color.WHITE)
+            textSize = 16f
+            setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        toolbar.addView(
+            appTitle,
+            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
         )
-        root.addView(web)
+
+        val refreshButton = TextView(this).apply {
+            text = "↻  Обновить страницу"
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(dp(15), dp(9), dp(15), dp(9))
+            background = GradientDrawable().apply {
+                setColor(Color.rgb(48, 74, 86))
+                cornerRadius = dp(10).toFloat()
+            }
+            isClickable = true
+            isFocusable = true
+            setOnClickListener {
+                web.reload()
+            }
+        }
+        toolbar.addView(
+            refreshButton,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                dp(40)
+            )
+        )
+        root.addView(
+            toolbar,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(52)
+            )
+        )
+
+        web = WebView(this)
+        root.addView(
+            web,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                0,
+                1f
+            )
+        )
         setContentView(root)
 
         web.settings.javaScriptEnabled = true
@@ -71,7 +130,10 @@ class MainActivity : Activity() {
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                if (url?.startsWith(ADMIN_URL) == true) { installTokenObserver(); restoreLoginIfAvailable() }
+                if (url?.startsWith(ADMIN_URL) == true) {
+                    installTokenObserver()
+                    restoreLoginIfAvailable()
+                }
             }
         }
 
@@ -102,6 +164,8 @@ class MainActivity : Activity() {
 
         web.loadUrl(ADMIN_URL)
     }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     private fun installTokenObserver() {
         val script = """
