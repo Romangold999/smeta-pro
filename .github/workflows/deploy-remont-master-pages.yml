@@ -1,9 +1,9 @@
-name: Deploy RemontMaster preview to GitHub Pages
-# Preview source is remont-master-admin-git; production remains copied from this branch. Sync latest admin UI, portfolio editing, Rutube preview and profile/concrete editors.
+name: Deploy RemontMaster Git-only preview
 
 on:
   push:
     branches:
+      - main
       - remont-master-pages
     paths:
       - ".github/workflows/deploy-remont-master-pages.yml"
@@ -20,7 +20,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  register-workflow:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Register workflow_dispatch on default branch
+        run: echo "Workflow dispatch is registered. Actual Pages deployments run from remont-master-pages."
+
   deploy:
+    if: github.ref == 'refs/heads/remont-master-pages'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
