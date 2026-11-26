@@ -18,7 +18,7 @@ function renderPortfolioCard(item,target){
  const card=document.createElement("article");card.className="widecard";card.dataset.portfolioId=item.id;
  const title=document.createElement("p");title.textContent=item.title||"Работа";card.append(title);
  if(item.type==="video"){
-  let id="";try{const u=new URL(item.url);const m=u.pathname.match(/\/(?:video|play\/embed)\/([a-zA-Z0-9_-]+)/);id=m?m[1]:""}catch(_){}
+  let id="";try{const u=new URL(item.url);const m=u.pathname.match(/\/(?:shorts|video|play\/embed)\/([a-zA-Z0-9_-]+)/);id=m?m[1]:""}catch(_){}
   if(id){const frame=document.createElement("iframe");frame.src="https://rutube.ru/play/embed/"+encodeURIComponent(id);frame.title=item.title||"Видео";frame.allow="clipboard-write; autoplay; fullscreen";frame.allowFullscreen=true;frame.style.cssText="width:100%;aspect-ratio:16/9;border:0;border-radius:10px";card.prepend(frame)}
   else{const link=document.createElement("a");link.href=item.url;link.target="_blank";link.rel="noopener";link.textContent="Открыть видео на Rutube";card.append(link)}
  }else if(item.image){const img=document.createElement("img");img.src=new URL(item.image,document.baseURI).href;img.alt=item.title||"Работа";img.loading="lazy";img.style.cssText="width:100%;max-height:320px;object-fit:cover;border-radius:10px";card.prepend(img)}
