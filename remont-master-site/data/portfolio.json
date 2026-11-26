@@ -98,6 +98,46 @@
       "category": "concrete",
       "image": "assets/portfolio/portfolio-mwwsi67l-tpq6e.jpg",
       "sortOrder": 6
+    },
+    {
+      "id": "portfolio-mwxf1io3-fx8q5",
+      "type": "image",
+      "title": "Венецианская штукатурка · 1000221917.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxf1io3-fx8q5.jpg",
+      "sortOrder": 5
+    },
+    {
+      "id": "portfolio-mwxf1ist-6lvkq",
+      "type": "image",
+      "title": "Венецианская штукатурка · 1000086128.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxf1ist-6lvkq.jpg",
+      "sortOrder": 6
+    },
+    {
+      "id": "portfolio-mwxf1iyj-sgpn4",
+      "type": "image",
+      "title": "Венецианская штукатурка · 1000086123.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxf1iyj-sgpn4.jpg",
+      "sortOrder": 7
+    },
+    {
+      "id": "portfolio-mwxf1j4o-zuajs",
+      "type": "image",
+      "title": "Венецианская штукатурка · 1000000534.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxf1j4o-zuajs.jpg",
+      "sortOrder": 8
+    },
+    {
+      "id": "portfolio-mwxf1jd7-w5yi7",
+      "type": "image",
+      "title": "Венецианская штукатурка · 1000000528.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxf1jd7-w5yi7.jpg",
+      "sortOrder": 9
     }
   ]
 }
