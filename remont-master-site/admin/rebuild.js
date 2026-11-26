@@ -32,7 +32,7 @@ function videoEmbed(url){
 }
 function isDirectVideoHost(url){
  try{
-  const host=new URL(String(url||"")).hostname.toLowerCase().replace(/^www\\./,"").replace(/^m\\./,"");
+  const host=new URL(String(url||"")).hostname.toLowerCase().replace(/^www\./,"").replace(/^m\./,"");
   return ["rutube.ru","youtube.com","youtube-nocookie.com","youtu.be","vk.com","vkvideo.ru","ok.ru","vimeo.com","player.vimeo.com","dzen.ru","tiktok.com","twitch.tv"].includes(host);
  }catch(_){return false}
 }
