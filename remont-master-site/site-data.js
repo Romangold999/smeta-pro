@@ -99,7 +99,7 @@
         const title=document.createElement("h3");title.textContent=item.title||"Материал";card.appendChild(title);
         if(item.description){const desc=document.createElement("p");desc.className="muted";desc.textContent=item.description;card.appendChild(desc);}
         if(item.type==="video"&&item.url){
-          let id="";try{const u=new URL(item.url);const m=u.pathname.match(/\/(?:video|play\/embed)\/([a-zA-Z0-9_-]+)/);id=m?m[1]:"";}catch(_){}
+          let id="";try{const u=new URL(item.url);const m=u.pathname.match(/\/(?:shorts|video|play\/embed)\/([a-zA-Z0-9_-]+)/);id=m?m[1]:"";}catch(_){}
           if(id){const frame=document.createElement("iframe");frame.src="https://rutube.ru/play/embed/"+encodeURIComponent(id);frame.title=item.title||"Видео";frame.allow="clipboard-write; autoplay; fullscreen";frame.allowFullscreen=true;frame.loading="lazy";frame.style.cssText="width:100%;aspect-ratio:16/9;border:0;border-radius:10px";card.appendChild(frame);}
           else{const link=document.createElement("a");link.href=item.url;link.target="_blank";link.rel="noopener";link.textContent="Открыть видео на Rutube";card.appendChild(link);}
         }else if(item.image){const img=document.createElement("img");img.src=new URL(item.image,scriptUrl).href;img.alt=item.title||"Материал";img.loading="lazy";img.style.cssText="width:100%;max-height:320px;object-fit:cover;border-radius:10px";card.appendChild(img);}
@@ -151,7 +151,7 @@
     });
 
     const rutubeId = url => {
-      try { const u = new URL(url); const m = u.pathname.match(/\/(?:video|play\/embed)\/([a-zA-Z0-9_-]+)/); return m ? m[1] : ""; }
+      try { const u = new URL(url); const m = u.pathname.match(/\/(?:shorts|video|play\/embed)\/([a-zA-Z0-9_-]+)/); return m ? m[1] : ""; }
       catch (_) { return ""; }
     };
     portfolioGroups.forEach(group => {
