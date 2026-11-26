@@ -146,6 +146,46 @@
       "category": "decorative-walls",
       "image": "assets/portfolio/portfolio-mwxfab9o-u56yw.jpg",
       "sortOrder": 10
+    },
+    {
+      "id": "portfolio-mwxfexd6-6qpyl",
+      "type": "image",
+      "title": "Ленина и барельеф · 1000226168.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxfexd6-6qpyl.jpg",
+      "sortOrder": 11
+    },
+    {
+      "id": "portfolio-mwxfexft-4e5fk",
+      "type": "image",
+      "title": "Ленина и барельеф · 1000226131.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxfexft-4e5fk.jpg",
+      "sortOrder": 12
+    },
+    {
+      "id": "portfolio-mwxfexko-3o6j2",
+      "type": "image",
+      "title": "Ленина и барельеф · 1000226138.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxfexko-3o6j2.jpg",
+      "sortOrder": 13
+    },
+    {
+      "id": "portfolio-mwxfexnu-1krab",
+      "type": "image",
+      "title": "Ленина и барельеф · 1000226125.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxfexnu-1krab.jpg",
+      "sortOrder": 14
+    },
+    {
+      "id": "portfolio-mwxfexs1-i1hlk",
+      "type": "image",
+      "title": "Ленина и барельеф · 1000226126.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxfexs1-i1hlk.jpg",
+      "sortOrder": 15
     }
   ]
 }
