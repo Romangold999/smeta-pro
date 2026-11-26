@@ -58,6 +58,46 @@
       "category": "concrete",
       "image": "assets/portfolio/portfolio-mwws5z07-7misn.jpg",
       "sortOrder": 1
+    },
+    {
+      "id": "portfolio-mwwse1nr-331ge",
+      "type": "image",
+      "title": "стол Тенсегрити, левитирующий стол с полированный бетонной столешницей(лофт)",
+      "category": "concrete",
+      "image": "assets/portfolio/portfolio-mwwse1nr-331ge.jpg",
+      "sortOrder": 2
+    },
+    {
+      "id": "portfolio-mwwsi5p8-71rfb",
+      "type": "image",
+      "title": "Бетонные подоконники · 1000077514.jpg",
+      "category": "concrete",
+      "image": "assets/portfolio/portfolio-mwwsi5p8-71rfb.jpg",
+      "sortOrder": 3
+    },
+    {
+      "id": "portfolio-mwwsi5v8-ln2cl",
+      "type": "image",
+      "title": "Бетонные подоконники · 1000073026.jpg",
+      "category": "concrete",
+      "image": "assets/portfolio/portfolio-mwwsi5v8-ln2cl.jpg",
+      "sortOrder": 4
+    },
+    {
+      "id": "portfolio-mwwsi60e-e5zm9",
+      "type": "image",
+      "title": "Бетонные подоконники · 1000071230.jpg",
+      "category": "concrete",
+      "image": "assets/portfolio/portfolio-mwwsi60e-e5zm9.jpg",
+      "sortOrder": 5
+    },
+    {
+      "id": "portfolio-mwwsi67l-tpq6e",
+      "type": "image",
+      "title": "Бетонные подоконники · 1000071229.jpg",
+      "category": "concrete",
+      "image": "assets/portfolio/portfolio-mwwsi67l-tpq6e.jpg",
+      "sortOrder": 6
     }
   ]
 }
