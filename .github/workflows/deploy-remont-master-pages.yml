@@ -37,6 +37,65 @@ jobs:
           cp -R remont-master-site/. public/remont-master/
           printf '%s\n' '<!doctype html>' '<html lang="ru">' '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0; url=./remont-master/"><title>РемонтМастер</title></head>' '<body><p><a href="./remont-master/">Открыть сайт РемонтМастер</a></p></body></html>' > public/index.html
 
+      - name: Resolve redirected video links for embedded playback
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from urllib.parse import urlparse
+          from urllib.request import Request, urlopen
+
+          root = "public/remont-master/data"
+          known_hosts = {
+              "rutube.ru", "youtube.com", "youtube-nocookie.com", "youtu.be",
+              "vk.com", "vkvideo.ru", "ok.ru", "vimeo.com", "player.vimeo.com",
+              "dzen.ru", "tiktok.com", "twitch.tv"
+          }
+
+          # Diagnostic probe for the short-link format reported by the site owner.
+          probe = "https://r2be.ru/HDGtRzV/?r=a"
+          try:
+              request = Request(probe, headers={"User-Agent": "Mozilla/5.0 RemontMasterPages/1.0"})
+              with urlopen(request, timeout=20) as response:
+                  print("R2BE redirect test:", response.geturl())
+          except Exception as error:
+              print("R2BE redirect test unavailable:", error)
+
+          for filename in ("portfolio.json", "diy-media.json"):
+              path = os.path.join(root, filename)
+              if not os.path.isfile(path):
+                  continue
+              with open(path, "r", encoding="utf-8") as stream:
+                  data = json.load(stream)
+              changed = False
+              for item in data.get("items", []):
+                  if item.get("type") != "video" or not isinstance(item.get("url"), str):
+                      continue
+                  original = item["url"].strip()
+                  parsed = urlparse(original)
+                  if parsed.scheme not in ("http", "https") or not parsed.hostname:
+                      continue
+                  host = parsed.hostname.lower().removeprefix("www.").removeprefix("m.")
+                  if host in known_hosts:
+                      continue
+                  try:
+                      request = Request(original, headers={"User-Agent": "Mozilla/5.0 RemontMasterPages/1.0"})
+                      with urlopen(request, timeout=20) as response:
+                          final_url = response.geturl()
+                      final = urlparse(final_url)
+                      if final.scheme in ("http", "https") and final.hostname and final_url != original:
+                          item["url"] = final_url
+                          changed = True
+                          print(f"Resolved video link: {host} -> {final.hostname} ({item.get('title', 'без названия')})")
+                  except Exception as error:
+                      print(f"Could not resolve {original}: {error}")
+              if changed:
+                  with open(path, "w", encoding="utf-8") as stream:
+                      json.dump(data, stream, ensure_ascii=False, indent=2)
+                  print("Updated published copy:", filename)
+          PY
+
       - name: Measure Pages output
         shell: bash
         run: |
