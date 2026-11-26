@@ -94,11 +94,11 @@
     const videoEmbed = url => {
       try {
         const u = new URL(url);
-        const host = u.hostname.toLowerCase().replace(/^www\\./, "");
+        const host = u.hostname.toLowerCase().replace(/^www\./, "");
         if (host === "rutube.ru" || host === "m.rutube.ru") {
-          const path = u.pathname.replace(/\\/+$/, "");
-          const m = path.match(/^\\/(?:shorts|video|play\\/embed)\\/([a-zA-Z0-9_-]+)$/i);
-          const privateMatch = path.match(/^\\/video\\/private\\/([a-zA-Z0-9_-]+)$/i);
+          const path = u.pathname.replace(/\/+$/, "");
+          const m = path.match(/^\/(?:shorts|video|play\/embed)\/([a-zA-Z0-9_-]+)$/i);
+          const privateMatch = path.match(/^\/video\/private\/([a-zA-Z0-9_-]+)$/i);
           const id = privateMatch ? privateMatch[1] : (m ? m[1] : "");
           if (!id) return null;
           const embed = new URL("https://rutube.ru/play/embed/" + encodeURIComponent(id));
@@ -111,7 +111,7 @@
           return /^[a-zA-Z0-9_-]{6,}$/.test(id) ? { src: "https://www.youtube.com/embed/" + encodeURIComponent(id), platform: "YouTube" } : null;
         }
         if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com" || host === "youtube-nocookie.com") {
-          const m = u.pathname.match(/^\\/(?:shorts|live|embed|v)\\/([a-zA-Z0-9_-]+)/);
+          const m = u.pathname.match(/^\/(?:shorts|live|embed|v)\/([a-zA-Z0-9_-]+)/);
           const id = u.pathname === "/watch" ? (u.searchParams.get("v") || "") : (m ? m[1] : "");
           return /^[a-zA-Z0-9_-]{6,}$/.test(id) ? { src: "https://www.youtube.com/embed/" + encodeURIComponent(id), platform: "YouTube" } : null;
         }
