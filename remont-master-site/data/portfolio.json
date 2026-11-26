@@ -498,6 +498,22 @@
       "category": "decorative-walls",
       "image": "assets/portfolio/portfolio-mwxghd5a-fe4cz.jpg",
       "sortOrder": 25
+    },
+    {
+      "id": "portfolio-mwxhz5bu-ybhms",
+      "type": "image",
+      "title": "Фактурные штукатурки · 1000248613.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxhz5bu-ybhms.jpg",
+      "sortOrder": 26
+    },
+    {
+      "id": "portfolio-mwxhz5ee-2s5a2",
+      "type": "image",
+      "title": "Фактурные штукатурки · 1000248612.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxhz5ee-2s5a2.jpg",
+      "sortOrder": 27
     }
   ]
 }
