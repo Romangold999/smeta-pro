@@ -30,12 +30,19 @@ function videoEmbed(url){
   return make(u.href,"Внешнее видео");
  }catch(_){return null}
 }
+function isDirectVideoHost(url){
+ try{
+  const host=new URL(String(url||"")).hostname.toLowerCase().replace(/^www\\./,"").replace(/^m\\./,"");
+  return ["rutube.ru","youtube.com","youtube-nocookie.com","youtu.be","vk.com","vkvideo.ru","ok.ru","vimeo.com","player.vimeo.com","dzen.ru","tiktok.com","twitch.tv"].includes(host);
+ }catch(_){return false}
+}
 function renderPortfolioCard(item,target){
  const card=document.createElement("article");card.className="widecard";card.dataset.portfolioId=item.id;
  const title=document.createElement("p");title.textContent=item.title||"Работа";card.append(title);
  if(item.type==="video"){
    const video=videoEmbed(item.url);
-   if(video){const frame=document.createElement("iframe");frame.src=video.src;frame.title=item.title||"Видео";frame.allow="clipboard-write; autoplay; encrypted-media; fullscreen";frame.allowFullscreen=true;frame.style.cssText="width:100%;aspect-ratio:16/9;border:0;border-radius:10px";card.prepend(frame)}
+   if(video&&isDirectVideoHost(item.url)){const frame=document.createElement("iframe");frame.src=video.src;frame.title=item.title||"Видео";frame.allow="clipboard-write; autoplay; encrypted-media; fullscreen";frame.allowFullscreen=true;frame.style.cssText="width:100%;aspect-ratio:16/9;border:0;border-radius:10px";card.prepend(frame)}
+   else if(video){const note=document.createElement("small");note.textContent="Короткая или внешняя ссылка. Конечный адрес будет определён при публикации; встроенный плеер появится на опубликованном сайте после деплоя.";note.style.cssText="display:block;color:#cdbb96;margin:8px 0";card.append(note);const link=document.createElement("a");link.href=item.url;link.target="_blank";link.rel="noopener noreferrer";link.textContent="Проверить исходную ссылку";card.append(link)}
    else{const link=document.createElement("a");link.href=item.url;link.target="_blank";link.rel="noopener";link.textContent="Открыть видео";card.append(link)}
  }else if(item.image){const img=document.createElement("img");img.src=new URL(item.image,document.baseURI).href;img.alt=item.title||"Работа";img.loading="lazy";img.style.cssText="width:100%;max-height:320px;object-fit:cover;border-radius:10px";card.prepend(img)}
  const del=document.createElement("button");del.type="button";del.textContent="Удалить материал";del.style.cssText="margin-top:10px;border:1px solid #8b4b43;border-radius:9px;background:#2a1d1b;color:#f0b7ad;padding:8px 10px;font-size:11px";
