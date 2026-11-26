@@ -802,6 +802,14 @@
       "category": "tile",
       "image": "assets/portfolio/portfolio-mwxvwt5i-z9ff2.jpg",
       "sortOrder": 56
+    },
+    {
+      "id": "portfolio-video-mwy0vyqc",
+      "type": "video",
+      "title": "Плиточные работы",
+      "category": "tile",
+      "url": "https://rutube.ru/shorts/213ef36dbd1a8bc08b3369fe89cdf9ae/?r=a",
+      "sortOrder": 57
     }
   ]
 }
