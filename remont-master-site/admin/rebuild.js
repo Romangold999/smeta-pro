@@ -16,10 +16,20 @@ function stageAsset(path,base64){pending.set(path,{__binary:true,content:base64}
 function portfolioTarget(category){return {"decorative-walls":"portfolio-decorative-walls","tile":"portfolio-tile","concrete":"portfolio-concrete","complex-structures":"portfolio-complex-structures"}[category]||"";}
 function videoEmbed(url){
  try{
-  const u=new URL(url),host=u.hostname.toLowerCase().replace(/^www\./,"");
-  if(host==="rutube.ru"){const m=u.pathname.match(/\/(?:shorts|video|play\/embed)\/([a-zA-Z0-9_-]+)/);return m?{src:"https://rutube.ru/play/embed/"+encodeURIComponent(m[1]),platform:"Rutube"}:null;}
+  const u=new URL(url),host=u.hostname.toLowerCase().replace(/^www\\./,"");
+  if(host==="rutube.ru"||host==="m.rutube.ru"){
+   const path=u.pathname.replace(/\\/+$/,"");
+   const m=path.match(/^\\/(?:shorts|video|play\\/embed)\\/([a-zA-Z0-9_-]+)$/i);
+   const privateMatch=path.match(/^\\/video\\/private\\/([a-zA-Z0-9_-]+)$/i);
+   const id=privateMatch?privateMatch[1]:(m?m[1]:"");
+   if(!id)return null;
+   const embed=new URL("https://rutube.ru/play/embed/"+encodeURIComponent(id));
+   const accessKey=u.searchParams.get("p");
+   if(accessKey)embed.searchParams.set("p",accessKey);
+   return {src:embed.href,platform:"Rutube"};
+  }
   if(host==="youtu.be"){const id=u.pathname.split("/").filter(Boolean)[0]||"";return /^[a-zA-Z0-9_-]{6,}$/.test(id)?{src:"https://www.youtube.com/embed/"+encodeURIComponent(id),platform:"YouTube"}:null;}
-  if(["youtube.com","m.youtube.com","music.youtube.com","youtube-nocookie.com"].includes(host)){const m=u.pathname.match(/^\/(?:shorts|live|embed|v)\/([a-zA-Z0-9_-]+)/),id=u.pathname==="/watch"?(u.searchParams.get("v")||""):(m?m[1]:"");return /^[a-zA-Z0-9_-]{6,}$/.test(id)?{src:"https://www.youtube.com/embed/"+encodeURIComponent(id),platform:"YouTube"}:null;}
+  if(["youtube.com","m.youtube.com","music.youtube.com","youtube-nocookie.com"].includes(host)){const m=u.pathname.match(/^\\/(?:shorts|live|embed|v)\\/([a-zA-Z0-9_-]+)/),id=u.pathname==="/watch"?(u.searchParams.get("v")||""):(m?m[1]:"");return /^[a-zA-Z0-9_-]{6,}$/.test(id)?{src:"https://www.youtube.com/embed/"+encodeURIComponent(id),platform:"YouTube"}:null;}
  }catch(_){}
  return null;
 }
