@@ -93,30 +93,23 @@
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
     const videoEmbed = url => {
       try {
-        const u = new URL(url);
-        const host = u.hostname.toLowerCase().replace(/^www\./, "");
-        if (host === "rutube.ru" || host === "m.rutube.ru") {
-          const path = u.pathname.replace(/\/+$/, "");
-          const m = path.match(/^\/(?:shorts|video|play\/embed)\/([a-zA-Z0-9_-]+)$/i);
-          const privateMatch = path.match(/^\/video\/private\/([a-zA-Z0-9_-]+)$/i);
-          const id = privateMatch ? privateMatch[1] : (m ? m[1] : "");
-          if (!id) return null;
-          const embed = new URL("https://rutube.ru/play/embed/" + encodeURIComponent(id));
-          const accessKey = u.searchParams.get("p");
-          if (accessKey) embed.searchParams.set("p", accessKey);
-          return { src: embed.href, platform: "Rutube" };
-        }
-        if (host === "youtu.be") {
-          const id = u.pathname.split("/").filter(Boolean)[0] || "";
-          return /^[a-zA-Z0-9_-]{6,}$/.test(id) ? { src: "https://www.youtube.com/embed/" + encodeURIComponent(id), platform: "YouTube" } : null;
-        }
-        if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com" || host === "youtube-nocookie.com") {
-          const m = u.pathname.match(/^\/(?:shorts|live|embed|v)\/([a-zA-Z0-9_-]+)/);
-          const id = u.pathname === "/watch" ? (u.searchParams.get("v") || "") : (m ? m[1] : "");
-          return /^[a-zA-Z0-9_-]{6,}$/.test(id) ? { src: "https://www.youtube.com/embed/" + encodeURIComponent(id), platform: "YouTube" } : null;
-        }
-      } catch (_) {}
-      return null;
+        const u=new URL(String(url||"").trim());
+        if(!["https:","http:"].includes(u.protocol))return null;
+        const host=u.hostname.toLowerCase().replace(/^www\./,"").replace(/^m\./,"");
+        const path=u.pathname.replace(/\/+$/,"")||"/";
+        const make=(src,platform,type)=>({src,platform,type:type||"iframe"});
+        const match=(v,re)=>{const m=v.match(re);return m?m[1]:""};
+        if(host==="rutube.ru"){const m=path.match(/^\/(?:shorts|video|play\/embed)\/([a-zA-Z0-9_-]+)$/i),p=path.match(/^\/video\/private\/([a-zA-Z0-9_-]+)$/i),id=p?p[1]:(m?m[1]:"");if(id){const e=new URL("https://rutube.ru/play/embed/"+encodeURIComponent(id)),k=u.searchParams.get("p");if(k)e.searchParams.set("p",k);return make(e.href,"Rutube")}}
+        if(["youtu.be","youtube.com","youtube-nocookie.com"].includes(host)){const id=host==="youtu.be"?(path.split("/").filter(Boolean)[0]||""):(path==="/watch"?(u.searchParams.get("v")||""):match(path,/^\/(?:shorts|live|embed|v)\/([a-zA-Z0-9_-]+)/));if(/^[a-zA-Z0-9_-]{6,}$/.test(id))return make("https://www.youtube-nocookie.com/embed/"+encodeURIComponent(id),"YouTube")}
+        if(host==="vk.com"||host==="vkvideo.ru"){const id=match(path,/^\/video(-?\d+_\d+)/);if(id){const p=id.split("_"),e=new URL("https://vk.com/video_ext.php");e.searchParams.set("oid",p[0]);e.searchParams.set("id",p[1]);const h=u.searchParams.get("hash");if(h)e.searchParams.set("hash",h);return make(e.href,"VK Видео")}if(/^\/(?:clip|clips)\//i.test(path))return make(u.href,"VK Видео")}
+        if(host==="ok.ru"){const id=match(path,/^\/video\/(\d+)/)||u.searchParams.get("videoId")||"";if(id)return make("https://ok.ru/videoembed/"+encodeURIComponent(id),"Одноклассники")}
+        if(host==="vimeo.com"||host==="player.vimeo.com"){const id=match(path,/\/(\d+)(?:\/|$)/);if(id)return make("https://player.vimeo.com/video/"+id,"Vimeo")}
+        if(host==="dzen.ru"&&/\/video\//i.test(path))return make(u.href,"Дзен");
+        if(host==="tiktok.com"){const id=match(path,/\/video\/(\d+)/);if(id)return make("https://www.tiktok.com/embed/v2/"+id,"TikTok")}
+        if(host==="twitch.tv"){const m=path.match(/^\/videos\/(\d+)/);if(m){const e=new URL("https://player.twitch.tv/");e.searchParams.set("video","v"+m[1]);e.searchParams.set("parent",location.hostname);return make(e.href,"Twitch")}}
+        // Any other HTTP(S) URL is tried in an iframe, including short/redirect links.
+        return make(u.href,"Внешнее видео");
+      }catch(_){return null}
     };
     const diyTarget=document.getElementById("diyMaterials");
     if(diyTarget){

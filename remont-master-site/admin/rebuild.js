@@ -16,22 +16,19 @@ function stageAsset(path,base64){pending.set(path,{__binary:true,content:base64}
 function portfolioTarget(category){return {"decorative-walls":"portfolio-decorative-walls","tile":"portfolio-tile","concrete":"portfolio-concrete","complex-structures":"portfolio-complex-structures"}[category]||"";}
 function videoEmbed(url){
  try{
-  const u=new URL(url),host=u.hostname.toLowerCase().replace(/^www\./,"");
-  if(host==="rutube.ru"||host==="m.rutube.ru"){
-   const path=u.pathname.replace(/\/+$/,"");
-   const m=path.match(/^\/(?:shorts|video|play\/embed)\/([a-zA-Z0-9_-]+)$/i);
-   const privateMatch=path.match(/^\/video\/private\/([a-zA-Z0-9_-]+)$/i);
-   const id=privateMatch?privateMatch[1]:(m?m[1]:"");
-   if(!id)return null;
-   const embed=new URL("https://rutube.ru/play/embed/"+encodeURIComponent(id));
-   const accessKey=u.searchParams.get("p");
-   if(accessKey)embed.searchParams.set("p",accessKey);
-   return {src:embed.href,platform:"Rutube"};
-  }
-  if(host==="youtu.be"){const id=u.pathname.split("/").filter(Boolean)[0]||"";return /^[a-zA-Z0-9_-]{6,}$/.test(id)?{src:"https://www.youtube.com/embed/"+encodeURIComponent(id),platform:"YouTube"}:null;}
-  if(["youtube.com","m.youtube.com","music.youtube.com","youtube-nocookie.com"].includes(host)){const m=u.pathname.match(/^\/(?:shorts|live|embed|v)\/([a-zA-Z0-9_-]+)/),id=u.pathname==="/watch"?(u.searchParams.get("v")||""):(m?m[1]:"");return /^[a-zA-Z0-9_-]{6,}$/.test(id)?{src:"https://www.youtube.com/embed/"+encodeURIComponent(id),platform:"YouTube"}:null;}
- }catch(_){}
- return null;
+  const u=new URL(String(url||"").trim());if(!["https:","http:"].includes(u.protocol))return null;
+  const host=u.hostname.toLowerCase().replace(/^www\./,"").replace(/^m\./,""),path=u.pathname.replace(/\/+$/,"")||"/";
+  const make=(src,platform,type)=>({src,platform,type:type||"iframe"}),match=(v,re)=>{const m=v.match(re);return m?m[1]:""};
+  if(host==="rutube.ru"){const m=path.match(/^\/(?:shorts|video|play\/embed)\/([a-zA-Z0-9_-]+)$/i),p=path.match(/^\/video\/private\/([a-zA-Z0-9_-]+)$/i),id=p?p[1]:(m?m[1]:"");if(id){const e=new URL("https://rutube.ru/play/embed/"+encodeURIComponent(id)),k=u.searchParams.get("p");if(k)e.searchParams.set("p",k);return make(e.href,"Rutube")}}
+  if(["youtu.be","youtube.com","youtube-nocookie.com"].includes(host)){const id=host==="youtu.be"?(path.split("/").filter(Boolean)[0]||""):(path==="/watch"?(u.searchParams.get("v")||""):match(path,/^\/(?:shorts|live|embed|v)\/([a-zA-Z0-9_-]+)/));if(/^[a-zA-Z0-9_-]{6,}$/.test(id))return make("https://www.youtube-nocookie.com/embed/"+encodeURIComponent(id),"YouTube")}
+  if(host==="vk.com"||host==="vkvideo.ru"){const id=match(path,/^\/video(-?\d+_\d+)/);if(id){const p=id.split("_"),e=new URL("https://vk.com/video_ext.php");e.searchParams.set("oid",p[0]);e.searchParams.set("id",p[1]);const h=u.searchParams.get("hash");if(h)e.searchParams.set("hash",h);return make(e.href,"VK Видео")}if(/^\/(?:clip|clips)\//i.test(path))return make(u.href,"VK Видео")}
+  if(host==="ok.ru"){const id=match(path,/^\/video\/(\d+)/)||u.searchParams.get("videoId")||"";if(id)return make("https://ok.ru/videoembed/"+encodeURIComponent(id),"Одноклассники")}
+  if(host==="vimeo.com"||host==="player.vimeo.com"){const id=match(path,/\/(\d+)(?:\/|$)/);if(id)return make("https://player.vimeo.com/video/"+id,"Vimeo")}
+  if(host==="dzen.ru"&&/\/video\//i.test(path))return make(u.href,"Дзен");
+  if(host==="tiktok.com"){const id=match(path,/\/video\/(\d+)/);if(id)return make("https://www.tiktok.com/embed/v2/"+id,"TikTok")}
+  if(host==="twitch.tv"){const m=path.match(/^\/videos\/(\d+)/);if(m){const e=new URL("https://player.twitch.tv/");e.searchParams.set("video","v"+m[1]);e.searchParams.set("parent",location.hostname);return make(e.href,"Twitch")}}
+  return make(u.href,"Внешнее видео");
+ }catch(_){return null}
 }
 function renderPortfolioCard(item,target){
  const card=document.createElement("article");card.className="widecard";card.dataset.portfolioId=item.id;
@@ -54,7 +51,7 @@ function renderPortfolioControls(){
    const heading=document.createElement("strong");heading.textContent="Добавить материал в портфолио";panel.append(heading);
    const title=document.createElement("input");title.placeholder="Название работы";title.dataset.role="title";title.style.cssText="display:block;width:100%;margin:10px 0;padding:11px;border:1px solid #51432d;border-radius:9px;background:#202426;color:#fff";
    const files=document.createElement("input");files.type="file";files.accept="image/*";files.multiple=true;files.dataset.role="files";files.style.cssText="display:block;width:100%;margin:8px 0;color:#ddd";
-   const video=document.createElement("input");video.type="url";video.placeholder="Ссылка на видео Rutube или YouTube";video.dataset.role="video";video.style.cssText="display:block;width:100%;margin:8px 0;padding:11px;border:1px solid #51432d;border-radius:9px;background:#202426;color:#fff";
+   const video=document.createElement("input");video.type="url";video.placeholder="Ссылка на видео (любой видеохостинг или короткая ссылка)";video.dataset.role="video";video.style.cssText="display:block;width:100%;margin:8px 0;padding:11px;border:1px solid #51432d;border-radius:9px;background:#202426;color:#fff";
    const add=document.createElement("button");add.type="button";add.textContent="Добавить выбранные материалы";add.className="goldbtn";add.style.cssText="width:100%;margin-top:8px";add.addEventListener("click",()=>addPortfolioContent(cat.id,panel));
    panel.append(title,files,video,add);screen.insertBefore(panel,screen.children[1]||null);
   }
@@ -66,7 +63,7 @@ function renderPortfolioControls(){
 async function addPortfolioContent(category,panel){
  const title=panel.querySelector('[data-role="title"]').value.trim(),files=Array.from(panel.querySelector('[data-role="files"]').files||[]),video=panel.querySelector('[data-role="video"]').value.trim();
  if(!title){status("Укажи название материала.",true);return}
- if(!files.length&&!video){status("Выбери фотографии или добавь ссылку Rutube / YouTube.",true);return}
+ if(!files.length&&!video){status("Выбери фотографии или добавь ссылку на видео.",true);return}
  let order=Math.max(0,...data["portfolio.json"].items.filter(x=>x.category===category).map(x=>Number(x.sortOrder)||0))+1;
  for(const file of files){
   if(!file.type.startsWith("image/"))continue;
@@ -75,7 +72,7 @@ async function addPortfolioContent(category,panel){
   stageAsset("remont-master-site/"+path,base64);
   data["portfolio.json"].items.push({id,type:"image",title:title+(files.length>1?" · "+file.name:""),category,image:path,sortOrder:order++});
  }
-  if(video){const parsed=videoEmbed(video);if(!parsed){status("Поддерживаются ссылки Rutube и YouTube (watch, youtu.be, Shorts).",true);return}data["portfolio.json"].items.push({id:"portfolio-video-"+Date.now().toString(36),type:"video",title,category,url:video,sortOrder:order++})}
+  if(video){const parsed=videoEmbed(video);if(!parsed){status("Не удалось обработать ссылку. Нужна действующая HTTP(S)-ссылка.",true);return}data["portfolio.json"].items.push({id:"portfolio-video-"+Date.now().toString(36),type:"video",title,category,url:video,sortOrder:order++})}
  stage("portfolio.json");panel.querySelector('[data-role="title"]').value="";panel.querySelector('[data-role="files"]').value="";panel.querySelector('[data-role="video"]').value="";renderPortfolioControls();status("Материалы подготовлены. Сохрани общей кнопкой.");
 }
 
