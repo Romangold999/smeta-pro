@@ -91,6 +91,26 @@
     ];
     const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, ch =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+    const videoEmbed = url => {
+      try {
+        const u = new URL(url);
+        const host = u.hostname.toLowerCase().replace(/^www\./, "");
+        if (host === "rutube.ru") {
+          const m = u.pathname.match(/\/(?:shorts|video|play\/embed)\/([a-zA-Z0-9_-]+)/);
+          return m ? { src: "https://rutube.ru/play/embed/" + encodeURIComponent(m[1]), platform: "Rutube" } : null;
+        }
+        if (host === "youtu.be") {
+          const id = u.pathname.split("/").filter(Boolean)[0] || "";
+          return /^[a-zA-Z0-9_-]{6,}$/.test(id) ? { src: "https://www.youtube.com/embed/" + encodeURIComponent(id), platform: "YouTube" } : null;
+        }
+        if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com" || host === "youtube-nocookie.com") {
+          const m = u.pathname.match(/^\/(?:shorts|live|embed|v)\/([a-zA-Z0-9_-]+)/);
+          const id = u.pathname === "/watch" ? (u.searchParams.get("v") || "") : (m ? m[1] : "");
+          return /^[a-zA-Z0-9_-]{6,}$/.test(id) ? { src: "https://www.youtube.com/embed/" + encodeURIComponent(id), platform: "YouTube" } : null;
+        }
+      } catch (_) {}
+      return null;
+    };
     const diyTarget=document.getElementById("diyMaterials");
     if(diyTarget){
       diyTarget.replaceChildren();
@@ -99,9 +119,9 @@
         const title=document.createElement("h3");title.textContent=item.title||"Материал";card.appendChild(title);
         if(item.description){const desc=document.createElement("p");desc.className="muted";desc.textContent=item.description;card.appendChild(desc);}
         if(item.type==="video"&&item.url){
-          let id="";try{const u=new URL(item.url);const m=u.pathname.match(/\/(?:shorts|video|play\/embed)\/([a-zA-Z0-9_-]+)/);id=m?m[1]:"";}catch(_){}
-          if(id){const frame=document.createElement("iframe");frame.src="https://rutube.ru/play/embed/"+encodeURIComponent(id);frame.title=item.title||"Видео";frame.allow="clipboard-write; autoplay; fullscreen";frame.allowFullscreen=true;frame.loading="lazy";frame.style.cssText="width:100%;aspect-ratio:16/9;border:0;border-radius:10px";card.appendChild(frame);}
-          else{const link=document.createElement("a");link.href=item.url;link.target="_blank";link.rel="noopener";link.textContent="Открыть видео на Rutube";card.appendChild(link);}
+          const video=videoEmbed(item.url);
+          if(video){const frame=document.createElement("iframe");frame.src=video.src;frame.title=item.title||"Видео";frame.allow="clipboard-write; autoplay; encrypted-media; fullscreen";frame.allowFullscreen=true;frame.loading="lazy";frame.style.cssText="width:100%;aspect-ratio:16/9;border:0;border-radius:10px";card.appendChild(frame);}
+          else{const link=document.createElement("a");link.href=item.url;link.target="_blank";link.rel="noopener";link.textContent="Открыть видео";card.appendChild(link);}
         }else if(item.image){const img=document.createElement("img");img.src=new URL(item.image,scriptUrl).href;img.alt=item.title||"Материал";img.loading="lazy";img.style.cssText="width:100%;max-height:320px;object-fit:cover;border-radius:10px";card.appendChild(img);}
         diyTarget.appendChild(card);
       });
@@ -150,10 +170,6 @@
       if (heading) heading.textContent = category.title;
     });
 
-    const rutubeId = url => {
-      try { const u = new URL(url); const m = u.pathname.match(/\/(?:shorts|video|play\/embed)\/([a-zA-Z0-9_-]+)/); return m ? m[1] : ""; }
-      catch (_) { return ""; }
-    };
     portfolioGroups.forEach(group => {
       const target = document.getElementById(group.id);
       if (!target) return;
@@ -162,10 +178,10 @@
         ? '<div class="portfolio-gallery">' + items.map(item => {
             const title = item.title || "Работа";
             if (item.type === "video") {
-              const id = rutubeId(item.url || "");
-              return id
-                ? '<article class="widecard" data-portfolio-id="' + escapeHtml(item.id) + '"><div style="position:relative;width:100%;aspect-ratio:16/9"><iframe src="https://rutube.ru/play/embed/' + encodeURIComponent(id) + '" title="' + escapeHtml(title) + '" allow="clipboard-write; autoplay; fullscreen" allowfullscreen loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:9px"></iframe></div><p>' + escapeHtml(title) + '</p><small>' + escapeHtml(item.description || "") + '</small></article>'
-                : '<article class="widecard"><p>' + escapeHtml(title) + '</p><a href="' + escapeHtml(item.url || "") + '" target="_blank" rel="noopener">Открыть видео на Rutube</a></article>';
+              const video = videoEmbed(item.url || "");
+              return video
+                ? '<article class="widecard" data-portfolio-id="' + escapeHtml(item.id) + '"><div style="position:relative;width:100%;aspect-ratio:16/9"><iframe src="' + escapeHtml(video.src) + '" title="' + escapeHtml(title) + '" allow="clipboard-write; autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:9px"></iframe></div><p>' + escapeHtml(title) + '</p><small>' + escapeHtml(item.description || "") + '</small></article>'
+                : '<article class="widecard"><p>' + escapeHtml(title) + '</p><a href="' + escapeHtml(item.url || "") + '" target="_blank" rel="noopener">Открыть видео</a></article>';
             }
             const src = item.image ? new URL(item.image, scriptUrl).href : "";
             return src
