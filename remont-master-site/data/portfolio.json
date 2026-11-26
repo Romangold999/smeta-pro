@@ -514,6 +514,30 @@
       "category": "decorative-walls",
       "image": "assets/portfolio/portfolio-mwxhz5ee-2s5a2.jpg",
       "sortOrder": 27
+    },
+    {
+      "id": "portfolio-mwxi6svt-3pr4s",
+      "type": "image",
+      "title": "Замша",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxi6svt-3pr4s.jpg",
+      "sortOrder": 28
+    },
+    {
+      "id": "portfolio-mwxi9vnx-woayf",
+      "type": "image",
+      "title": "Фактурная штукатурка · 1000000826.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxi9vnx-woayf.jpg",
+      "sortOrder": 29
+    },
+    {
+      "id": "portfolio-mwxi9vuc-5nwyl",
+      "type": "image",
+      "title": "Фактурная штукатурка · 1000000823.jpg",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxi9vuc-5nwyl.jpg",
+      "sortOrder": 30
     }
   ]
 }
