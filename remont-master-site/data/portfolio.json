@@ -138,6 +138,14 @@
       "category": "decorative-walls",
       "image": "assets/portfolio/portfolio-mwxf1jd7-w5yi7.jpg",
       "sortOrder": 9
+    },
+    {
+      "id": "portfolio-mwxfab9o-u56yw",
+      "type": "image",
+      "title": "Мокрый шелк",
+      "category": "decorative-walls",
+      "image": "assets/portfolio/portfolio-mwxfab9o-u56yw.jpg",
+      "sortOrder": 10
     }
   ]
 }
